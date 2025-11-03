@@ -285,6 +285,53 @@ Ctrl+R                           # Search history (fzf)
 
 ---
 
+## Custom Keybindings (Hyper Key)
+
+**Hyper Key = Caps Lock (hold) = Cmd+Opt+Ctrl+Shift**
+**Tap Caps Lock = Escape**
+
+### Window Management
+```bash
+# Snap to Halves
+Hyper + Left                     # Snap left half
+Hyper + Right                    # Snap right half
+Hyper + Up                       # Snap top half
+Hyper + Down                     # Snap bottom half
+
+# Snap to Quarters
+Hyper + 1                        # Top-left
+Hyper + 2                        # Top-right
+Hyper + 3                        # Bottom-left
+Hyper + 4                        # Bottom-right
+
+# Window Control
+Hyper + F                        # Maximize
+Hyper + C                        # Center window
+```
+
+### App Launching
+```bash
+Hyper + T                        # iTerm2
+Hyper + B                        # Browser (Safari)
+Hyper + V                        # VS Code
+Hyper + M                        # Mail
+Hyper + N                        # Notes
+Hyper + S                        # Messages
+Hyper + O                        # Obsidian
+```
+
+### Developer Shortcuts
+```bash
+Hyper + R                        # Reload/Refresh
+Hyper + D                        # Developer Tools
+Hyper + K                        # Force Quit dialog
+Hyper + P                        # Command Palette
+```
+
+**Tip:** Practice 3-5 shortcuts per week. See [user-data/user-content/karabiner/README.md](../user-data/user-content/karabiner/README.md) for complete guide.
+
+---
+
 ## Learning Resources
 
 - **Complete docs:** [docs/index.md](index.md)

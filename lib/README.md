@@ -506,3 +506,181 @@ See `lib/default.nix` for complete function implementations with inline document
 - [Architecture Overview](../docs/architecture/overview.md)
 - [overlays/README.md](../overlays/README.md) - Package customization
 - [pkgs/README.md](../pkgs/README.md) - Custom packages
+
+---
+
+## Database & Credential Helpers (`database`)
+
+Generate database connection functions and token helpers with file permission validation.
+
+### `mkDatabaseConnector`
+
+Generate database connection function with validation.
+
+**Usage**:
+```nix
+myLib.database.mkDatabaseConnector {
+  name = "oracle";
+  command = "sqlplus \${USERNAME}/\${PASSWORD}@\${HOST}:\${PORT}/\${SERVICE_NAME}";
+  description = "Oracle";
+}
+```
+
+**Generated Function**: `dbconnect-oracle [environment]`  
+**Default Environment**: prod  
+**Available Environments**: prod, dev, qa, test  
+**Features**: File permission validation (600), environment variable sourcing
+
+### `mkDatabaseConnectors`
+
+Generate multiple database connector functions at once.
+
+**Usage**:
+```nix
+myLib.database.mkDatabaseConnectors [
+  { name = "oracle"; command = "..."; description = "Oracle"; }
+  { name = "mssql"; command = "..."; description = "SQL Server"; }
+]
+```
+
+### `mkDatabaseList`
+
+Generate `dblist` function to show all configured databases.
+
+**Usage**:
+```nix
+myLib.database.mkDatabaseList [
+  { name = "oracle"; label = "Oracle"; }
+  { name = "mssql"; label = "SQL Server"; }
+]
+```
+
+**Generated Function**: `dblist`
+
+### `mkTokenHelper`
+
+Generate token helper function that copies token to clipboard.
+
+**Usage**:
+```nix
+myLib.database.mkTokenHelper {
+  name = "git";
+  description = "Git token";
+  file = "git_token";
+}
+```
+
+**Generated Function**: `git-token`  
+**Features**: File permission validation (600), clipboard copy
+
+### `mkTokenHelpers`
+
+Generate multiple token helper functions.
+
+**Example Usage in work.nix**:
+```nix
+${myLib.database.mkTokenHelpers [
+  { name = "git"; description = "Git token"; file = "git_token"; }
+  { name = "terraform"; description = "HCP Terraform token"; file = "hcp_terraform_token"; }
+  { name = "jira"; description = "Jira API token"; file = "jira_api_token"; }
+]}
+```
+
+**Token Reduction**: 150 lines → 30 lines (80% reduction)
+
+---
+
+## AWS Helpers (`aws`)
+
+Generate AWS profile switching aliases for quick environment switching.
+
+### `mkAwsProfileAliases`
+
+Generate AWS profile switching aliases.
+
+**Usage**:
+```nix
+myLib.aws.mkAwsProfileAliases {
+  project = "tririga-integrations";
+  environments = [ "dev" "sbx" "qa" "prod" ];
+}
+```
+
+**Generated Aliases**:
+- `awsdev` → `awsuse tririga-integrations-dev`
+- `awssbx` → `awsuse tririga-integrations-sbx`
+- `awsqa` → `awsuse tririga-integrations-qa`
+- `awsprod` → `awsuse tririga-integrations-prod`
+
+### `mkAwsProjectAliases`
+
+Generate AWS profile aliases for multiple projects.
+
+**Usage**:
+```nix
+myLib.aws.mkAwsProjectAliases [
+  { project = "tririga-integrations"; environments = [ "dev" "sbx" "qa" "prod" ]; }
+  { project = "project2"; environments = [ "dev" "prod" ]; }
+]
+```
+
+### `mkAwsProfileAliasesWithPrefix`
+
+Generate AWS profile aliases with custom prefix (for multiple projects).
+
+**Usage**:
+```nix
+myLib.aws.mkAwsProfileAliasesWithPrefix {
+  prefix = "ti";  # tririga-integrations
+  project = "tririga-integrations";
+  environments = [ "dev" "sbx" "qa" "prod" ];
+}
+```
+
+**Generated Aliases**: `tidev`, `tisbx`, `tiqa`, `tiprod`
+
+---
+
+## Mixin Helpers (`mixin`)
+
+Standardize mixin structure for machine-specific configurations.
+
+### `mkMixin`
+
+Create mixin with standard structure.
+
+**Usage**:
+```nix
+myLib.mixin.mkMixin {
+  type = "work";
+  packages = [ pkgs.unixODBC ];
+  sessionVariables = { MACHINE_MODE = "work"; };
+  shellAliases = { ... };
+  initExtra = ''...'';
+}
+```
+
+### `mkConditionalMixinComponents`
+
+Create mixin components that apply conditionally.
+
+**Usage**:
+```nix
+myLib.mixin.mkConditionalMixinComponents {
+  condition = hostname == "mbp-work";
+  packages = [ pkgs.work-tool ];
+  sessionVariables = { WORK_MODE = "true"; };
+}
+```
+
+### `mergeMixins`
+
+Merge multiple mixins into a single configuration.
+
+**Usage**:
+```nix
+myLib.mixin.mergeMixins [
+  (mkMixin { type = "base"; ... })
+  (mkMixin { type = "dev"; ... })
+]
+```

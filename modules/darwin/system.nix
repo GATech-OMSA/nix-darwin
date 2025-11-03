@@ -8,11 +8,24 @@
       autohide = false;
       show-recents = false;
       orientation = "bottom";
-      tilesize = 72;
+      tilesize = 64;
       minimize-to-application = true;
       show-process-indicators = true;
       launchanim = false;  # Faster app launching
-      persistent-apps = [];  # Clean dock, add apps manually
+      persistent-apps = [
+        "/Applications/Safari.app"
+        "/System/Applications/Messages.app"
+        "/System/Applications/Mail.app"
+        "/System/Applications/FaceTime.app"
+        "/System/Applications/Phone.app"
+        "/System/Applications/Notes.app"
+        "/System/Applications/Music.app"
+        "/System/Applications/System Settings.app"
+        "/Applications/iTerm.app"
+        "/Applications/Visual Studio Code.app"
+      ];
+      # persistent-others: Add folders/files to right side of Dock
+      # Example: ["/Users/jimmy/Downloads" "/Users/jimmy/Documents"]
       persistent-others = [];
     };
 

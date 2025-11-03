@@ -1,0 +1,138 @@
+{
+  "title": "App Launching (Hyper + Keys)",
+  "rules": [
+    {
+      "description": "Hyper + T → Launch/Focus iTerm2",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "t",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'iTerm'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + B → Launch/Focus Safari",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "b",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'Safari'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + V → Launch/Focus Visual Studio Code",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "v",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'Visual Studio Code'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + M → Launch/Focus Mail",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "m",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'Mail'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + N → Launch/Focus Notes",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "n",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'Notes'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + S → Launch/Focus Messages",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "s",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'Messages'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + O → Launch/Focus Obsidian",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "o",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open -a 'Obsidian'"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

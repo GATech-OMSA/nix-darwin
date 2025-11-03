@@ -317,4 +317,28 @@ rec {
   # Import cleanup helper library
   # Provides: mkCleanupFunction, mkCleanupGroup, mkDiskSpaceReport, mkCleanupLog, etc.
   cleanup = import ./cleanup.nix { inherit lib; pkgs = inputs.nixpkgs.legacyPackages.${builtins.currentSystem or "x86_64-darwin"}; };
+
+  # ============================================
+  # DATABASE & CREDENTIAL HELPERS
+  # ============================================
+
+  # Import database helper library
+  # Provides: mkDatabaseConnector, mkDatabaseConnectors, mkDatabaseList, mkTokenHelper, mkTokenHelpers
+  database = import ./database-helpers.nix { inherit lib; };
+
+  # ============================================
+  # AWS HELPERS
+  # ============================================
+
+  # Import AWS helper library
+  # Provides: mkAwsProfileAliases, mkAwsProjectAliases, mkAwsProfileAliasesWithPrefix
+  aws = import ./aws-helpers.nix { inherit lib; };
+
+  # ============================================
+  # MIXIN HELPERS
+  # ============================================
+
+  # Import mixin helper library
+  # Provides: mkMixin, mkConditionalMixinComponents, mergeMixins
+  mixin = import ./mixin-helpers.nix { inherit lib; };
 }

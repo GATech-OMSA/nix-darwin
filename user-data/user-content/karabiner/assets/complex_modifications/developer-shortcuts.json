@@ -1,0 +1,85 @@
+{
+  "title": "Developer Shortcuts (Hyper + Keys)",
+  "rules": [
+    {
+      "description": "Hyper + R → Reload/Refresh (Cmd+R)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "r",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "r",
+              "modifiers": ["command"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + D → Developer Tools (Cmd+Opt+I)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "d",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "i",
+              "modifiers": ["command", "option"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + K → Force Quit Focused App (Cmd+Opt+Esc then Return)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "k",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "escape",
+              "modifiers": ["command", "option"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Hyper + P → Toggle VS Code Command Palette (Cmd+Shift+P)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "p",
+            "modifiers": {
+              "mandatory": ["command", "option", "control", "shift"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "p",
+              "modifiers": ["command", "shift"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

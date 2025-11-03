@@ -70,25 +70,38 @@
     # COMPLETE Shell aliases - merged from all sources
     shellAliases = {
       # ============================================
-      # GENERAL & CONFIGURATION
+      # SYSTEM & CONFIGURATION
       # ============================================
       c = "clear";
-      C = "clear";
-      code = "code .";
-      vs = "code .";
-      zshrc = "$EDITOR ~/nix-darwin/home/jimmy/shell/zsh.nix && darwin-rebuild switch --flake ~/nix-darwin";
-      gitconf = "$EDITOR ~/nix-darwin/home/jimmy/programs/git.nix";
-      condaconf = "$EDITOR ~/.condarc";
-      awsconf = "$EDITOR ~/.aws/config";
-      jupyterconf = "$EDITOR ~/.jupyter/jupyter_notebook_config.py";
       reload = "source ~/.zshrc && echo '✅ .zshrc reloaded'";
       restart = "exec zsh";
 
+      # Configuration shortcuts
+      nixconf = "code ~/nix-darwin";
+      zshconf = "$EDITOR ~/nix-darwin/home/jimmy/shell/zsh.nix";
+      gitconf = "$EDITOR ~/nix-darwin/home/jimmy/programs/git.nix";
+      vscodeconf = "$EDITOR ~/nix-darwin/home/jimmy/programs/vscode.nix";
+      condaconf = "$EDITOR ~/.condarc";
+      awsconf = "$EDITOR ~/.aws/config";
+      jupyterconf = "$EDITOR ~/.jupyter/jupyter_notebook_config.py";
+
+      # Nix-Darwin system management
+      nix-rebuild = "sudo darwin-rebuild switch --flake ~/nix-darwin";
+      nix-rollback = "sudo darwin-rebuild --rollback";
 
       # Safety aliases
       cp = "cp -i";
       mv = "mv -i";
       rm = "rm -i";
+
+      # ============================================
+      # NIX DEVELOPMENT
+      # ============================================
+      ns = "nix-shell";
+      nd = "nix develop";
+      nb = "nix build";
+      nf = "nix flake";
+      se = "sops -e -i";  # SOPS edit secrets
 
       # ============================================
       # NAVIGATION
@@ -102,41 +115,54 @@
       # Quick directories
       dev = "cd ~/Dev";
       downloads = "cd ~/Downloads";
-      apps = "cd ~/Applications";
-      docs = "cd ~/Documents";
-      algo = "cd ~/Dev/algorithms";
       desktop = "cd ~/Desktop";
+      docs = "cd ~/Documents";
+      apps = "cd ~/Applications";
       down = "cd ~/Downloads";
       desk = "cd ~/Desktop";
 
-      # Personal-specific navigation
+      # Personal projects
       learning = "cd ~/Dev/learning";
       aiml = "cd ~/Dev/ai-ml";
+      algo = "cd ~/Dev/algorithms";
       courses = "cd ~/Dev/courses";
       experiments = "cd ~/Dev/experiments";
       oss = "cd ~/Dev/open-source";
 
       # ============================================
-      # MODERN CLI TOOLS
+      # MODERN CLI TOOLS (eza, bat, ripgrep, etc.)
       # ============================================
       ls = "eza --icons --group-directories-first";
       ll = "eza -al --icons --group-directories-first";
       la = "eza -a --icons --group-directories-first";
       lt = "eza --tree --level=2 --icons";
+      
       cat = "bat --style=plain --paging=never";
       catp = "bat -p";
+      
       grep = "rg";
       rgi = "rg -i";
+      
       find = "fd";
       du = "dust";
       df = "duf";
       top = "btop";
 
       # ============================================
-      # PYTHON - MULTI-TIER SETUP (UV + Micromamba)
+      # GIT - Modern shortcuts (complement g-prefix)
       # ============================================
-      # Create your own environments: micromamba create -n myenv python=3.12 -y
-      # Activate: micromamba activate myenv
+      # Main git interface (all aliases in git.nix with 'g' prefix)
+      g = "git";
+
+      # Modern git shortcuts
+      gsw = "git switch";
+      gswc = "git switch -c";
+      gres = "git restore";
+      grest = "git restore --staged";
+
+      # ============================================
+      # PYTHON - MULTI-TIER (UV + Micromamba)
+      # ============================================
       py = "python";
       ipy = "ipython";
       jl = "jupyter lab";
@@ -162,43 +188,16 @@
       mambalist = "micromamba env list";
 
       # ============================================
-      # GIT - Universal prefix
+      # AWS
       # ============================================
-      # All git aliases are defined in git.nix (60+ aliases!)
-      # Use 'g' as prefix: g s, g d, g co, g recent, g sync, etc.
-      # Examples:
-      #   g s          -> git status -s
-      #   g st         -> git status (full)
-      #   g aa         -> git add --all
-      #   g cm "msg"   -> git commit -m "msg"
-      #   g recent     -> show recent branches
-      #   g today      -> today's commits
-      #   g sync       -> fetch and pull
-      g = "git";
-
-      # ============================================
-      # AWS HELPERS
-      # ============================================
-      # Quick profile switching (usage: awsp project-env)
       awsp = "export AWS_PROFILE=";
-      # Show current profile
       awsprofile = "echo $AWS_PROFILE";
-      # Check current identity (uses AWS_PROFILE if set)
       awswho = "aws sts get-caller-identity";
 
       # ============================================
-      # TERRAFORM HELPERS
+      # DOCKER & KUBERNETES
       # ============================================
-      tf = "terraform";
-      tfi = "terraform init";
-      tfp = "terraform plan";
-      tfa = "terraform apply";
-      tfv = "terraform validate";
-      tff = "terraform fmt";
-
-      # ============================================
-      # DOCKER HELPERS
-      # ============================================
+      # Docker
       d = "docker";
       dc = "docker compose";
       dps = "docker ps";
@@ -209,18 +208,31 @@
       dimg = "docker images";
       drm = "docker rm";
       drmi = "docker rmi";
-      dex = "docker exec -it";  # Quick shell into container
-      drun = "docker run -it --rm";  # Quick test container
-      dprune = "docker system prune -af";  # Deep clean
+      dex = "docker exec -it";
+      drun = "docker run -it --rm";
+      dprune = "docker system prune -af";
 
-      # ============================================
-      # KUBERNETES HELPERS
-      # ============================================
+      # Kubernetes
       k = "kubectl";
       kg = "kubectl get";
       kd = "kubectl describe";
       kl = "kubectl logs";
       k9 = "k9s";
+
+      # ============================================
+      # TERRAFORM
+      # ============================================
+      tf = "terraform";
+      tfi = "terraform init";
+      tfp = "terraform plan";
+      tfa = "terraform apply";
+      tfv = "terraform validate";
+      tff = "terraform fmt";
+
+      # ============================================
+      # FILE OPERATIONS
+      # ============================================
+      extract = "tar -xvf";
 
       # ============================================
       # NETWORK UTILITIES
@@ -245,20 +257,6 @@
       models = "ollama list";
       llama3 = "ollama run llama3";
       codellama = "ollama run codellama";
-
-      # ============================================
-      # NIX-DARWIN ALIASES
-      # ============================================
-      "nix-rebuild" = "sudo darwin-rebuild switch --flake ~/nix-darwin";
-      "nix-switch" = "sudo darwin-rebuild switch --flake ~/nix-darwin";
-      "nix-check" = "darwin-rebuild check --flake ~/nix-darwin";
-      "nix-test" = "darwin-rebuild build --flake ~/nix-darwin";
-      "nix-update" = "cd ~/nix-darwin && nix flake update && sudo darwin-rebuild switch --flake .";
-      "nix-clean" = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix-store --optimize";
-      "nix-generations" = "darwin-rebuild --list-generations";
-      "nix-rollback" = "sudo darwin-rebuild rollback";
-      "nix-list" = "nix-env -q";
-      "nix-search" = "nix search nixpkgs";
 
       # ============================================
       # CLEANUP ALIASES
@@ -320,6 +318,15 @@
         bindkey '^[[A' history-substring-search-up
         bindkey '^[[B' history-substring-search-down
       fi
+
+      # ============================================
+      # OPTION+ARROW WORD NAVIGATION
+      # ============================================
+      # Fix for Option+Left/Right to navigate by word
+      bindkey "^[b" backward-word      # Option+Left
+      bindkey "^[f" forward-word       # Option+Right
+      bindkey "^[[1;3C" forward-word   # Option+Right (alternative)
+      bindkey "^[[1;3D" backward-word  # Option+Left (alternative)
 
       # ============================================
       # TERRAFORM PLUGIN CACHE
@@ -831,6 +838,78 @@ EOF
           echo "✅ Homebrew update completed successfully"
         else
           echo "⚠️  Homebrew update completed with $errors error(s)"
+          return 1
+        fi
+      }
+
+      # ============================================
+      # USER DATA SYNC
+      # ============================================
+
+      # Sync user-data from home directory to nix-darwin repository
+      # Backs up VS Code settings, Karabiner config, and other user preferences
+      function sync-user-data() {
+        echo "📦 Syncing user data to nix-darwin repository..."
+        local errors=0
+        local nix_darwin="$HOME/nix-darwin"
+        local user_data="$nix_darwin/user-data/user-content"
+
+        # Check if nix-darwin exists
+        if [ ! -d "$nix_darwin" ]; then
+          echo "❌ Error: ~/nix-darwin directory not found"
+          return 1
+        fi
+
+        # Sync VS Code settings
+        if [ -d "$HOME/Library/Application Support/Code/User" ]; then
+          echo "  📝 Syncing VS Code settings..."
+          mkdir -p "$user_data/vscode"
+
+          # Copy settings.json
+          if [ -f "$HOME/Library/Application Support/Code/User/settings.json" ]; then
+            cp "$HOME/Library/Application Support/Code/User/settings.json" \
+               "$user_data/vscode/settings.json"
+            echo "  ✅ VS Code settings synced"
+          fi
+
+          # Copy keybindings.json
+          if [ -f "$HOME/Library/Application Support/Code/User/keybindings.json" ]; then
+            cp "$HOME/Library/Application Support/Code/User/keybindings.json" \
+               "$user_data/vscode/keybindings.json"
+            echo "  ✅ VS Code keybindings synced"
+          fi
+        else
+          echo "  ⚠️  VS Code User directory not found"
+        fi
+
+        # Sync Karabiner config
+        if [ -d "$HOME/.config/karabiner" ]; then
+          echo "  ⌨️  Syncing Karabiner configuration..."
+          mkdir -p "$user_data/karabiner"
+
+          # Copy main config
+          if [ -f "$HOME/.config/karabiner/karabiner.json" ]; then
+            cp "$HOME/.config/karabiner/karabiner.json" \
+               "$user_data/karabiner/karabiner.json"
+            echo "  ✅ Karabiner config synced"
+          fi
+
+          # Copy complex modifications
+          if [ -d "$HOME/.config/karabiner/assets/complex_modifications" ]; then
+            mkdir -p "$user_data/karabiner/assets/complex_modifications"
+            cp -r "$HOME/.config/karabiner/assets/complex_modifications/"* \
+               "$user_data/karabiner/assets/complex_modifications/" 2>/dev/null || true
+            echo "  ✅ Karabiner complex modifications synced"
+          fi
+        else
+          echo "  ⚠️  Karabiner config directory not found (may not be installed yet)"
+        fi
+
+        if [ $errors -eq 0 ]; then
+          echo "✅ User data sync completed successfully"
+          echo "  💡 Don't forget to commit changes: cd ~/nix-darwin && git add user-data && git commit"
+        else
+          echo "⚠️  User data sync completed with $errors error(s)"
           return 1
         fi
       }
@@ -2018,9 +2097,9 @@ EOF
               echo "Docker-specific cleanup"
               echo ""
               echo "Options:"
-              echo "  --dry-run    Preview operations"
-              echo "  --volumes    Also remove volumes (DESTRUCTIVE)"
-              echo "  --help, -h   Show this help"
+              echo "  --dry-run       Preview operations"
+              echo "  --volumes       Also remove volumes (DESTRUCTIVE)"
+              echo "  --help, -h      Show this help"
               return 0
               ;;
           esac
@@ -2041,6 +2120,8 @@ EOF
         echo -e "\033[36m========================================\033[0m"
         echo ""
 
+        local disk_before=$(__cleanup_get_disk_space)
+
         if [[ "$dry_run" == "true" ]]; then
           echo -e "\033[36m[DRY RUN] Would prune images, containers, networks\033[0m"
           [[ "$volumes" == "true" ]] && echo -e "\033[36m[DRY RUN] Would also remove volumes\033[0m"
@@ -2051,6 +2132,10 @@ EOF
             docker system prune -af && echo "  ✅ Docker cleaned (volumes preserved)"
           fi
         fi
+
+        local disk_after=$(__cleanup_get_disk_space)
+        echo ""
+        echo -e "\033[32m✅ Docker cleanup complete! (Disk: $disk_before → $disk_after)\033[0m"
         echo ""
       }
 

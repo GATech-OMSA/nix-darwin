@@ -46,6 +46,7 @@
       # Productivity
       "alfred"
       "rectangle"  # Will suggest AeroSpace alternative
+      "karabiner-elements"  # Keyboard customization and remapping
 
       # AI/LLM
       "chatgpt"

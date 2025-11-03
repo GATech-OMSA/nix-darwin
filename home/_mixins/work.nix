@@ -37,20 +37,14 @@
     ap = "cd ~/Dev/webMethods/api";
     deploys = "cd ~/Dev/production-deploys";
 
-    # AWS SSO - Quick profile switching (customize with actual profiles)
-    # Pattern: tririga-integrations-{env}
-    awsdev = "awsuse tririga-integrations-dev";
-    awssbx = "awsuse tririga-integrations-sbx";
-    awsqa = "awsuse tririga-integrations-qa";
-    awsprod = "awsuse tririga-integrations-prod";
-
-    # Placeholders for additional projects (customize later)
-    # awsproject2dev = "awsuse project2-dev";
-    # awsproject2prod = "awsuse project2-prod";
-
     # Quick access to last-used profile
     awslast = "export AWS_PROFILE=$(cat ~/.aws/.last_profile 2>/dev/null || echo 'default') && echo '🔄 Restored AWS profile:' $AWS_PROFILE";
-  };
+  } // (myLib.aws.mkAwsProfileAliases {
+    # AWS SSO - Quick profile switching (generated)
+    # Pattern: tririga-integrations-{env}
+    project = "tririga-integrations";
+    environments = [ "dev" "sbx" "qa" "prod" ];
+  });
 
   # Work-specific shell functions
   programs.zsh.initExtra = ''
@@ -66,165 +60,78 @@
       fi
     }
 
-    # Database connection helpers - Multi-Environment
+    # ==================================================
+    # DATABASE CONNECTION HELPERS (Generated)
+    # ==================================================
     # Pattern: ~/.db/{database_type}/{environment}
     # Usage: dbconnect-oracle prod|dev|qa|test
+    # Available: dbconnect-{oracle|mssql|postgres|oracle-ps|ods|dw}
+    # Includes: File permission validation (600)
 
-    function dbconnect-oracle() {
-      local env="''${1:-prod}"
-      local conn_file="$HOME/.db/oracle/''${env}"
+    ${myLib.database.mkDatabaseConnectors [
+      {
+        name = "oracle";
+        command = "sqlplus \${USERNAME}/\${PASSWORD}@\${HOST}:\${PORT}/\${SERVICE_NAME}";
+        description = "Oracle";
+      }
+      {
+        name = "mssql";
+        command = "sqlcmd -S \${SERVER} -d \${DATABASE} -U \${USERNAME} -P \${PASSWORD}";
+        description = "SQL Server";
+      }
+      {
+        name = "postgres";
+        command = "PGPASSWORD=\${PASSWORD} psql -h \${HOST} -p \${PORT} -U \${USERNAME} -d \${DATABASE}";
+        description = "PostgreSQL";
+      }
+      {
+        name = "oracle-ps";
+        command = "sqlplus \${USERNAME}/\${PASSWORD}@\${HOST}:\${PORT}/\${SERVICE_NAME}";
+        description = "Oracle PeopleSoft";
+      }
+      {
+        name = "ods";
+        command = "sqlcmd -S \${SERVER} -d \${DATABASE} -U \${USERNAME} -P \${PASSWORD}";
+        description = "ODS";
+      }
+      {
+        name = "dw";
+        command = "sqlcmd -S \${SERVER} -d \${DATABASE} -U \${USERNAME} -P \${PASSWORD}";
+        description = "Data Warehouse";
+      }
+    ]}
 
-      if [ -f "''${conn_file}" ]; then
-        source "''${conn_file}"
-        echo "🔌 Connecting to Oracle (''${env})..."
-        sqlplus ''${USERNAME}/''${PASSWORD}@''${HOST}:''${PORT}/''${SERVICE_NAME}
-      else
-        echo "❌ Error: Oracle connection file not found for environment: ''${env}"
-        echo "Expected: ''${conn_file}"
-        echo "Available environments: prod, dev, qa, test"
-        return 1
-      fi
-    }
+    ${myLib.database.mkDatabaseList [
+      { name = "oracle"; label = "Oracle"; }
+      { name = "mssql"; label = "SQL Server"; }
+      { name = "postgres"; label = "PostgreSQL"; }
+      { name = "oracle-ps"; label = "Oracle PeopleSoft"; }
+      { name = "ods"; label = "ODS"; }
+      { name = "dw"; label = "Data Warehouse"; }
+    ]}
 
-    function dbconnect-mssql() {
-      local env="''${1:-prod}"
-      local conn_file="$HOME/.db/mssql/''${env}"
+    # ==================================================
+    # TOKEN HELPERS (Generated)
+    # ==================================================
+    # Usage: git-token, terraform-token, jira-token
+    # Includes: File permission validation (600)
 
-      if [ -f "''${conn_file}" ]; then
-        source "''${conn_file}"
-        echo "🔌 Connecting to SQL Server (''${env})..."
-        sqlcmd -S ''${SERVER} -d ''${DATABASE} -U ''${USERNAME} -P ''${PASSWORD}
-      else
-        echo "❌ Error: SQL Server connection file not found for environment: ''${env}"
-        echo "Expected: ''${conn_file}"
-        echo "Available environments: prod, dev, qa, test"
-        return 1
-      fi
-    }
-
-    function dbconnect-postgres() {
-      local env="''${1:-prod}"
-      local conn_file="$HOME/.db/postgres/''${env}"
-
-      if [ -f "''${conn_file}" ]; then
-        source "''${conn_file}"
-        echo "🔌 Connecting to PostgreSQL (''${env})..."
-        PGPASSWORD=''${PASSWORD} psql -h ''${HOST} -p ''${PORT} -U ''${USERNAME} -d ''${DATABASE}
-      else
-        echo "❌ Error: PostgreSQL connection file not found for environment: ''${env}"
-        echo "Expected: ''${conn_file}"
-        echo "Available environments: prod, dev, qa, test"
-        return 1
-      fi
-    }
-
-    function dbconnect-oracle-ps() {
-      local env="''${1:-prod}"
-      local conn_file="$HOME/.db/oracle-ps/''${env}"
-
-      if [ -f "''${conn_file}" ]; then
-        source "''${conn_file}"
-        echo "🔌 Connecting to Oracle PeopleSoft (''${env})..."
-        sqlplus ''${USERNAME}/''${PASSWORD}@''${HOST}:''${PORT}/''${SERVICE_NAME}
-      else
-        echo "❌ Error: Oracle PeopleSoft connection file not found for environment: ''${env}"
-        echo "Expected: ''${conn_file}"
-        echo "Available environments: prod, dev, qa, test"
-        return 1
-      fi
-    }
-
-    function dbconnect-ods() {
-      local env="''${1:-prod}"
-      local conn_file="$HOME/.db/ods/''${env}"
-
-      if [ -f "''${conn_file}" ]; then
-        source "''${conn_file}"
-        echo "🔌 Connecting to ODS (''${env})..."
-        sqlcmd -S ''${SERVER} -d ''${DATABASE} -U ''${USERNAME} -P ''${PASSWORD}
-      else
-        echo "❌ Error: ODS connection file not found for environment: ''${env}"
-        echo "Expected: ''${conn_file}"
-        echo "Available environments: prod, dev, qa, test"
-        return 1
-      fi
-    }
-
-    function dbconnect-dw() {
-      local env="''${1:-prod}"
-      local conn_file="$HOME/.db/dw/''${env}"
-
-      if [ -f "''${conn_file}" ]; then
-        source "''${conn_file}"
-        echo "🔌 Connecting to Data Warehouse (''${env})..."
-        sqlcmd -S ''${SERVER} -d ''${DATABASE} -U ''${USERNAME} -P ''${PASSWORD}
-      else
-        echo "❌ Error: Data Warehouse connection file not found for environment: ''${env}"
-        echo "Expected: ''${conn_file}"
-        echo "Available environments: prod, dev, qa, test"
-        return 1
-      fi
-    }
-
-    # List all available database connections
-    function dblist() {
-      echo "📊 Available Database Connections:"
-      echo ""
-      echo "Oracle:"
-      ls -1 ~/.db/oracle/ 2>/dev/null | sed 's/^/  - oracle /' || echo "  (none configured)"
-      echo ""
-      echo "SQL Server:"
-      ls -1 ~/.db/mssql/ 2>/dev/null | sed 's/^/  - mssql /' || echo "  (none configured)"
-      echo ""
-      echo "PostgreSQL:"
-      ls -1 ~/.db/postgres/ 2>/dev/null | sed 's/^/  - postgres /' || echo "  (none configured)"
-      echo ""
-      echo "Oracle PeopleSoft:"
-      ls -1 ~/.db/oracle-ps/ 2>/dev/null | sed 's/^/  - oracle-ps /' || echo "  (none configured)"
-      echo ""
-      echo "ODS:"
-      ls -1 ~/.db/ods/ 2>/dev/null | sed 's/^/  - ods /' || echo "  (none configured)"
-      echo ""
-      echo "Data Warehouse:"
-      ls -1 ~/.db/dw/ 2>/dev/null | sed 's/^/  - dw /' || echo "  (none configured)"
-      echo ""
-      echo "Usage: dbconnect-{type} {environment}"
-      echo "Example: dbconnect-oracle dev"
-      echo "Example: dbconnect-mssql qa"
-    }
-
-    # Token helpers (copy to clipboard)
-    function git-token() {
-      if [ -f ~/.tokens/git_token ]; then
-        cat ~/.tokens/git_token | pbcopy
-        echo "✅ Git token copied to clipboard"
-      else
-        echo "❌ Error: Git token not found"
-        echo "Expected: ~/.tokens/git_token (from secrets.yaml)"
-        return 1
-      fi
-    }
-
-    function terraform-token() {
-      if [ -f ~/.tokens/hcp_terraform_token ]; then
-        cat ~/.tokens/hcp_terraform_token | pbcopy
-        echo "✅ HCP Terraform token copied to clipboard"
-      else
-        echo "❌ Error: HCP Terraform token not found"
-        echo "Expected: ~/.tokens/hcp_terraform_token (from secrets.yaml)"
-        return 1
-      fi
-    }
-
-    function jira-token() {
-      if [ -f ~/.tokens/jira_api_token ]; then
-        cat ~/.tokens/jira_api_token | pbcopy
-        echo "✅ Jira API token copied to clipboard"
-      else
-        echo "❌ Error: Jira API token not found"
-        echo "Expected: ~/.tokens/jira_api_token (from secrets.yaml)"
-        return 1
-      fi
-    }
+    ${myLib.database.mkTokenHelpers [
+      {
+        name = "git";
+        description = "Git token";
+        file = "git_token";
+      }
+      {
+        name = "terraform";
+        description = "HCP Terraform token";
+        file = "hcp_terraform_token";
+      }
+      {
+        name = "jira";
+        description = "Jira API token";
+        file = "jira_api_token";
+      }
+    ]}
   '';
 }
