@@ -589,16 +589,37 @@ sudo darwin-rebuild switch --switch-generation 10
 
 ### Cleanup
 
+**Tier-Based Cleanup System:**
+
 ```bash
-# Clean old generations (frees space)
-nix-clean
+# Daily/weekly maintenance
+cleanup-quick        # or: clean
 
-# Clean Homebrew
-brew cleanup
+# Regular maintenance (recommended)
+cleanup              # Standard cleanup (default)
 
-# Clean Docker
-docker-prune
+# For active developers
+cleanup-dev          # Clean dev artifacts
+
+# Maximum cleanup (with confirmations)
+cleanup-aggressive   # or: cleanup-all
+
+# Always preview first with dry-run
+cleanup-aggressive --dry-run
 ```
+
+**Tool-Specific Cleanup:**
+
+```bash
+# Clean specific tools
+cleanup-nix --keep=3      # Nix generations
+cleanup-docker --volumes  # Docker (including volumes)
+cleanup-python            # Python/UV caches
+cleanup-git               # Git repositories
+cleanup-terraform         # Terraform directories
+```
+
+**See full documentation:** [Shell Reference - Cleanup Functions](../reference/shell.md#cleanup-functions)
 
 ---
 

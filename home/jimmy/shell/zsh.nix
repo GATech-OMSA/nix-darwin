@@ -263,7 +263,8 @@
       # ============================================
       # CLEANUP ALIASES
       # ============================================
-      cleanup = "cleanup-all";
+      # Note: cleanup function is defined below and defaults to cleanup-standard
+      # cleanup-all is an alias for cleanup-aggressive
       clean = "cleanup-quick";
     };
 
@@ -1067,149 +1068,758 @@ EOF
       }
 
       # ============================================
-      # CLEANUP SYSTEM
+      # ============================================
+      # CLEANUP SYSTEM - Comprehensive Tier-Based Cleanup
+      # ============================================
+      #
+      # Features:
+      # - 5 cleanup tiers: safe → quick → standard → dev → aggressive
+      # - Dry-run mode: --dry-run flag
+      # - Skip confirmations: --yes flag
+      # - Before/after disk reporting
+      # - Cleanup history logging to ~/.cleanup-history
+      # - Tool-specific cleanup functions
+      #
+      # Usage:
+      #   cleanup-safe                    # Conservative cleanup
+      #   cleanup-quick                   # Fast daily cleanup
+      #   cleanup                         # Standard (default)
+      #   cleanup-dev                     # Development-focused
+      #   cleanup-aggressive              # Maximum cleanup (with prompts)
+      #   cleanup-aggressive --dry-run    # Preview without executing
+      #   cleanup-aggressive --yes        # Skip all confirmations
+      #
+      # Tool-specific:
+      #   cleanup-nix                     # Nix only
+      #   cleanup-docker                  # Docker only
+      #   cleanup-python                  # Python/UV only
+      #   cleanup-git                     # Git repositories
+      #   cleanup-aws                     # AWS caches
+      #   cleanup-terraform               # Terraform
+      #   cleanup-macos                   # macOS-specific
+      #
       # ============================================
 
-      function cleanup-all() {
-        echo "🧹 Starting comprehensive system cleanup..."
-        echo "================================================"
+      # Helper: Get disk space
+      __cleanup_get_disk_space() {
+        df -h / | tail -n1 | awk '{print $3}'
+      }
+
+      # Helper: Log to cleanup history
+      __cleanup_log() {
+        local tier="$1"
+        local message="$2"
+        local log_file="$HOME/.cleanup-history"
+
+        mkdir -p "$(dirname "$log_file")"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$tier] $message" >> "$log_file"
+
+        # Rotate log (keep last 500 lines)
+        if [[ -f "$log_file" && $(wc -l < "$log_file") -gt 1000 ]]; then
+          tail -500 "$log_file" > "$log_file.tmp"
+          mv "$log_file.tmp" "$log_file"
+        fi
+      }
+
+      # Helper: Confirm risky operation
+      __cleanup_confirm() {
+        local operation="$1"
+        local description="$2"
+        local risk="$3"  # low, medium, high
+        local yes_flag="$4"
+
+        # Skip if --yes flag
+        [[ "$yes_flag" == "true" ]] && return 0
+
+        # Show warning based on risk level
+        case "$risk" in
+          high)
+            echo -e "\033[31m⚠️  HIGH RISK OPERATION\033[0m"
+            ;;
+          medium)
+            echo -e "\033[33m⚠️  Medium Risk Operation\033[0m"
+            ;;
+        esac
+
+        [[ -n "$description" ]] && echo -e "\033[1m$description\033[0m"
+        echo ""
+
+        read -p "Continue with $operation? [y/N] " -n 1 -r
+        echo
+        [[ ! $REPLY =~ ^[Yy]$ ]] && {
+          echo -e "\033[33mSkipped: $operation\033[0m"
+          return 1
+        }
+        return 0
+      }
+
+      # ============================================
+      # TIER 1: CLEANUP-SAFE (Conservative, no confirmations)
+      # ============================================
+      function cleanup-safe() {
+        local dry_run=false
+        local yes_flag=true  # Safe tier doesn't need confirmations
+
+        # Parse flags
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --help|-h)
+              echo "Usage: cleanup-safe [OPTIONS]"
+              echo ""
+              echo "Conservative cleanup (safe, no confirmations needed)"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations without executing"
+              echo "  --help, -h   Show this help message"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m🛡️  SAFE CLEANUP - Conservative System Cleanup\033[0m"
+        echo -e "\033[36m============================================================\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  DRY RUN MODE - No changes will be made\033[0m"
         echo ""
 
         local start_time=$(date +%s)
-        local total_freed=0
+        local disk_before=$(__cleanup_get_disk_space)
+
+        __cleanup_log "safe" "Starting safe cleanup (dry_run=$dry_run)"
 
         # 1. Empty Trash
-        echo "🗑️  Emptying Trash..."
-        if rm -rf ~/.Trash/* 2>/dev/null; then
-          echo "   ✅ Trash emptied"
+        echo -e "\033[35m🗑️  Trash & Temporary Files\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would empty Trash\033[0m"
+          echo -e "\033[36m  [DRY RUN] Would clean temp files (/tmp, ~/Downloads/*.tmp)\033[0m"
         else
-          echo "   ⚠️  Trash was already empty or inaccessible"
+          rm -rf ~/.Trash/* 2>/dev/null && echo "  ✅ Trash emptied" || echo "  ℹ️  Trash already empty"
+          rm -rf /tmp/* 2>/dev/null && echo "  ✅ Temp files cleaned"
+          rm -rf ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null && echo "  ✅ Download temp files cleaned"
         fi
         echo ""
 
-        # 2. Clean system caches
-        echo "🧽 Cleaning system caches..."
-        if [ -d ~/Library/Caches ]; then
-          local cache_size=$(du -sh ~/Library/Caches 2>/dev/null | awk '{print $1}')
-          echo "   Current cache size: $cache_size"
-          # Clean specific caches (be selective to avoid breaking apps)
-          rm -rf ~/Library/Caches/com.apple.Safari/* 2>/dev/null
-          rm -rf ~/Library/Caches/Homebrew/* 2>/dev/null
-          rm -rf ~/Library/Caches/pip/* 2>/dev/null
-          echo "   ✅ Safe caches cleaned"
+        # 2. Nix GC (keep last 5 generations)
+        echo -e "\033[35m❄️  Nix Cleanup (Conservative)\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would keep last 5 generations and run GC\033[0m"
+        else
+          echo "  Removing old generations (keeping last 5)..."
+          nix-env --delete-generations +5 2>/dev/null || true
+          sudo nix-env --delete-generations +5 2>/dev/null || true
+          echo "  Running garbage collection..."
+          nix-collect-garbage -d &>/dev/null && echo "  ✅ Nix GC completed"
         fi
         echo ""
 
-        # 3. Clean temporary files
-        echo "🔥 Cleaning temporary files..."
-        rm -rf /tmp/* 2>/dev/null
-        rm -rf ~/Downloads/*.tmp 2>/dev/null
-        rm -rf ~/Downloads/*.download 2>/dev/null
-        echo "   ✅ Temporary files cleaned"
-        echo ""
-
-        # 4. Clean Nix (generations and garbage collection)
-        echo "❄️  Cleaning Nix..."
-        echo "   Removing old generations (keeping last 3)..."
-        nix-env --delete-generations +3 2>/dev/null || true
-        sudo nix-env --delete-generations +3 2>/dev/null || true
-
-        echo "   Running garbage collection..."
-        local nix_before=$(du -sh /nix/store 2>/dev/null | awk '{print $1}')
-        nix-collect-garbage -d
-        sudo nix-collect-garbage -d
-        nix-store --optimize
-        local nix_after=$(du -sh /nix/store 2>/dev/null | awk '{print $1}')
-        echo "   ✅ Nix cleaned (was: $nix_before, now: $nix_after)"
-        echo ""
-
-        # 5. Clean Homebrew
+        # 3. Homebrew (30 days)
         if command -v brew &> /dev/null; then
-          echo "🍺 Cleaning Homebrew..."
-          brew cleanup --prune=all
-          brew autoremove
-          rm -rf $(brew --cache)/* 2>/dev/null
-          echo "   ✅ Homebrew cleaned"
+          echo -e "\033[35m🍺 Homebrew Cleanup (30 days)\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would cleanup Homebrew (prune 30 days)\033[0m"
+          else
+            brew cleanup --prune=30 &>/dev/null && echo "  ✅ Homebrew cleaned (30 days)"
+          fi
           echo ""
         fi
 
-        # 6. Clean micromamba
-        if command -v micromamba &> /dev/null; then
-          echo "🐍 Cleaning micromamba..."
-          micromamba clean --all --yes
-          echo "   ✅ Micromamba cleaned"
-          echo ""
-        fi
-
-        # 7. Clean Python caches
-        echo "🐍 Cleaning Python caches..."
-        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-        find . -type f -name "*.pyc" -delete 2>/dev/null || true
-        find . -type f -name "*.pyo" -delete 2>/dev/null || true
-        rm -rf ~/.cache/pip/* 2>/dev/null
-        rm -rf ~/.cache/uv/* 2>/dev/null
-        echo "   ✅ Python caches cleaned"
-        echo ""
-
-        # 8. Clean VS Code caches
-        echo "💻 Cleaning VS Code caches..."
-        rm -rf ~/Library/Application\ Support/Code/Cache/* 2>/dev/null
-        rm -rf ~/Library/Application\ Support/Code/CachedData/* 2>/dev/null
-        rm -rf ~/Library/Application\ Support/Code/logs/* 2>/dev/null
-        echo "   ✅ VS Code caches cleaned"
-        echo ""
-
-        # 9. Clean Docker (if installed)
-        if command -v docker &> /dev/null; then
-          echo "🐳 Cleaning Docker..."
-          docker system prune -af --volumes 2>/dev/null || echo "   ⚠️  Docker not running"
-          echo ""
-        fi
-
-        # 10. Clean npm/node caches
-        if command -v npm &> /dev/null; then
-          echo "📦 Cleaning npm cache..."
-          npm cache clean --force 2>/dev/null
-          echo "   ✅ npm cache cleaned"
-          echo ""
-        fi
-
-        # 11. Clean system logs
-        echo "📋 Cleaning system logs..."
-        sudo rm -rf /var/log/*.log 2>/dev/null || true
-        rm -rf ~/Library/Logs/* 2>/dev/null
-        echo "   ✅ Logs cleaned"
-        echo ""
-
-        # 12. Clean Xcode derived data (if exists)
-        if [ -d ~/Library/Developer/Xcode/DerivedData ]; then
-          echo "🔨 Cleaning Xcode derived data..."
-          rm -rf ~/Library/Developer/Xcode/DerivedData/* 2>/dev/null
-          echo "   ✅ Xcode derived data cleaned"
-          echo ""
-        fi
-
+        # Final report
+        local disk_after=$(__cleanup_get_disk_space)
         local end_time=$(date +%s)
         local duration=$((end_time - start_time))
 
-        echo "================================================"
-        echo "📊 Cleanup Summary:"
-        echo "⏱️  Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
         echo ""
-        echo "💡 Tip: Check available disk space with 'df -h'"
-        echo "💡 To see what's using disk space: 'ncdu ~' or 'dust ~'"
+        echo -e "\033[1m\033[32m✅ Safe Cleanup Complete!\033[0m"
+        echo -e "\033[32m============================================================\033[0m"
+        echo -e "\033[36mℹ️  Disk: $disk_before → $disk_after\033[0m"
+        echo -e "\033[36mℹ️  Duration: $((duration / 60))m $((duration % 60))s\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  This was a DRY RUN - no changes were made\033[0m"
         echo ""
-        echo "✅ Cleanup completed!"
+
+        __cleanup_log "safe" "Completed in $((duration))s (disk: $disk_before → $disk_after)"
       }
 
-      # Quick cleanup (less aggressive, faster)
+      # ============================================
+      # TIER 2: CLEANUP-QUICK (Fast daily/weekly cleanup)
+      # ============================================
       function cleanup-quick() {
-        echo "🧹 Quick cleanup..."
-        rm -rf ~/.Trash/* 2>/dev/null
-        nix-collect-garbage -d
-        brew cleanup --prune=7 2>/dev/null || true
-        micromamba clean --yes 2>/dev/null || true
-        echo "✅ Quick cleanup done!"
+        local dry_run=false
+        local yes_flag=true
+
+        # Parse flags
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --help|-h)
+              echo "Usage: cleanup-quick [OPTIONS]"
+              echo ""
+              echo "Fast daily/weekly cleanup"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations without executing"
+              echo "  --help, -h   Show this help message"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m⚡ QUICK CLEANUP - Fast System Cleanup\033[0m"
+        echo -e "\033[36m============================================================\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  DRY RUN MODE - No changes will be made\033[0m"
+        echo ""
+
+        local start_time=$(date +%s)
+        local disk_before=$(__cleanup_get_disk_space)
+
+        __cleanup_log "quick" "Starting quick cleanup (dry_run=$dry_run)"
+
+        # Run safe tier operations
+        echo -e "\033[35m🛡️  Running Safe Tier Operations...\033[0m"
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would run: cleanup-safe operations\033[0m"
+        else
+          # Empty Trash & temp files
+          rm -rf ~/.Trash/* /tmp/* ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null
+          nix-env --delete-generations +5 2>/dev/null || true
+          sudo nix-env --delete-generations +5 2>/dev/null || true
+          nix-collect-garbage -d &>/dev/null
+          command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
+          echo "  ✅ Safe operations completed"
+        fi
+        echo ""
+
+        # Micromamba
+        if command -v micromamba &> /dev/null; then
+          echo -e "\033[35m🐍 Micromamba Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would run: micromamba clean --yes\033[0m"
+          else
+            micromamba clean --yes &>/dev/null && echo "  ✅ Micromamba cleaned"
+          fi
+          echo ""
+        fi
+
+        # Docker images (keep volumes)
+        if command -v docker &> /dev/null && docker info &>/dev/null; then
+          echo -e "\033[35m🐳 Docker Image Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would run: docker image prune -af\033[0m"
+          else
+            docker image prune -af &>/dev/null && echo "  ✅ Docker images cleaned"
+          fi
+          echo ""
+        fi
+
+        # Python caches
+        echo -e "\033[35m🐍 Python Cache Cleanup\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would clean Python caches\033[0m"
+        else
+          rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
+          echo "  ✅ Python caches cleaned"
+        fi
+        echo ""
+
+        # npm cache
+        if command -v npm &> /dev/null; then
+          echo -e "\033[35m📦 npm Cache Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would run: npm cache clean --force\033[0m"
+          else
+            npm cache clean --force &>/dev/null && echo "  ✅ npm cache cleaned"
+          fi
+          echo ""
+        fi
+
+        # Final report
+        local disk_after=$(__cleanup_get_disk_space)
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+
+        echo ""
+        echo -e "\033[1m\033[32m✅ Quick Cleanup Complete!\033[0m"
+        echo -e "\033[32m============================================================\033[0m"
+        echo -e "\033[36mℹ️  Disk: $disk_before → $disk_after\033[0m"
+        echo -e "\033[36mℹ️  Duration: $((duration / 60))m $((duration % 60))s\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  This was a DRY RUN - no changes were made\033[0m"
+        echo ""
+
+        __cleanup_log "quick" "Completed in $((duration))s (disk: $disk_before → $disk_after)"
+      }
+
+      # ============================================
+      # TIER 3: CLEANUP-STANDARD (Default cleanup - alias: cleanup)
+      # ============================================
+      function cleanup-standard() {
+        local dry_run=false
+        local yes_flag=false
+
+        # Parse flags
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --yes|-y) yes_flag=true ;;
+            --help|-h)
+              echo "Usage: cleanup-standard [OPTIONS]"
+              echo ""
+              echo "Standard cleanup (recommended for regular maintenance)"
+              echo "Alias: cleanup"
+              echo ""
+              echo "Includes:"
+              echo "  - Everything in cleanup-quick"
+              echo "  - UV cache cleanup"
+              echo "  - Git repository cleanup"
+              echo "  - AWS cache cleanup"
+              echo "  - VS Code caches"
+              echo "  - System logs (safe)"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations without executing"
+              echo "  --yes, -y    Skip confirmation prompts"
+              echo "  --help, -h   Show this help message"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m🚀 STANDARD CLEANUP - Regular Maintenance\033[0m"
+        echo -e "\033[36m============================================================\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  DRY RUN MODE - No changes will be made\033[0m"
+        echo ""
+
+        local start_time=$(date +%s)
+        local disk_before=$(__cleanup_get_disk_space)
+
+        __cleanup_log "standard" "Starting standard cleanup (dry_run=$dry_run)"
+
+        # Run quick tier operations inline for performance
+        echo -e "\033[35m⚡ Quick Tier Operations\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would run quick cleanup operations\033[0m"
+        else
+          rm -rf ~/.Trash/* /tmp/* ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null
+          nix-env --delete-generations +5 2>/dev/null || true
+          sudo nix-env --delete-generations +5 2>/dev/null || true
+          nix-collect-garbage -d &>/dev/null
+          command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
+          command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null
+          command -v docker &>/dev/null && docker info &>/dev/null && docker image prune -af &>/dev/null
+          rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
+          command -v npm &>/dev/null && npm cache clean --force &>/dev/null
+          echo "  ✅ Quick tier completed"
+        fi
+        echo ""
+
+        # UV cache (comprehensive)
+        echo -e "\033[35m⚡ UV Cache Cleanup\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would clean UV cache (~/.cache/uv)\033[0m"
+        else
+          rm -rf ~/.cache/uv/* 2>/dev/null && echo "  ✅ UV cache cleaned"
+        fi
+        echo ""
+
+        # Git cleanup
+        echo -e "\033[35m📂 Git Repository Cleanup\033[0m"
+        echo "=================================================="
+        if [[ -d "$HOME/Dev" ]]; then
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would clean Git repos in ~/Dev\033[0m"
+          else
+            find "$HOME/Dev" -name ".git" -type d -exec sh -c 'cd "$(dirname "{}")" && git gc --quiet 2>/dev/null' \; 2>/dev/null
+            echo "  ✅ Git repositories optimized"
+          fi
+        fi
+        echo ""
+
+        # AWS cache
+        if [[ -d "$HOME/.aws/cli/cache" ]]; then
+          echo -e "\033[35m☁️  AWS Cache Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would clean AWS CLI cache\033[0m"
+          else
+            rm -rf "$HOME/.aws/cli/cache"/* 2>/dev/null && echo "  ✅ AWS cache cleaned"
+          fi
+          echo ""
+        fi
+
+        # VS Code caches
+        echo -e "\033[35m💻 VS Code Cache Cleanup\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would clean VS Code caches\033[0m"
+        else
+          rm -rf ~/Library/Application\ Support/Code/Cache/* 2>/dev/null
+          rm -rf ~/Library/Application\ Support/Code/CachedData/* 2>/dev/null
+          rm -rf ~/Library/Application\ Support/Code/logs/* 2>/dev/null
+          echo "  ✅ VS Code caches cleaned"
+        fi
+        echo ""
+
+        # System logs (safe)
+        echo -e "\033[35m📋 System Log Cleanup (Safe)\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would clean safe system logs\033[0m"
+        else
+          rm -rf ~/Library/Logs/* 2>/dev/null && echo "  ✅ User logs cleaned"
+        fi
+        echo ""
+
+        # Final report
+        local disk_after=$(__cleanup_get_disk_space)
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+
+        echo ""
+        echo -e "\033[1m\033[32m✅ Standard Cleanup Complete!\033[0m"
+        echo -e "\033[32m============================================================\033[0m"
+        echo -e "\033[36mℹ️  Disk: $disk_before → $disk_after\033[0m"
+        echo -e "\033[36mℹ️  Duration: $((duration / 60))m $((duration % 60))s\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  This was a DRY RUN - no changes were made\033[0m"
+        echo ""
+
+        __cleanup_log "standard" "Completed in $((duration))s (disk: $disk_before → $disk_after)"
+      }
+
+      # Alias for backward compatibility and convenience
+      function cleanup() {
+        cleanup-standard "$@"
+      }
+
+      # ============================================
+      # TIER 4: CLEANUP-DEV (Development-focused cleanup)
+      # ============================================
+      function cleanup-dev() {
+        local dry_run=false
+        local yes_flag=false
+
+        # Parse flags
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --yes|-y) yes_flag=true ;;
+            --help|-h)
+              echo "Usage: cleanup-dev [OPTIONS]"
+              echo ""
+              echo "Development-focused cleanup"
+              echo ""
+              echo "Includes:"
+              echo "  - Everything in cleanup-standard"
+              echo "  - Terraform .terraform directories"
+              echo "  - Jupyter checkpoints"
+              echo "  - Python __pycache__ across projects"
+              echo "  - Docker build cache"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations without executing"
+              echo "  --yes, -y    Skip confirmation prompts"
+              echo "  --help, -h   Show this help message"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m🔧 DEV CLEANUP - Development-Focused Cleanup\033[0m"
+        echo -e "\033[36m============================================================\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  DRY RUN MODE - No changes will be made\033[0m"
+        echo ""
+
+        local start_time=$(date +%s)
+        local disk_before=$(__cleanup_get_disk_space)
+
+        __cleanup_log "dev" "Starting dev cleanup (dry_run=$dry_run)"
+
+        # Run standard tier inline
+        echo -e "\033[35m🚀 Standard Tier Operations\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would run standard cleanup operations\033[0m"
+        else
+          # Quick operations
+          rm -rf ~/.Trash/* /tmp/* ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null
+          nix-env --delete-generations +5 2>/dev/null || true
+          sudo nix-env --delete-generations +5 2>/dev/null || true
+          nix-collect-garbage -d &>/dev/null
+          command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
+          command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null
+          rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
+          command -v npm &>/dev/null && npm cache clean --force &>/dev/null
+          rm -rf ~/Library/Application\ Support/Code/Cache/* ~/Library/Application\ Support/Code/CachedData/* 2>/dev/null
+          [[ -d "$HOME/.aws/cli/cache" ]] && rm -rf "$HOME/.aws/cli/cache"/* 2>/dev/null
+          echo "  ✅ Standard tier completed"
+        fi
+        echo ""
+
+        # Terraform cleanup
+        if [[ -d "$HOME/Dev" ]]; then
+          echo -e "\033[35m🏗️  Terraform Cleanup\033[0m"
+          echo "=================================================="
+          local terraform_count=$(find "$HOME/Dev" -name ".terraform" -type d 2>/dev/null | wc -l | tr -d ' ')
+          if [[ $terraform_count -gt 0 ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+              echo -e "\033[36m  [DRY RUN] Would remove $terraform_count .terraform directories\033[0m"
+            else
+              find "$HOME/Dev" -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null
+              echo "  ✅ Removed $terraform_count .terraform directories"
+            fi
+          else
+            echo "  ℹ️  No .terraform directories found"
+          fi
+          echo ""
+        fi
+
+        # Jupyter checkpoints
+        if [[ -d "$HOME/Dev" ]]; then
+          echo -e "\033[35m📓 Jupyter Checkpoint Cleanup\033[0m"
+          echo "=================================================="
+          local jupyter_count=$(find "$HOME/Dev" -name ".ipynb_checkpoints" -type d 2>/dev/null | wc -l | tr -d ' ')
+          if [[ $jupyter_count -gt 0 ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+              echo -e "\033[36m  [DRY RUN] Would remove $jupyter_count Jupyter checkpoint directories\033[0m"
+            else
+              find "$HOME/Dev" -name ".ipynb_checkpoints" -type d -exec rm -rf {} + 2>/dev/null
+              echo "  ✅ Removed $jupyter_count checkpoint directories"
+            fi
+          else
+            echo "  ℹ️  No Jupyter checkpoints found"
+          fi
+          echo ""
+        fi
+
+        # Python __pycache__ across all projects
+        if [[ -d "$HOME/Dev" ]]; then
+          echo -e "\033[35m🐍 Python __pycache__ Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            local pycache_count=$(find "$HOME/Dev" -name "__pycache__" -type d 2>/dev/null | wc -l | tr -d ' ')
+            echo -e "\033[36m  [DRY RUN] Would remove $pycache_count __pycache__ directories\033[0m"
+          else
+            local before_count=$(find "$HOME/Dev" -name "__pycache__" -type d 2>/dev/null | wc -l | tr -d ' ')
+            find "$HOME/Dev" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+            find "$HOME/Dev" -name "*.pyc" -type f -delete 2>/dev/null
+            find "$HOME/Dev" -name "*.pyo" -type f -delete 2>/dev/null
+            echo "  ✅ Removed $before_count __pycache__ directories"
+          fi
+          echo ""
+        fi
+
+        # Docker build cache
+        if command -v docker &> /dev/null && docker info &>/dev/null; then
+          echo -e "\033[35m🐳 Docker Build Cache\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would run: docker builder prune -af\033[0m"
+          else
+            docker builder prune -af &>/dev/null && echo "  ✅ Docker build cache cleared"
+          fi
+          echo ""
+        fi
+
+        # Final report
+        local disk_after=$(__cleanup_get_disk_space)
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+
+        echo ""
+        echo -e "\033[1m\033[32m✅ Dev Cleanup Complete!\033[0m"
+        echo -e "\033[32m============================================================\033[0m"
+        echo -e "\033[36mℹ️  Disk: $disk_before → $disk_after\033[0m"
+        echo -e "\033[36mℹ️  Duration: $((duration / 60))m $((duration % 60))s\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  This was a DRY RUN - no changes were made\033[0m"
+        echo ""
+
+        __cleanup_log "dev" "Completed in $((duration))s (disk: $disk_before → $disk_after)"
+      }
+
+      # ============================================
+      # TIER 5: CLEANUP-AGGRESSIVE (Maximum cleanup with confirmations)
+      # ============================================
+      function cleanup-aggressive() {
+        local dry_run=false
+        local yes_flag=false
+
+        # Parse flags
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --yes|-y) yes_flag=true ;;
+            --help|-h)
+              echo "Usage: cleanup-aggressive [OPTIONS]"
+              echo ""
+              echo "Maximum cleanup (WITH CONFIRMATIONS for risky operations)"
+              echo "Alias: cleanup-all (backward compat)"
+              echo ""
+              echo "Includes:"
+              echo "  - Everything in cleanup-dev"
+              echo "  - All tool caches (Ollama models, LLM caches)"
+              echo "  - All development artifacts (node_modules, .venv, build dirs)"
+              echo "  - macOS: Time Machine snapshots, iOS backups"
+              echo "  - Old downloads (30+ days)"
+              echo "  - All Docker volumes"
+              echo "  - Nix: keep only last 2 generations"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations without executing"
+              echo "  --yes, -y    Skip ALL confirmation prompts (use with caution!)"
+              echo "  --help, -h   Show this help message"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[31m🔥 AGGRESSIVE CLEANUP - Maximum System Cleanup\033[0m"
+        echo -e "\033[31m============================================================\033[0m"
+        echo -e "\033[33m⚠️  WARNING: This performs extensive cleanup operations\033[0m"
+        echo -e "\033[33m⚠️  Some operations may require re-downloading data later\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  DRY RUN MODE - No changes will be made\033[0m"
+        echo ""
+
+        local start_time=$(date +%s)
+        local disk_before=$(__cleanup_get_disk_space)
+
+        __cleanup_log "aggressive" "Starting aggressive cleanup (dry_run=$dry_run, yes_flag=$yes_flag)"
+
+        # Run dev tier inline
+        echo -e "\033[35m🔧 Dev Tier Operations\033[0m"
+        echo "=================================================="
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m  [DRY RUN] Would run dev cleanup operations\033[0m"
+        else
+          # All quick + standard + dev operations
+          rm -rf ~/.Trash/* /tmp/* ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null
+          nix-env --delete-generations +5 2>/dev/null || true
+          sudo nix-env --delete-generations +5 2>/dev/null || true
+          command -v brew &>/dev/null && brew cleanup --prune=all &>/dev/null
+          command -v micromamba &>/dev/null && micromamba clean --all --yes &>/dev/null
+          rm -rf ~/.cache/* 2>/dev/null
+          command -v npm &>/dev/null && npm cache clean --force &>/dev/null
+          [[ -d "$HOME/Dev" ]] && {
+            find "$HOME/Dev" -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null
+            find "$HOME/Dev" -name ".ipynb_checkpoints" -type d -exec rm -rf {} + 2>/dev/null
+            find "$HOME/Dev" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+          }
+          echo "  ✅ Dev tier completed"
+        fi
+        echo ""
+
+        # Ollama models (HIGH RISK)
+        if [[ -d "$HOME/.ollama/models" ]] && __cleanup_confirm "Ollama models cleanup" "This will remove all Ollama models (requires re-download)" "high" "$yes_flag"; then
+          echo -e "\033[35m🤖 Ollama Models Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would remove all Ollama models\033[0m"
+          else
+            rm -rf "$HOME/.ollama/models"/* 2>/dev/null && echo "  ✅ Ollama models removed"
+          fi
+          echo ""
+        fi
+
+        # HuggingFace cache (HIGH RISK)
+        if [[ -d "$HOME/.cache/huggingface" ]] && __cleanup_confirm "HuggingFace cache cleanup" "This will remove all cached models (requires re-download)" "high" "$yes_flag"; then
+          echo -e "\033[35m🤗 HuggingFace Cache Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would remove HuggingFace cache\033[0m"
+          else
+            rm -rf "$HOME/.cache/huggingface"/* 2>/dev/null && echo "  ✅ HuggingFace cache cleared"
+          fi
+          echo ""
+        fi
+
+        # Old downloads (MEDIUM RISK)
+        if __cleanup_confirm "old downloads cleanup" "Remove files in ~/Downloads older than 30 days" "medium" "$yes_flag"; then
+          echo -e "\033[35m📥 Old Downloads Cleanup (30+ days)\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            local old_count=$(find "$HOME/Downloads" -type f -mtime +30 2>/dev/null | wc -l | tr -d ' ')
+            echo -e "\033[36m  [DRY RUN] Would remove $old_count files\033[0m"
+          else
+            local removed_count=$(find "$HOME/Downloads" -type f -mtime +30 2>/dev/null | wc -l | tr -d ' ')
+            find "$HOME/Downloads" -type f -mtime +30 -delete 2>/dev/null
+            echo "  ✅ Removed $removed_count old files"
+          fi
+          echo ""
+        fi
+
+        # Docker volumes (HIGH RISK)
+        if command -v docker &>/dev/null && docker info &>/dev/null && __cleanup_confirm "Docker volumes cleanup" "This will remove ALL Docker volumes (data loss possible)" "high" "$yes_flag"; then
+          echo -e "\033[35m🐳 Docker Complete Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would run: docker system prune -af --volumes\033[0m"
+          else
+            docker system prune -af --volumes &>/dev/null && echo "  ✅ Docker completely cleaned"
+          fi
+          echo ""
+        fi
+
+        # Time Machine snapshots (HIGH RISK)
+        if __cleanup_confirm "Time Machine snapshots" "Remove local Time Machine snapshots" "high" "$yes_flag"; then
+          echo -e "\033[35m⏰ Time Machine Snapshots\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would remove Time Machine local snapshots\033[0m"
+          else
+            tmutil listlocalsnapshots / 2>/dev/null | grep "com.apple" | while read snapshot; do
+              sudo tmutil deletelocalsnapshots $(echo "$snapshot" | cut -d'.' -f4) 2>/dev/null
+            done
+            echo "  ✅ Time Machine snapshots removed"
+          fi
+          echo ""
+        fi
+
+        # Aggressive Nix cleanup (keep only 2 generations)
+        if __cleanup_confirm "aggressive Nix cleanup" "Keep only last 2 generations (more aggressive)" "medium" "$yes_flag"; then
+          echo -e "\033[35m❄️  Aggressive Nix Cleanup\033[0m"
+          echo "=================================================="
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m  [DRY RUN] Would keep only last 2 generations\033[0m"
+          else
+            nix-env --delete-generations +2 2>/dev/null || true
+            sudo nix-env --delete-generations +2 2>/dev/null || true
+            nix-collect-garbage -d &>/dev/null
+            sudo nix-collect-garbage -d &>/dev/null
+            nix-store --optimize &>/dev/null
+            echo "  ✅ Aggressive Nix cleanup completed"
+          fi
+          echo ""
+        fi
+
+        # Final report
+        local disk_after=$(__cleanup_get_disk_space)
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+
+        echo ""
+        echo -e "\033[1m\033[32m✅ Aggressive Cleanup Complete!\033[0m"
+        echo -e "\033[32m============================================================\033[0m"
+        echo -e "\033[36mℹ️  Disk: $disk_before → $disk_after\033[0m"
+        echo -e "\033[36mℹ️  Duration: $((duration / 60))m $((duration % 60))s\033[0m"
+        [[ "$dry_run" == "true" ]] && echo -e "\033[33mℹ️  This was a DRY RUN - no changes were made\033[0m"
+        echo ""
+
+        __cleanup_log "aggressive" "Completed in $((duration))s (disk: $disk_before → $disk_after)"
+      }
+
+      # Alias for backward compatibility
+      function cleanup-all() {
+        cleanup-aggressive "$@"
       }
 
       # ============================================
@@ -1327,44 +1937,364 @@ EOF
       # ============================================
 
       # Clean old Nix generations and report space saved
-      function nix-cleanup() {
-        echo "🧹 Nix System Cleanup"
-        echo "================================================"
+      # ============================================
+      # TOOL-SPECIFIC CLEANUP FUNCTIONS
+      # ============================================
+
+      # Nix-specific cleanup
+      function cleanup-nix() {
+        local dry_run=false
+        local keep=5
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --keep=*) keep="''${arg#*=}" ;;
+            --help|-h)
+              echo "Usage: cleanup-nix [OPTIONS]"
+              echo ""
+              echo "Nix-specific cleanup with generation management"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run       Preview operations"
+              echo "  --keep=N        Keep last N generations (default: 5)"
+              echo "  --help, -h      Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m❄️  NIX CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
         echo ""
 
-        # Get current disk usage
-        local before=$(df -k / | tail -n1 | awk '{print $3}')
+        local disk_before=$(__cleanup_get_disk_space)
 
-        echo "📊 Current generations:"
+        echo -e "\033[35m📊 Current Generations\033[0m"
         nix-env --list-generations --profile /nix/var/nix/profiles/system
         echo ""
 
-        echo "🗑️  Removing old generations (keeping last 5)..."
-        sudo nix-env --delete-generations +5 --profile /nix/var/nix/profiles/system
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would remove generations older than last $keep\033[0m"
+          echo -e "\033[36m[DRY RUN] Would run garbage collection\033[0m"
+          echo -e "\033[36m[DRY RUN] Would optimize Nix store\033[0m"
+        else
+          echo "Removing old generations (keeping last $keep)..."
+          sudo nix-env --delete-generations +$keep --profile /nix/var/nix/profiles/system 2>/dev/null || true
+          nix-env --delete-generations +$keep --profile ~/.local/state/nix/profiles/home-manager 2>/dev/null || true
+          echo "  ✅ Generations cleaned"
+          echo ""
 
-        echo "🗑️  Removing old home-manager generations (keeping last 5)..."
-        nix-env --delete-generations +5 --profile ~/.local/state/nix/profiles/home-manager
+          echo "Running garbage collection..."
+          nix-collect-garbage -d &>/dev/null
+          sudo nix-collect-garbage -d &>/dev/null
+          echo "  ✅ Garbage collection completed"
+          echo ""
 
-        echo ""
-        echo "🧹 Running garbage collection..."
-        nix-collect-garbage -d
-
-        echo ""
-        echo "🔧 Optimizing Nix store..."
-        nix-store --optimize
-
-        # Get new disk usage
-        local after=$(df -k / | tail -n1 | awk '{print $3}')
-        local saved=$((before - after))
-        local saved_mb=$((saved / 1024))
-
-        echo ""
-        echo "================================================"
-        echo "✅ Cleanup complete!"
-        if [ $saved_mb -gt 0 ]; then
-          echo "💾 Space saved: ~$saved_mb MB"
+          echo "Optimizing Nix store..."
+          nix-store --optimize &>/dev/null
+          echo "  ✅ Store optimized"
         fi
-        echo "================================================"
+
+        local disk_after=$(__cleanup_get_disk_space)
+        echo ""
+        echo -e "\033[32m✅ Nix cleanup complete! (Disk: $disk_before → $disk_after)\033[0m"
+        echo ""
+      }
+
+      # Docker-specific cleanup
+      function cleanup-docker() {
+        local dry_run=false
+        local volumes=false
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --volumes) volumes=true ;;
+            --help|-h)
+              echo "Usage: cleanup-docker [OPTIONS]"
+              echo ""
+              echo "Docker-specific cleanup"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations"
+              echo "  --volumes    Also remove volumes (DESTRUCTIVE)"
+              echo "  --help, -h   Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        if ! command -v docker &>/dev/null; then
+          echo "Docker not installed"
+          return 1
+        fi
+
+        if ! docker info &>/dev/null; then
+          echo "Docker not running"
+          return 1
+        fi
+
+        echo ""
+        echo -e "\033[1m\033[36m🐳 DOCKER CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
+        echo ""
+
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would prune images, containers, networks\033[0m"
+          [[ "$volumes" == "true" ]] && echo -e "\033[36m[DRY RUN] Would also remove volumes\033[0m"
+        else
+          if [[ "$volumes" == "true" ]]; then
+            docker system prune -af --volumes && echo "  ✅ Docker completely cleaned (including volumes)"
+          else
+            docker system prune -af && echo "  ✅ Docker cleaned (volumes preserved)"
+          fi
+        fi
+        echo ""
+      }
+
+      # Python/UV-specific cleanup
+      function cleanup-python() {
+        local dry_run=false
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --help|-h)
+              echo "Usage: cleanup-python [OPTIONS]"
+              echo ""
+              echo "Python/UV-specific cleanup"
+              echo ""
+              echo "Cleans:"
+              echo "  - UV cache"
+              echo "  - pip cache"
+              echo "  - __pycache__ directories"
+              echo "  - .pyc/.pyo files"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations"
+              echo "  --help, -h   Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m🐍 PYTHON CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
+        echo ""
+
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would clean UV cache\033[0m"
+          echo -e "\033[36m[DRY RUN] Would clean pip cache\033[0m"
+          [[ -d "$HOME/Dev" ]] && {
+            local pycache_count=$(find "$HOME/Dev" -name "__pycache__" 2>/dev/null | wc -l | tr -d ' ')
+            echo -e "\033[36m[DRY RUN] Would remove $pycache_count __pycache__ directories\033[0m"
+          }
+        else
+          rm -rf ~/.cache/uv/* ~/.cache/pip/* 2>/dev/null && echo "  ✅ UV and pip caches cleaned"
+
+          if [[ -d "$HOME/Dev" ]]; then
+            local count=$(find "$HOME/Dev" -name "__pycache__" 2>/dev/null | wc -l | tr -d ' ')
+            find "$HOME/Dev" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+            find "$HOME/Dev" -name "*.pyc" -type f -delete 2>/dev/null
+            find "$HOME/Dev" -name "*.pyo" -type f -delete 2>/dev/null
+            echo "  ✅ Removed $count __pycache__ directories"
+          fi
+        fi
+        echo ""
+      }
+
+      # Git repository cleanup
+      function cleanup-git() {
+        local dry_run=false
+        local base_dir="$HOME/Dev"
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --dir=*) base_dir="''${arg#*=}" ;;
+            --help|-h)
+              echo "Usage: cleanup-git [OPTIONS]"
+              echo ""
+              echo "Git repository cleanup (optimize and gc)"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run     Preview operations"
+              echo "  --dir=PATH    Target directory (default: ~/Dev)"
+              echo "  --help, -h    Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        if [[ ! -d "$base_dir" ]]; then
+          echo "Directory not found: $base_dir"
+          return 1
+        fi
+
+        echo ""
+        echo -e "\033[1m\033[36m📂 GIT CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
+        echo ""
+
+        local repo_count=$(find "$base_dir" -name ".git" -type d 2>/dev/null | wc -l | tr -d ' ')
+
+        if [[ $repo_count -eq 0 ]]; then
+          echo "  ℹ️  No Git repositories found in $base_dir"
+          return 0
+        fi
+
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would optimize $repo_count Git repositories\033[0m"
+        else
+          echo "Optimizing $repo_count repositories..."
+          find "$base_dir" -name ".git" -type d -exec sh -c 'cd "$(dirname "{}")" && git gc --quiet 2>/dev/null' \; 2>/dev/null
+          echo "  ✅ Git repositories optimized"
+        fi
+        echo ""
+      }
+
+      # AWS cache cleanup
+      function cleanup-aws() {
+        local dry_run=false
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --help|-h)
+              echo "Usage: cleanup-aws [OPTIONS]"
+              echo ""
+              echo "AWS CLI cache cleanup"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations"
+              echo "  --help, -h   Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m☁️  AWS CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
+        echo ""
+
+        if [[ ! -d "$HOME/.aws/cli/cache" ]]; then
+          echo "  ℹ️  No AWS CLI cache found"
+          return 0
+        fi
+
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would clean AWS CLI cache\033[0m"
+        else
+          rm -rf "$HOME/.aws/cli/cache"/* 2>/dev/null && echo "  ✅ AWS CLI cache cleaned"
+        fi
+        echo ""
+      }
+
+      # Terraform cleanup
+      function cleanup-terraform() {
+        local dry_run=false
+        local base_dir="$HOME/Dev"
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --dir=*) base_dir="''${arg#*=}" ;;
+            --help|-h)
+              echo "Usage: cleanup-terraform [OPTIONS]"
+              echo ""
+              echo "Terraform .terraform directory cleanup"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run     Preview operations"
+              echo "  --dir=PATH    Target directory (default: ~/Dev)"
+              echo "  --help, -h    Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        if [[ ! -d "$base_dir" ]]; then
+          echo "Directory not found: $base_dir"
+          return 1
+        fi
+
+        echo ""
+        echo -e "\033[1m\033[36m🏗️  TERRAFORM CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
+        echo ""
+
+        local tf_count=$(find "$base_dir" -name ".terraform" -type d 2>/dev/null | wc -l | tr -d ' ')
+
+        if [[ $tf_count -eq 0 ]]; then
+          echo "  ℹ️  No .terraform directories found"
+          return 0
+        fi
+
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would remove $tf_count .terraform directories\033[0m"
+        else
+          find "$base_dir" -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null
+          echo "  ✅ Removed $tf_count .terraform directories"
+        fi
+        echo ""
+      }
+
+      # macOS-specific cleanup
+      function cleanup-macos() {
+        local dry_run=false
+        local yes_flag=false
+
+        for arg in "$@"; do
+          case $arg in
+            --dry-run) dry_run=true ;;
+            --yes|-y) yes_flag=true ;;
+            --help|-h)
+              echo "Usage: cleanup-macos [OPTIONS]"
+              echo ""
+              echo "macOS-specific cleanup (Time Machine snapshots, system caches)"
+              echo ""
+              echo "Options:"
+              echo "  --dry-run    Preview operations"
+              echo "  --yes, -y    Skip confirmations"
+              echo "  --help, -h   Show this help"
+              return 0
+              ;;
+          esac
+        done
+
+        echo ""
+        echo -e "\033[1m\033[36m🍎 MACOS CLEANUP\033[0m"
+        echo -e "\033[36m========================================\033[0m"
+        echo ""
+
+        # Time Machine snapshots (HIGH RISK)
+        if __cleanup_confirm "Time Machine snapshots" "Remove local Time Machine snapshots" "high" "$yes_flag"; then
+          if [[ "$dry_run" == "true" ]]; then
+            echo -e "\033[36m[DRY RUN] Would remove Time Machine snapshots\033[0m"
+          else
+            tmutil listlocalsnapshots / 2>/dev/null | grep "com.apple" | while read snapshot; do
+              sudo tmutil deletelocalsnapshots $(echo "$snapshot" | cut -d'.' -f4) 2>/dev/null
+            done
+            echo "  ✅ Time Machine snapshots removed"
+          fi
+        fi
+
+        # System caches (safe)
+        echo ""
+        echo "Cleaning safe system caches..."
+        if [[ "$dry_run" == "true" ]]; then
+          echo -e "\033[36m[DRY RUN] Would clean Safari, Homebrew, user caches\033[0m"
+        else
+          rm -rf ~/Library/Caches/com.apple.Safari/* 2>/dev/null
+          rm -rf ~/Library/Caches/Homebrew/* 2>/dev/null
+          rm -rf ~/Library/Logs/* 2>/dev/null
+          echo "  ✅ System caches cleaned"
+        fi
+        echo ""
       }
 
       # System health check

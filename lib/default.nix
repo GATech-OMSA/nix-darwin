@@ -309,4 +309,12 @@ rec {
   # Usage: mkPackageGroup ["git" "vim" "curl"] pkgs
   mkPackageGroup = names: pkgs:
     map (name: pkgs.${name}) names;
+
+  # ============================================
+  # CLEANUP HELPERS
+  # ============================================
+
+  # Import cleanup helper library
+  # Provides: mkCleanupFunction, mkCleanupGroup, mkDiskSpaceReport, mkCleanupLog, etc.
+  cleanup = import ./cleanup.nix { inherit lib; pkgs = inputs.nixpkgs.legacyPackages.${builtins.currentSystem or "x86_64-darwin"}; };
 }

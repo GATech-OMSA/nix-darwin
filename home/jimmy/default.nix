@@ -59,7 +59,7 @@
     ./programs/ssh.nix
     ./programs/aws.nix
     ./development/python.nix
-    # ./development/node.nix  # Commented out - not needed for Python/AI/ML focus
+    ./development/node.nix
     ./development/ai-ml.nix
   ];
 

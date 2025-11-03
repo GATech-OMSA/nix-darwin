@@ -4,8 +4,7 @@
   # Node.js development configuration
 
   home.packages = with pkgs; [
-    nodejs_22
-    nodePackages.npm
+    nodejs_22  # Includes npm by default
     nodePackages.pnpm
     nodePackages.yarn
   ];

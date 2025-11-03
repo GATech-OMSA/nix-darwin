@@ -176,9 +176,26 @@ duf                              # Disk usage by filesystem
 btop                             # Better top
 kill-port 3000                   # Kill process on port
 
-# Cleanup
-nix-cleanup                      # Clean Nix store
-brew cleanup                     # Clean Homebrew cache
+# Cleanup (Tier-Based System)
+cleanup-safe                     # Safest cleanup (no confirmations)
+cleanup-quick                    # Quick daily cleanup (alias: clean)
+cleanup                          # Standard cleanup (default)
+cleanup-dev                      # Development-focused cleanup
+cleanup-aggressive               # Maximum cleanup (alias: cleanup-all)
+
+# Tool-Specific Cleanup
+cleanup-nix [--keep=5]           # Nix-specific cleanup
+cleanup-docker [--volumes]       # Docker cleanup
+cleanup-python                   # Python/UV cache cleanup
+cleanup-git [--dir=~/Dev]        # Git repository optimization
+cleanup-aws                      # AWS cache cleanup
+cleanup-terraform                # Terraform .terraform cleanup
+cleanup-macos                    # macOS-specific cleanup
+
+# Common Flags
+--dry-run                        # Preview without executing
+--yes / -y                       # Skip confirmations
+--help / -h                      # Show help
 ```
 
 ---

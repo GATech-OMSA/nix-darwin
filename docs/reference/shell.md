@@ -358,7 +358,7 @@ Miscellaneous useful aliases:
 | `cp`      | `cp -i`                                        | Copy with confirmation      |
 | `mv`      | `mv -i`                                        | Move with confirmation      |
 | `rm`      | `rm -i`                                        | Remove with confirmation    |
-| `cleanup` | `cleanup-all`                                  | Full system cleanup         |
+| `cleanup` | `cleanup-standard`                             | Standard cleanup (default)  |
 | `clean`   | `cleanup-quick`                                | Quick cleanup               |
 
 ---
@@ -484,29 +484,139 @@ update-all          # Everything: All of the above + macOS check
 
 ### Cleanup Functions
 
-**Quick Cleanup:**
+**Tier-Based Cleanup System** with 5 levels + 7 tool-specific functions:
 
+#### Cleanup Tiers
+
+**1. Safe (Conservative, No Confirmations):**
 ```bash
-cleanup-quick
-# Cleans:
-# - Empty trash
-# - Nix garbage collection
-# - Homebrew cleanup
-# - Micromamba cache
+cleanup-safe [--dry-run]
+# Safest cleanup - no confirmations needed
+# - Empty trash & temp files
+# - Nix GC (keep last 5 generations)
+# - Homebrew cleanup (30 days)
 ```
 
-**Comprehensive Cleanup:**
+**2. Quick (Daily/Weekly):**
+```bash
+cleanup-quick [--dry-run]
+# or use alias: clean
+# Fast cleanup for regular use
+# - Everything in safe
+# - Micromamba clean
+# - Docker images (keep volumes)
+# - Python caches (pip, UV)
+# - npm cache
+```
+
+**3. Standard (Default):**
+```bash
+cleanup [--dry-run] [--yes]
+# or: cleanup-standard
+# Recommended for regular maintenance
+# - Everything in quick
+# - UV cache cleanup
+# - Git repository cleanup
+# - AWS cache cleanup
+# - VS Code caches
+# - System logs (safe)
+```
+
+**4. Dev (Development-Focused):**
+```bash
+cleanup-dev [--dry-run] [--yes]
+# For active developers
+# - Everything in standard
+# - Terraform .terraform directories
+# - Jupyter checkpoints
+# - Python __pycache__ across projects
+# - Docker build cache
+```
+
+**5. Aggressive (Maximum Cleanup):**
+```bash
+cleanup-aggressive [--dry-run] [--yes]
+# or use backward-compatible alias: cleanup-all
+# Maximum cleanup WITH CONFIRMATIONS
+# - Everything in dev
+# - All tool caches (Ollama models, HuggingFace)
+# - All development artifacts
+# - macOS: Time Machine snapshots
+# - Old downloads (30+ days)
+# - All Docker volumes
+# - Nix: keep only last 2 generations
+```
+
+#### Tool-Specific Cleanup
+
+**Nix:**
+```bash
+cleanup-nix [--dry-run] [--keep=N]
+# Nix-specific with generation management
+# Default: keep last 5 generations
+```
+
+**Docker:**
+```bash
+cleanup-docker [--dry-run] [--volumes]
+# Docker-specific cleanup
+# --volumes: Also remove volumes (DESTRUCTIVE)
+```
+
+**Python/UV:**
+```bash
+cleanup-python [--dry-run]
+# Clean UV cache, pip cache, __pycache__
+```
+
+**Git:**
+```bash
+cleanup-git [--dry-run] [--dir=PATH]
+# Optimize Git repositories in directory
+# Default: ~/Dev
+```
+
+**AWS:**
+```bash
+cleanup-aws [--dry-run]
+# Clean AWS CLI cache
+```
+
+**Terraform:**
+```bash
+cleanup-terraform [--dry-run] [--dir=PATH]
+# Remove .terraform directories
+# Default: ~/Dev
+```
+
+**macOS:**
+```bash
+cleanup-macos [--dry-run] [--yes]
+# macOS-specific: Time Machine snapshots, system caches
+```
+
+#### Common Flags
+
+- `--dry-run` - Preview operations without executing
+- `--yes` or `-y` - Skip all confirmation prompts
+- `--help` or `-h` - Show help message
+
+#### Cleanup History
+
+All cleanup operations are logged to `~/.cleanup-history`:
 
 ```bash
-cleanup-all
-# Cleans everything:
-# - All of quick cleanup
-# - Docker (containers, images, volumes)
-# - Python caches (__pycache__, .pytest_cache, .mypy_cache)
-# - Application caches
-# - System logs
-# - Temporary files
+cat ~/.cleanup-history
+# [2025-11-03 14:32:15] [safe] Starting safe cleanup (dry_run=false)
+# [2025-11-03 14:32:31] [safe] Completed in 16s (disk: 125GB → 125GB)
 ```
+
+#### Recommended Usage
+
+- **Daily:** `cleanup-quick` or `clean`
+- **Weekly:** `cleanup` (standard)
+- **Monthly:** `cleanup-dev` (if you develop)
+- **Quarterly:** `cleanup-aggressive --dry-run` (review first), then run without `--dry-run`
 
 ### User Data Functions
 
