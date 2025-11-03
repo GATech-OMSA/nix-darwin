@@ -38,19 +38,19 @@
         mode = "0600";
       };
 
-      # SSH private key (optional - only if managing SSH keys with Nix)
-      # ssh_private_key = {
-      #   path = "/Users/${username}/.ssh/id_ed25519";
-      #   owner = username;
-      #   mode = "0600";
-      # };
+      # SSH private key (Nix-managed for automated deployment)
+      ssh_private_key = {
+        path = "/Users/${username}/.ssh/id_ed25519";
+        owner = username;
+        mode = "0600";
+      };
 
-      # SSH public key (optional)
-      # ssh_public_key = {
-      #   path = "/Users/${username}/.ssh/id_ed25519.pub";
-      #   owner = username;
-      #   mode = "0644";
-      # };
+      # SSH public key
+      ssh_public_key = {
+        path = "/Users/${username}/.ssh/id_ed25519.pub";
+        owner = username;
+        mode = "0644";
+      };
 
       # AWS credentials (optional)
       # aws_credentials = {
