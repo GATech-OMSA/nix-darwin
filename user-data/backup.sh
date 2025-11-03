@@ -48,6 +48,13 @@ if [ -d ~/.cursor ]; then
   echo "  ✅ Cursor config"
 fi
 
+# Docker configs (user preferences, NOT daemon settings)
+if [ -f ~/.docker/config.json ]; then
+  mkdir -p "$BACKUP_DIR/app-configs/docker"
+  cp ~/.docker/config.json "$BACKUP_DIR/app-configs/docker/"
+  echo "  ✅ Docker config"
+fi
+
 echo ""
 
 # User Content

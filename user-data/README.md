@@ -16,6 +16,7 @@ This directory contains **non-secret user data** that cannot be managed declarat
 - **Gemini** - `~/.gemini/settings.json`
 - **iTerm2** - Preferences plist
 - **Cursor** - `~/.cursor/argv.json`, `~/.cursor/cli-config.json`
+- **Docker** - `~/.docker/config.json` (user preferences, NOT daemon settings)
 
 ### User Content
 - **VS Code** - settings.json, argv.json, snippets, spell dictionary
@@ -55,7 +56,9 @@ user-data/
 │   ├── claude.json
 │   ├── continue/
 │   ├── gemini/
-│   └── iterm2/
+│   ├── iterm2/
+│   ├── cursor/
+│   └── docker/
 ├── user-content/
 │   ├── vscode/
 │   │   ├── settings.json

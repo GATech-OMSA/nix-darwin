@@ -52,14 +52,27 @@
         mode = "0644";
       };
 
-      # AWS credentials (optional)
-      # aws_credentials = {
-      #   path = "/Users/${username}/.aws/credentials";
-      #   owner = username;
-      #   mode = "0600";
-      # };
+      # AWS credentials (encrypted in secrets.yaml)
+      aws_credentials = {
+        path = "/Users/${username}/.aws/credentials";
+        owner = username;
+        mode = "0600";
+      };
 
-      # Docker config (optional)
+      # Ollama SSH keys (encrypted in secrets.yaml)
+      ollama_ssh_private_key = {
+        path = "/Users/${username}/.ollama/id_ed25519";
+        owner = username;
+        mode = "0600";
+      };
+
+      ollama_ssh_public_key = {
+        path = "/Users/${username}/.ollama/id_ed25519.pub";
+        owner = username;
+        mode = "0644";
+      };
+
+      # Docker config (optional - uncomment if needed)
       # docker_config = {
       #   path = "/Users/${username}/.docker/config.json";
       #   owner = username;

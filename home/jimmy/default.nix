@@ -126,6 +126,7 @@ EOF
     ./programs/direnv.nix
     ./programs/ssh.nix
     ./programs/aws.nix
+    ./programs/node.nix
     ./development/python.nix
     ./development/node.nix
     ./development/ai-ml.nix

@@ -64,7 +64,11 @@ Planning
 
 # Claude
 .claude/
+claudedocs/
 CLAUDE.md
 
 # Cursor
 .cursor/
+
+# MCP
+.serena/

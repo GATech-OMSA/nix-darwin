@@ -54,6 +54,13 @@ if [ -d "$BACKUP_DIR/app-configs" ]; then
     echo "  ✅ Cursor config"
   fi
 
+  # Docker configs
+  if [ -f "$BACKUP_DIR/app-configs/docker/config.json" ]; then
+    mkdir -p ~/.docker
+    cp "$BACKUP_DIR/app-configs/docker/config.json" ~/.docker/
+    echo "  ✅ Docker config"
+  fi
+
   echo ""
 fi
 
