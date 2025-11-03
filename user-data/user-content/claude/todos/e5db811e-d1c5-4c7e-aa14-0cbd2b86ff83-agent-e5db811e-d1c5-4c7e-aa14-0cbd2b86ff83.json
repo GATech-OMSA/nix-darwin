@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Review current backup.sh script",
+    "status": "completed",
+    "activeForm": "Reviewing backup.sh script"
+  },
+  {
+    "content": "Review current restore.sh script",
+    "status": "completed",
+    "activeForm": "Reviewing restore.sh script"
+  },
+  {
+    "content": "Scan /Users/jimmy for config files/directories",
+    "status": "completed",
+    "activeForm": "Scanning for config files"
+  },
+  {
+    "content": "Add spell-dictionary.txt to backup",
+    "status": "completed",
+    "activeForm": "Adding spell-dictionary.txt"
+  },
+  {
+    "content": "Add other missing configs to backup",
+    "status": "completed",
+    "activeForm": "Adding missing configs"
+  },
+  {
+    "content": "Update restore script",
+    "status": "completed",
+    "activeForm": "Updating restore script"
+  },
+  {
+    "content": "Test backup functionality",
+    "status": "in_progress",
+    "activeForm": "Testing backup"
+  }
+]

@@ -1,0 +1,67 @@
+# Nix build results
+result
+result-*
+
+# Secrets (keep encrypted versions, ignore unencrypted)
+secrets/secrets.yaml.dec
+secrets/*.dec
+*.key
+*.age
+
+# Keep encrypted secrets (these are safe to commit)
+!secrets/secrets.yaml
+!secrets/.sops.yaml
+
+# Home Manager backup files
+*.hm-backup
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+*.log
+
+# Obsidian
+.obsidian
+
+# Planning notes
+Planning
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Cursor
+.cursor/

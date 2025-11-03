@@ -1,0 +1,15 @@
+# Ignore large/personal data (not valuable for version control)
+
+# Claude conversation history (22M+ - too large)
+user-content/claude/projects/
+
+# Personal navigation history (rebuilds naturally)
+zoxide_database
+
+# SSH known hosts (machine-specific)
+ssh_known_hosts
+
+# macOS files
+.DS_Store
+
+# Everything else (configs, snippets, etc.) is committed to git

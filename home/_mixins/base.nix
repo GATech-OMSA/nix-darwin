@@ -1,0 +1,59 @@
+{ config, pkgs, lib, ... }:
+
+{
+  # Base configuration for all machines
+  # Essential tools and settings that every machine should have
+
+  home.packages = with pkgs; [
+    # Essential CLI tools
+    wget
+    curl
+    tree
+    htop
+  ];
+
+  # Zoxide - smarter cd command
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  # fzf - fuzzy finder
+  programs.fzf = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  # bat - better cat
+  programs.bat = {
+    enable = true;
+    config = {
+      theme = "TwoDark";
+      pager = "less -FR";
+    };
+  };
+
+  # direnv - automatic environment switching
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true;
+    nix-direnv.enable = true;
+  };
+
+  # eza - modern ls replacement
+  programs.eza = {
+    enable = true;
+    enableZshIntegration = true;
+    icons = "auto";
+    git = true;
+  };
+
+  # Starship prompt - Custom Catppuccin Powerline with AWS
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  # Use custom TOML file (preserves Unicode powerline characters)
+  home.file.".config/starship.toml".source = ./starship.toml;
+}
