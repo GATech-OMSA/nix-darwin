@@ -286,6 +286,56 @@
       [ -f ~/.zsh_secrets ] && source ~/.zsh_secrets
 
       # ============================================
+      # LOAD CREDENTIALS (Environment Variables)
+      # ============================================
+      # Credentials are loaded from encrypted file for database connections
+      # and other services requiring rotating passwords
+      if [ -f "$HOME/.secrets/credentials.env.enc" ]; then
+        # Decrypt credentials file (SOPS automatically decrypts)
+        if command -v sops &> /dev/null; then
+          # Decrypt to temporary file
+          SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops --decrypt "$HOME/.secrets/credentials.env.enc" > "$HOME/.secrets/credentials.env" 2>/dev/null
+
+          if [ -f "$HOME/.secrets/credentials.env" ]; then
+            # Set permissions
+            chmod 600 "$HOME/.secrets/credentials.env"
+
+            # Load variables
+            set -a  # Auto-export all variables
+            source "$HOME/.secrets/credentials.env"
+            set +a
+
+            # Count loaded variables
+            local cred_count=$(grep -c '^export' "$HOME/.secrets/credentials.env" 2>/dev/null || echo "0")
+            if [ "$cred_count" -gt 0 ]; then
+              echo "🔐 Loaded $cred_count credentials"
+            fi
+
+            # Clean up decrypted file for security
+            rm "$HOME/.secrets/credentials.env" 2>/dev/null
+          fi
+        fi
+      elif [ -f "$HOME/.secrets/credentials.env" ]; then
+        # If unencrypted file exists (shouldn't happen in prod), warn and load
+        echo "⚠️  Warning: Unencrypted credentials file found"
+        set -a
+        source "$HOME/.secrets/credentials.env"
+        set +a
+      fi
+
+      # ============================================
+      # AWS PROFILE AUTO-RESTORE
+      # ============================================
+      # Auto-restore last used AWS profile for convenience
+      if [ -f ~/.aws/.last_profile ]; then
+        export AWS_PROFILE="$(cat ~/.aws/.last_profile)"
+        if [ -n "$AWS_PROFILE" ]; then
+          echo "🔄 Restored AWS Profile: $AWS_PROFILE"
+          echo "💡 Run 'awswho' for details or 'awsuse' to switch"
+        fi
+      fi
+
+      # ============================================
       # LOAD CUSTOM OH-MY-ZSH PLUGINS
       # ============================================
       # These plugins are installed manually in ~/.oh-my-zsh/custom/plugins
@@ -2727,7 +2777,7 @@ EOF
         cd - > /dev/null
       }
 
-      # Edit encrypted secrets with sops
+      # Edit encrypted secrets with sops (system-level secrets)
       function edit-secrets() {
         local hostname=$(hostname -s)
         local secrets_file="$HOME/nix-darwin/hosts/$hostname/secrets.yaml"
@@ -2754,6 +2804,136 @@ EOF
         echo "🔐 Opening encrypted secrets with sops..."
         echo "File: $secrets_file"
         SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops "$secrets_file"
+      }
+
+      # Edit encrypted credentials (database passwords, rotating credentials)
+      function edit-credentials() {
+        local credentials_dir="$HOME/.secrets"
+        local credentials_file="$credentials_dir/credentials.env"
+        local encrypted_file="$credentials_dir/credentials.env.enc"
+
+        # Create directory if it doesn't exist
+        if [ ! -d "$credentials_dir" ]; then
+          echo "📁 Creating credentials directory: $credentials_dir"
+          mkdir -p "$credentials_dir"
+          chmod 700 "$credentials_dir"
+        fi
+
+        # Check if sops is available
+        if ! command -v sops &> /dev/null; then
+          echo "❌ Error: sops not found"
+          echo "Install with: nix-env -iA nixpkgs.sops"
+          return 1
+        fi
+
+        # Check if age key exists
+        if [ ! -f ~/.config/sops/age/keys.txt ]; then
+          echo "❌ Error: Age key not found"
+          echo "Generate with: age-keygen -o ~/.config/sops/age/keys.txt"
+          return 1
+        fi
+
+        # Create template if encrypted file doesn't exist
+        if [ ! -f "$encrypted_file" ]; then
+          echo "📝 Creating credentials template..."
+          cat > "$credentials_file" << 'TEMPLATE'
+# Enterprise Credential Management
+# This file contains rotating credentials for databases and services
+#
+# Variable Naming Pattern: <PROJECT>_<ENV>_<TYPE>
+# Example: TI_PROD_USERNAME, TI_PROD_PASSWORD, TI_PROD_HOST
+#
+# After editing:
+#   1. Save and exit
+#   2. Run: exec zsh (to reload credentials)
+#   3. Test connection: dbconnect-<instance> <env>
+#
+# WARNING: This file will be encrypted with SOPS on save
+
+# ==================================================
+# LAN CREDENTIALS (Reusable)
+# ==================================================
+export LAN_USERNAME="your-lan-id"
+export LAN_PASSWORD="your-lan-password"
+
+# ==================================================
+# TRIRIGA (TI) - Oracle Database
+# ==================================================
+# Development
+export TI_DEV_USERNAME="ti_dev"
+export TI_DEV_PASSWORD="dev-password"
+export TI_DEV_HOST="dev-oracle.company.com"
+export TI_DEV_PORT="1521"
+export TI_DEV_SERVICE="TIDEV"
+
+# QA
+export TI_QA_USERNAME="ti_qa"
+export TI_QA_PASSWORD="qa-password"
+export TI_QA_HOST="qa-oracle.company.com"
+export TI_QA_PORT="1521"
+export TI_QA_SERVICE="TIQA"
+
+# Production
+export TI_PROD_USERNAME="ti_prod"
+export TI_PROD_PASSWORD="prod-password"
+export TI_PROD_HOST="prod-oracle.company.com"
+export TI_PROD_PORT="1521"
+export TI_PROD_SERVICE="TIPROD"
+
+# ==================================================
+# HR DATABASE - SQL Server
+# ==================================================
+export HRDB_PROD_USERNAME="hr_app"
+export HRDB_PROD_PASSWORD="hrdb-prod-password"
+export HRDB_PROD_HOST="hrdb.company.com"
+export HRDB_PROD_PORT="1433"
+export HRDB_PROD_DATABASE="HRPROD"
+
+# ==================================================
+# PAYROLL - PostgreSQL (Uses LAN Credentials)
+# ==================================================
+export PAYROLL_PROD_USERNAME="$LAN_USERNAME"
+export PAYROLL_PROD_PASSWORD="$LAN_PASSWORD"
+export PAYROLL_PROD_HOST="payroll.company.com"
+export PAYROLL_PROD_PORT="5432"
+export PAYROLL_PROD_DATABASE="payroll"
+
+# ==================================================
+# ADD YOUR PROJECTS BELOW
+# ==================================================
+# Copy and modify templates above for each new database instance
+TEMPLATE
+
+          echo "✅ Template created at: $credentials_file"
+          echo ""
+          echo "🔐 Encrypting template..."
+          SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops --encrypt "$credentials_file" > "$encrypted_file"
+          rm "$credentials_file"
+          echo "✅ Encrypted file created: $encrypted_file"
+          echo ""
+        fi
+
+        # Decrypt, edit, and re-encrypt
+        echo "🔐 Opening credentials with sops..."
+        echo "File: $encrypted_file"
+        echo ""
+        echo "💡 After editing:"
+        echo "  1. Save and exit"
+        echo "  2. Run: exec zsh (reload credentials)"
+        echo "  3. Test: dbconnect-<instance> <env>"
+        echo ""
+
+        SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops "$encrypted_file"
+
+        # Ensure decrypted file is cleaned up
+        if [ -f "$credentials_file" ]; then
+          echo "⚠️  Cleaning up decrypted file..."
+          rm "$credentials_file"
+        fi
+
+        # Update shell to use new credentials
+        echo ""
+        echo "💡 To use updated credentials, run: exec zsh"
       }
 
       # Check secrets configuration status

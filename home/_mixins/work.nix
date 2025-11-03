@@ -18,8 +18,12 @@
   # Machine detection for shell
   home.sessionVariables = {
     MACHINE_MODE = "work";
-    # AWS_PROFILE - Set dynamically using awsuse or awslogin commands
-    # Example: awsuse project1-dev
+    # AWS_PROFILE - Auto-restored from ~/.aws/.last_profile on shell start
+    # Managed by: awsuse <project> <env> [role]
+    # Examples:
+    #   awsuse tririga-integrations dev
+    #   awsuse ti sbx developer
+    #   awslogin hr qa
 
     # ODBC Configuration
     ODBCSYSINI = "/usr/local/etc";
@@ -36,15 +40,7 @@
     wfhub = "cd ~/Dev/workforce-hub";
     ap = "cd ~/Dev/webMethods/api";
     deploys = "cd ~/Dev/production-deploys";
-
-    # Quick access to last-used profile
-    awslast = "export AWS_PROFILE=$(cat ~/.aws/.last_profile 2>/dev/null || echo 'default') && echo '🔄 Restored AWS profile:' $AWS_PROFILE";
-  } // (myLib.aws.mkAwsProfileAliases {
-    # AWS SSO - Quick profile switching (generated)
-    # Pattern: tririga-integrations-{env}
-    project = "tririga-integrations";
-    environments = [ "dev" "sbx" "qa" "prod" ];
-  });
+  };
 
   # Work-specific shell functions
   programs.zsh.initExtra = ''
@@ -61,59 +57,160 @@
     }
 
     # ==================================================
-    # DATABASE CONNECTION HELPERS (Generated)
+    # AWS UNIVERSAL COMMAND SYSTEM
     # ==================================================
-    # Pattern: ~/.db/{database_type}/{environment}
-    # Usage: dbconnect-oracle prod|dev|qa|test
-    # Available: dbconnect-{oracle|mssql|postgres|oracle-ps|ods|dw}
-    # Includes: File permission validation (600)
+    # Pattern: awsuse <project> <env> [role]
+    # Examples:
+    #   awsuse tririga-integrations dev        → ti-dev-support
+    #   awsuse ti sbx developer                → ti-sbx-developer
+    #   awslogin hr qa                         → hr-qa-support + SSO login
+    #
+    # Commands: awsuse, awslogin, awswho, awslist
+    # Profile auto-restores on shell start from ~/.aws/.last_profile
 
-    ${myLib.database.mkDatabaseConnectors [
+    ${myLib.aws.mkAwsUniversalCommand {
+      projects = [
+        {
+          name = "tririga-integrations";
+          short = "ti";
+          environments = [ "dev" "sbx" "qa" "prod" ];
+          roles = [ "support" "developer" "data-engineer" ];
+        }
+        {
+          name = "hr-system";
+          short = "hr";
+          environments = [ "qa" "prod" ];
+          roles = [ "support" "data-engineer" ];
+        }
+        {
+          name = "workforce-hub";
+          short = "wfh";
+          environments = [ "dev" "sbx" "qa" "prod" ];
+          roles = [ "support" "developer" ];
+        }
+        # Add more projects as needed:
+        # {
+        #   name = "project-name";
+        #   short = "proj";
+        #   environments = [ "dev" "qa" "prod" ];
+        #   roles = [ "support" ];
+        # }
+      ];
+    }}
+
+    ${myLib.aws.mkAwsSsoLogin {
+      projects = [
+        {
+          name = "tririga-integrations";
+          short = "ti";
+          environments = [ "dev" "sbx" "qa" "prod" ];
+          roles = [ "support" "developer" "data-engineer" ];
+        }
+        {
+          name = "hr-system";
+          short = "hr";
+          environments = [ "qa" "prod" ];
+          roles = [ "support" "data-engineer" ];
+        }
+        {
+          name = "workforce-hub";
+          short = "wfh";
+          environments = [ "dev" "sbx" "qa" "prod" ];
+          roles = [ "support" "developer" ];
+        }
+      ];
+    }}
+
+    ${myLib.aws.mkAwsInfoCommands}
+
+    # ==================================================
+    # DATABASE INSTANCE CONNECTORS (Environment Variables)
+    # ==================================================
+    # Pattern: dbconnect-<instance> <env>
+    # Examples:
+    #   dbconnect-ti dev         → Tririga Oracle (dev)
+    #   dbconnect-hrdb prod      → HR SQL Server (prod)
+    #   dbconnect-payroll qa     → Payroll PostgreSQL (qa)
+    #
+    # Credentials: Loaded from ~/.secrets/credentials.env.enc
+    # Rotation: edit-credentials → save → exec zsh (NO nix rebuild!)
+    #
+    # Required env vars (example for TI prod):
+    #   TI_PROD_USERNAME, TI_PROD_PASSWORD, TI_PROD_HOST,
+    #   TI_PROD_PORT, TI_PROD_SERVICE
+
+    ${myLib.database.mkDatabaseInstances [
+      # Tririga Oracle Database (multiple environments)
       {
-        name = "oracle";
-        command = "sqlplus \${USERNAME}/\${PASSWORD}@\${HOST}:\${PORT}/\${SERVICE_NAME}";
-        description = "Oracle";
+        instance = "ti";
+        type = "oracle";
+        environments = [ "dev" "qa" "prod" ];
+        description = "Tririga Oracle Database";
       }
+
+      # HR Database - SQL Server (prod only)
       {
-        name = "mssql";
-        command = "sqlcmd -S \${SERVER} -d \${DATABASE} -U \${USERNAME} -P \${PASSWORD}";
-        description = "SQL Server";
+        instance = "hrdb";
+        type = "mssql";
+        environments = [ "prod" ];
+        description = "HR SQL Server Database";
       }
+
+      # PeopleSoft Oracle (dev, qa, prod)
       {
-        name = "postgres";
-        command = "PGPASSWORD=\${PASSWORD} psql -h \${HOST} -p \${PORT} -U \${USERNAME} -d \${DATABASE}";
-        description = "PostgreSQL";
+        instance = "ps";
+        type = "oracle";
+        environments = [ "dev" "qa" "prod" ];
+        description = "PeopleSoft Oracle Database";
       }
+
+      # ODS - SQL Server (qa, prod)
       {
-        name = "oracle-ps";
-        command = "sqlplus \${USERNAME}/\${PASSWORD}@\${HOST}:\${PORT}/\${SERVICE_NAME}";
-        description = "Oracle PeopleSoft";
+        instance = "ods";
+        type = "mssql";
+        environments = [ "qa" "prod" ];
+        description = "Operational Data Store (ODS)";
       }
+
+      # Data Warehouse - SQL Server
       {
-        name = "ods";
-        command = "sqlcmd -S \${SERVER} -d \${DATABASE} -U \${USERNAME} -P \${PASSWORD}";
-        description = "ODS";
-      }
-      {
-        name = "dw";
-        command = "sqlcmd -S \${SERVER} -d \${DATABASE} -U \${USERNAME} -P \${PASSWORD}";
+        instance = "dw";
+        type = "mssql";
+        environments = [ "prod" ];
         description = "Data Warehouse";
       }
+
+      # Payroll PostgreSQL (uses LAN credentials)
+      {
+        instance = "payroll";
+        type = "postgres";
+        environments = [ "qa" "prod" ];
+        description = "Payroll PostgreSQL Database";
+      }
+
+      # Add more database instances as needed:
+      # {
+      #   instance = "your-db-name";
+      #   type = "oracle|mssql|postgres|mysql";
+      #   environments = [ "dev" "qa" "prod" ];
+      #   description = "Your Database Description";
+      # }
     ]}
 
-    ${myLib.database.mkDatabaseList [
-      { name = "oracle"; label = "Oracle"; }
-      { name = "mssql"; label = "SQL Server"; }
-      { name = "postgres"; label = "PostgreSQL"; }
-      { name = "oracle-ps"; label = "Oracle PeopleSoft"; }
-      { name = "ods"; label = "ODS"; }
-      { name = "dw"; label = "Data Warehouse"; }
+    ${myLib.database.mkInstanceList [
+      { instance = "ti"; type = "oracle"; environments = [ "dev" "qa" "prod" ]; description = "Tririga"; }
+      { instance = "hrdb"; type = "mssql"; environments = [ "prod" ]; description = "HR Database"; }
+      { instance = "ps"; type = "oracle"; environments = [ "dev" "qa" "prod" ]; description = "PeopleSoft"; }
+      { instance = "ods"; type = "mssql"; environments = [ "qa" "prod" ]; description = "ODS"; }
+      { instance = "dw"; type = "mssql"; environments = [ "prod" ]; description = "Data Warehouse"; }
+      { instance = "payroll"; type = "postgres"; environments = [ "qa" "prod" ]; description = "Payroll"; }
     ]}
 
     # ==================================================
-    # TOKEN HELPERS (Generated)
+    # TOKEN HELPERS (File-based - kept for tokens)
     # ==================================================
     # Usage: git-token, terraform-token, jira-token
+    # Tokens managed via sops-nix in secrets.yaml
     # Includes: File permission validation (600)
 
     ${myLib.database.mkTokenHelpers [

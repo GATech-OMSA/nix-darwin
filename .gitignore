@@ -20,9 +20,11 @@ secrets/secrets.yaml
 # ==================================================
 # These directories contain plaintext credentials
 # managed by sops-nix - NEVER commit
-.db/                      # Database connection files
+.db/                      # Database connection files (legacy, file-based)
 .tokens/                  # API tokens
 .credentials/             # General credentials
+.secrets/credentials.env  # Enterprise credentials (unencrypted)
+!.secrets/credentials.env.enc  # Keep encrypted version
 
 # AWS credentials (unencrypted)
 .aws/credentials

@@ -588,6 +588,70 @@ ${myLib.database.mkTokenHelpers [
 
 **Token Reduction**: 150 lines → 30 lines (80% reduction)
 
+### `mkDatabaseInstance` (NEW - Enterprise)
+
+Generate instance-based database connector using environment variables instead of credential files. **Perfect for rotating passwords.**
+
+**Key Benefits**:
+- ✅ No file management required
+- ✅ Credential rotation without Nix rebuild (just `exec zsh`)
+- ✅ Single encrypted file for all credentials
+- ✅ Instance-based organization (not type-based)
+
+**Variable Naming Pattern**: `<INSTANCE>_<ENV>_<TYPE>`
+
+**Usage**:
+```nix
+myLib.database.mkDatabaseInstance {
+  instance = "ti";                           # Instance name (lowercase)
+  type = "oracle";                           # oracle, mssql, postgres, mysql
+  environments = ["dev" "qa" "prod"];        # Available environments
+  description = "Tririga Oracle Database";
+}
+```
+
+**Generated Function**: `dbconnect-ti [environment]`
+**Default Environment**: prod
+
+**Required Environment Variables** (example for TI prod Oracle):
+```bash
+TI_PROD_USERNAME="ti_prod"
+TI_PROD_PASSWORD="rotating-password"
+TI_PROD_HOST="prod-oracle.company.com"
+TI_PROD_PORT="1521"
+TI_PROD_SERVICE="TIPROD"
+```
+
+**Credentials Management**:
+- Edit: `edit-credentials`
+- Reload: `exec zsh` (NO nix rebuild!)
+- Stored: `~/.secrets/credentials.env.enc` (encrypted with SOPS)
+
+### `mkDatabaseInstances`
+
+Generate multiple instance-based database connectors at once.
+
+**Usage**:
+```nix
+myLib.database.mkDatabaseInstances [
+  { instance = "ti"; type = "oracle"; environments = ["dev" "qa" "prod"]; description = "Tririga"; }
+  { instance = "hrdb"; type = "mssql"; environments = ["prod"]; description = "HR Database"; }
+]
+```
+
+### `mkInstanceList`
+
+Generate `dblist-instances` function to show all configured database instances.
+
+**Usage**:
+```nix
+myLib.database.mkInstanceList [
+  { instance = "ti"; type = "oracle"; environments = ["dev" "qa" "prod"]; description = "Tririga"; }
+]
+```
+
+**Generated Function**: `dblist-instances`
+
 ---
 
 ## AWS Helpers (`aws`)
@@ -638,6 +702,133 @@ myLib.aws.mkAwsProfileAliasesWithPrefix {
 ```
 
 **Generated Aliases**: `tidev`, `tisbx`, `tiqa`, `tiprod`
+
+### `mkAwsUniversalCommand` (NEW - Enterprise)
+
+Generate universal AWS profile switching command with role support and profile persistence.
+
+**Key Benefits**:
+- ✅ Single command pattern: `awsuse <project> <env> [role]`
+- ✅ Short name support: `awsuse ti dev` instead of `awsuse tririga-integrations dev`
+- ✅ Profile persistence across shell sessions
+- ✅ Corporate policy enforcement (developer role only in sbx)
+- ✅ Automatic validation of project/environment/role combinations
+
+**Pattern**: `awsuse <project> <env> [role]`
+**Default Role**: support
+
+**Usage**:
+```nix
+myLib.aws.mkAwsUniversalCommand {
+  projects = [
+    {
+      name = "tririga-integrations";
+      short = "ti";
+      environments = ["dev" "sbx" "qa" "prod"];
+      roles = ["support" "developer" "data-engineer"];
+    }
+    {
+      name = "hr-system";
+      short = "hr";
+      environments = ["qa" "prod"];
+      roles = ["support"];
+    }
+  ];
+}
+```
+
+**Generated Function**: `awsuse <project> <env> [role]`
+
+**Examples**:
+```bash
+awsuse tririga-integrations dev         → ti-dev-support
+awsuse ti sbx developer                 → ti-sbx-developer
+awsuse hr qa                            → hr-qa-support (short name)
+```
+
+**Features**:
+- Profile validation against ~/.aws/config
+- Auto-save to ~/.aws/.last_profile for session persistence
+- Corporate policy: developer role restricted to sbx environment
+- Helpful error messages with usage examples
+
+### `mkAwsSsoLogin`
+
+Generate AWS SSO login command with automatic profile setting.
+
+**Pattern**: `awslogin <project> <env> [role]`
+**Performs**: SSO login + automatic AWS_PROFILE setting
+
+**Usage**: Same project configuration as `mkAwsUniversalCommand`
+
+**Generated Function**: `awslogin <project> <env> [role]`
+
+**Examples**:
+```bash
+awslogin tririga-integrations dev
+awslogin ti sbx developer
+awslogin hr prod
+```
+
+**What it does**:
+1. Opens browser for SSO authentication
+2. Sets AWS_PROFILE environment variable
+3. Saves profile to ~/.aws/.last_profile
+4. Profile auto-restores on next shell start
+
+### `mkAwsInfoCommands`
+
+Generate AWS profile information commands.
+
+**Generated Functions**:
+- `awswho` - Show current profile and session details
+- `awslist` - List all available profiles from ~/.aws/config
+
+**Usage**:
+```nix
+${myLib.aws.mkAwsInfoCommands}
+```
+
+**Examples**:
+```bash
+# Show current profile
+awswho
+# Output:
+# 📋 Current AWS Profile: ti-dev-support
+# Profile configuration:
+#   sso_session = domain-sso
+#   sso_account_id = 123456789012
+#   ...
+
+# List all profiles
+awslist
+# Output:
+# 📋 Available AWS Profiles:
+#   tririga-integrations-dev-support
+#   tririga-integrations-sbx-developer
+#   ...
+```
+
+### `mkAwsProfileAutoRestore`
+
+Generate shell initialization code to auto-restore last AWS profile on shell start.
+
+**Usage**:
+```nix
+# Add to zsh initExtra (ALREADY INCLUDED in zsh.nix)
+${myLib.aws.mkAwsProfileAutoRestore}
+```
+
+**What it does**:
+- Reads ~/.aws/.last_profile on shell start
+- Sets AWS_PROFILE automatically
+- Shows confirmation message
+
+**Output on shell start**:
+```
+🔄 Restored AWS Profile: ti-dev-support
+💡 Run 'awswho' for details or 'awsuse' to switch
+```
 
 ---
 
