@@ -432,7 +432,48 @@ cat hosts/*/secrets.yaml | grep -v "ENC\["
 
 # Review all changes
 g diff
+
+# Run manual validation
+secrets-check
 ```
+
+### Git Protection
+
+**Automated safeguards prevent committing/pushing unencrypted secrets:**
+
+**Pre-commit hook:**
+- Checks all secrets files in staging area
+- Validates SOPS encryption markers
+- Blocks commit if unencrypted secrets detected
+- Provides fix instructions
+
+**Pre-push hook:**
+- Final safeguard before remote push
+- Scans all secrets in repository
+- Catches anything that bypassed pre-commit
+
+**Manual validation:**
+```bash
+# Check encryption status
+secrets-check
+
+# Or run directly
+./scripts/check-secrets-encrypted.sh
+```
+
+**Bypass (NOT RECOMMENDED):**
+```bash
+# Skip hooks if absolutely necessary
+git commit --no-verify
+git push --no-verify
+```
+
+**Hook locations:**
+- `.git/hooks/pre-commit` - Commit protection
+- `.git/hooks/pre-push` - Push protection
+- `scripts/check-secrets-encrypted.sh` - Validation script
+
+**Note:** Git hooks are local to your repository. If you clone fresh, hooks will be missing and need to be recreated.
 
 ---
 
@@ -441,6 +482,7 @@ g diff
 ```bash
 edit-secrets         # Edit encrypted secrets
 secrets-status       # Check secrets configuration
+secrets-check        # Validate all secrets are encrypted
 backup-age-key       # Backup age key to clipboard
 ```
 

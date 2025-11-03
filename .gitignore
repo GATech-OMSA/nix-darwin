@@ -8,8 +8,11 @@ secrets/*.dec
 *.key
 *.age
 
+# Ignore template file (unencrypted example)
+secrets/secrets.yaml
+
 # Keep encrypted secrets (these are safe to commit)
-!secrets/secrets.yaml
+!hosts/*/secrets.yaml
 !secrets/.sops.yaml
 
 # Home Manager backup files

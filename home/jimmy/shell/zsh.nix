@@ -1757,6 +1757,17 @@ EOF
         echo "================================================"
       }
 
+      # Validate all secrets are properly encrypted
+      function secrets-check() {
+        if [ -x ~/nix-darwin/scripts/check-secrets-encrypted.sh ]; then
+          ~/nix-darwin/scripts/check-secrets-encrypted.sh
+        else
+          echo "❌ Error: Validation script not found"
+          echo "Expected: ~/nix-darwin/scripts/check-secrets-encrypted.sh"
+          return 1
+        fi
+      }
+
       # ============================================
       # ZOXIDE INITIALIZATION
       # ============================================
