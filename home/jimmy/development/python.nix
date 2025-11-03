@@ -6,8 +6,9 @@
   home.packages = with pkgs; [
     python313
     python313Packages.pip
+    python313Packages.pipx
     python313Packages.ipython
-    uv  # Fast Python package manager
+    uv    # Fast Python package manager
     ruff  # Fast linter/formatter
     # micromamba  # Build broken - install via Homebrew: brew install micromamba
   ];
