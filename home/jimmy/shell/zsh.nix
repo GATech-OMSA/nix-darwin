@@ -2436,6 +2436,18 @@ EOF
       # WORK-SPECIFIC FUNCTIONS (only on work Mac)
       # ============================================
       if [ "$MACHINE_MODE" = "work" ]; then
+        # AWS profile completion function
+        function _aws_profiles() {
+          local profiles
+          profiles=($(grep '^\[profile' ~/.aws/config 2>/dev/null | sed 's/\[profile \(.*\)\]/\1/'))
+          _describe 'aws profiles' profiles
+        }
+
+        # Enable completion for AWS functions
+        compdef _aws_profiles awsuse
+        compdef _aws_profiles awslogin
+        compdef _aws_profiles awsrefresh
+
         # AWS SSO Login - accepts profile name
         # Usage: awslogin <profile-name>
         # Example: awslogin project1-dev
@@ -2510,10 +2522,21 @@ EOF
             return 1
           fi
           export AWS_PROFILE="$1"
+
+          # Save last-used profile for session persistence
+          mkdir -p ~/.aws
+          echo "$1" > ~/.aws/.last_profile
+
           echo "✅ Switched to profile: $1"
           echo "🔍 Checking identity..."
           awswho
         }
+
+        # Auto-restore last AWS profile on shell startup (work Mac only)
+        if [ -f ~/.aws/.last_profile ]; then
+          export AWS_PROFILE=$(cat ~/.aws/.last_profile)
+          echo "🔄 Restored AWS profile: $AWS_PROFILE"
+        fi
 
         # SSM Session Manager - uses current profile or specified profile
         function ssm() {
