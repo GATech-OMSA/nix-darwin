@@ -154,6 +154,9 @@ nano secrets/secrets.yaml
 sops -e -i secrets/secrets.yaml
 
 # Now it's safe to commit!
+
+# Note: Git hooks will be automatically installed on first rebuild
+# to prevent committing unencrypted secrets
 ```
 
 See `secrets/README.md` for detailed instructions.
@@ -231,6 +234,9 @@ git config --list | head -10
 
 # Test update functions
 update-dev   # Quick update
+
+# Check secrets and git hooks status
+secrets-status   # Shows git hooks installation status
 ```
 
 ---

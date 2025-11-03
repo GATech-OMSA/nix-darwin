@@ -2409,6 +2409,17 @@ EOF
         fi
         echo ""
 
+        # Check git hooks
+        echo "🪝 Checking git hooks..."
+        if [ -f ~/nix-darwin/.git/hooks/pre-commit ] && [ -f ~/nix-darwin/.git/hooks/pre-push ]; then
+          echo "  ✅ Git hooks installed (pre-commit, pre-push)"
+        else
+          echo "  ⚠️  Git hooks not installed"
+          echo "     Run: secrets-status for details"
+          echo "     Hooks will be installed automatically on next rebuild"
+        fi
+        echo ""
+
         echo "================================================"
         if [ $issues -eq 0 ]; then
           echo "✅ System health: GOOD"
@@ -2695,6 +2706,19 @@ EOF
           echo "  ✅ age: $(age --version 2>&1)"
         else
           echo "  ❌ age not installed (included in nix-darwin)"
+        fi
+        echo ""
+
+        # Check git hooks
+        echo "🪝 Git Hooks:"
+        if [ -f ~/nix-darwin/.git/hooks/pre-commit ] && [ -f ~/nix-darwin/.git/hooks/pre-push ]; then
+          echo "  ✅ Git hooks installed (pre-commit, pre-push)"
+          echo "     Hooks automatically validate secrets encryption"
+        else
+          echo "  ⚠️  Git hooks not installed"
+          echo "     These hooks prevent committing unencrypted secrets"
+          echo "     Install with: ~/nix-darwin/scripts/install-hooks.sh"
+          echo "     Or they will be installed automatically on next rebuild"
         fi
         echo ""
 

@@ -51,6 +51,8 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 
 # 7. Restart terminal
 exec zsh
+
+# Note: Git hooks for secrets validation are installed automatically
 ```
 
 ### Verification
@@ -355,7 +357,37 @@ export SECRET_KEY="..."
 exec zsh
 ```
 
-### 8. Configure AWS (if needed)
+### 8. Verify Git Hooks Installation
+
+**Git hooks are automatically installed** on every rebuild to prevent committing unencrypted secrets:
+
+```bash
+# Check if hooks are installed
+secrets-status
+
+# Expected output:
+# 🪝 Git Hooks:
+#   ✅ Git hooks installed (pre-commit, pre-push)
+#      Hooks automatically validate secrets encryption
+```
+
+**What these hooks do:**
+
+- **pre-commit**: Blocks commits containing unencrypted secrets files
+- **pre-push**: Blocks pushes containing unencrypted secrets files
+
+**Automatic Installation:**
+
+- Hooks are installed automatically during `nix-rebuild`
+
+**Manual Installation (if needed):**
+
+```bash
+# Only needed if you want to install manually
+~/nix-darwin/scripts/install-hooks.sh
+```
+
+### 9. Configure AWS (if needed)
 
 **Personal Mac:**
 
@@ -377,7 +409,7 @@ awsconf  # Edit config
 awslogin
 ```
 
-### 9. Test Python Setup
+### 10. Test Python Setup
 
 ```bash
 # Create first UV project
@@ -394,7 +426,7 @@ uv-add requests
 vs
 ```
 
-### 10. Create Backup
+### 11. Create Backup
 
 ```bash
 cd ~/nix-darwin

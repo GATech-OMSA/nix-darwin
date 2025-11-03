@@ -39,6 +39,74 @@
     packages = with pkgs; [
       # Add user-specific packages here
     ];
+
+    # Activation scripts (run on every rebuild)
+    activation = {
+      installGitHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        # Install git hooks for secrets validation
+        NIX_DARWIN_DIR="$HOME/nix-darwin"
+
+        # Only install if .git directory exists
+        if [ -d "$NIX_DARWIN_DIR/.git" ]; then
+          # Check if hooks already exist (skip if present to save time)
+          if [ ! -f "$NIX_DARWIN_DIR/.git/hooks/pre-commit" ] || [ ! -f "$NIX_DARWIN_DIR/.git/hooks/pre-push" ]; then
+            echo "🪝 Installing git hooks for secrets validation..."
+
+            # Ensure hooks directory exists
+            mkdir -p "$NIX_DARWIN_DIR/.git/hooks"
+
+            # Install pre-commit hook
+            cat > "$NIX_DARWIN_DIR/.git/hooks/pre-commit" << 'EOF'
+#!/bin/bash
+# Pre-commit hook to check for unencrypted secrets files
+
+SECRETS_DIR="$HOME/nix-darwin/hosts"
+
+# Find all secrets.yaml files
+for secrets_file in $(find "$SECRETS_DIR" -name "secrets.yaml" 2>/dev/null); do
+  # Check if file is staged for commit
+  if git diff --cached --name-only | grep -q "$(basename $(dirname $secrets_file))/secrets.yaml"; then
+    # Check if file is encrypted (SOPS files are binary)
+    if file "$secrets_file" | grep -q "ASCII text"; then
+      echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
+      echo "   Please encrypt with: sops -e -i $secrets_file"
+      exit 1
+    fi
+  fi
+done
+
+exit 0
+EOF
+
+            # Install pre-push hook
+            cat > "$NIX_DARWIN_DIR/.git/hooks/pre-push" << 'EOF'
+#!/bin/bash
+# Pre-push hook to check for unencrypted secrets files
+
+SECRETS_DIR="$HOME/nix-darwin/hosts"
+
+# Find all secrets.yaml files
+for secrets_file in $(find "$SECRETS_DIR" -name "secrets.yaml" 2>/dev/null); do
+  # Check if file is encrypted (SOPS files are binary)
+  if file "$secrets_file" | grep -q "ASCII text"; then
+    echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
+    echo "   Please encrypt with: sops -e -i $secrets_file"
+    exit 1
+  fi
+done
+
+exit 0
+EOF
+
+            # Make hooks executable
+            chmod +x "$NIX_DARWIN_DIR/.git/hooks/pre-commit"
+            chmod +x "$NIX_DARWIN_DIR/.git/hooks/pre-push"
+
+            echo "  ✅ Git hooks installed successfully"
+          fi
+        fi
+      '';
+    };
   };
 
   # Import all configurations
