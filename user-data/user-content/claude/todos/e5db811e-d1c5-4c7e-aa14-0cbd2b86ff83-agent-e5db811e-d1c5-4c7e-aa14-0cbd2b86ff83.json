@@ -1,37 +1,37 @@
 [
   {
-    "content": "Review current backup.sh script",
+    "content": "Remove userSettings from vscode.nix",
     "status": "completed",
-    "activeForm": "Reviewing backup.sh script"
+    "activeForm": "Removing userSettings from vscode.nix"
   },
   {
-    "content": "Review current restore.sh script",
+    "content": "Update backup.sh to backup VS Code settings",
     "status": "completed",
-    "activeForm": "Reviewing restore.sh script"
+    "activeForm": "Updating backup script"
   },
   {
-    "content": "Scan /Users/jimmy for config files/directories",
+    "content": "Add sync-user-data function to zsh.nix",
     "status": "completed",
-    "activeForm": "Scanning for config files"
+    "activeForm": "Adding sync function"
   },
   {
-    "content": "Add spell-dictionary.txt to backup",
+    "content": "Create JSON settings from Nix config",
     "status": "completed",
-    "activeForm": "Adding spell-dictionary.txt"
+    "activeForm": "Creating JSON settings"
   },
   {
-    "content": "Add other missing configs to backup",
+    "content": "User testing",
     "status": "completed",
-    "activeForm": "Adding missing configs"
+    "activeForm": "User testing"
   },
   {
-    "content": "Update restore script",
-    "status": "completed",
-    "activeForm": "Updating restore script"
-  },
-  {
-    "content": "Test backup functionality",
+    "content": "Backup user settings before commit",
     "status": "in_progress",
-    "activeForm": "Testing backup"
+    "activeForm": "Backing up user settings"
+  },
+  {
+    "content": "Commit all changes",
+    "status": "pending",
+    "activeForm": "Committing changes"
   }
 ]

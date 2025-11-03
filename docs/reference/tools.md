@@ -60,7 +60,7 @@
 | `vs` | Open VS Code in current directory |
 | `code .` | Open VS Code (full command) |
 | `code file.txt` | Open specific file |
-| `vscodeconf` | Edit VS Code configuration |
+| `vscodeconf` | Edit vscode.nix (extensions/keybindings only) |
 
 **Examples:**
 ```bash
@@ -74,9 +74,19 @@ vs
 # Open file
 code README.md
 
-# Edit VS Code config
+# Edit extensions/keybindings (Nix)
 vscodeconf
+
+# Change settings
+# Edit in VS Code UI → Cmd+, (Settings)
+# Then save to git:
+sync-user-data
 ```
+
+**Settings Management:**
+- **Extensions & Keybindings**: Managed in `vscode.nix` (declarative)
+- **Settings**: Managed in VS Code UI (user-data/)
+- Use `sync-user-data` to backup and sync settings changes to git
 
 ---
 
@@ -1588,21 +1598,23 @@ killall Dock
 
 ### VS Code Configuration
 
-**Nix Configuration:**
+**Hybrid Approach:**
 
-**File:** `home/jimmy/programs/vscode.nix`
-
-**Structure:**
+**Extensions (Nix):** `home/jimmy/programs/vscode.nix`
 ```nix
 programs.vscode = {
   enable = true;
-
   profiles.default = {
-    extensions = [ /* ... */ ];
-    userSettings = { /* ... */ };
+    extensions = [ /* VS Code extensions */ ];
+    keybindings = [];  // Optional custom keybindings
   };
 };
 ```
+
+**Settings (User-Data):** Managed in VS Code UI
+- Settings location: `~/Library/Application Support/Code/User/settings.json`
+- Backed up to: `user-data/user-content/vscode/settings.json`
+- Edit in VS Code UI (Cmd+,), then run `sync-user-data` to save
 
 **Edit Configuration:**
 

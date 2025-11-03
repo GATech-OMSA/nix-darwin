@@ -49,20 +49,29 @@ Both tiers work together to provide complete system recovery.
 
 ### Tier 2: User Data (backup scripts)
 
-**Location:** `user-data/` (git-ignored)
+**Location:** `user-data/` (version controlled)
 
 **What's included:**
+- VS Code settings, argv.json, snippets, spell dictionary
 - Claude Code config
 - Continue.dev settings
 - Gemini preferences
 - iTerm2 preferences
-- VS Code snippets
+- Cursor configs
 - Jupyter/IPython configs
-- SSH known_hosts
+- SSH known_hosts, Zoxide database
+- Claude todos
 
-**Backup:** Run `backup-user-data`
+**Commands:**
+- `backup-user-data` - Backup configs to user-data/
+- `restore-user-data` - Restore configs from user-data/
+- `sync-user-data` - Backup + commit + push (recommended)
 
-**Restore:** Run `restore-user-data`
+**Typical workflow:**
+```bash
+# After changing VS Code settings or other configs
+sync-user-data
+```
 
 **See:** `user-data/README.md`
 

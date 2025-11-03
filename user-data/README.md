@@ -1,12 +1,12 @@
 # User Data Backup & Restore
 
-This directory contains **non-secret user data** that cannot be managed declaratively by Nix. These are typically large application configs, user-generated content, and preferences that are too personal or too large to commit to git.
+This directory contains **non-secret user data** that cannot be managed declaratively by Nix. These configs are backed up to git and synced across machines.
 
 ## Overview
 
 **Two-Tier Backup Strategy:**
 1. **Secrets** (managed by sops-nix) - Encrypted in git, auto-restored
-2. **User Data** (this directory) - Git-ignored, manually backed up/restored
+2. **User Data** (this directory) - Version controlled in git, synced with `sync-user-data`
 
 ## What's Backed Up Here
 
@@ -15,25 +15,40 @@ This directory contains **non-secret user data** that cannot be managed declarat
 - **Continue.dev** - `~/.continue/config.json`, `~/.continue/config.ts`
 - **Gemini** - `~/.gemini/settings.json`
 - **iTerm2** - Preferences plist
+- **Cursor** - `~/.cursor/argv.json`, `~/.cursor/cli-config.json`
 
 ### User Content
-- **VS Code** - Custom snippets
+- **VS Code** - settings.json, argv.json, snippets, spell dictionary
 - **Jupyter** - Custom configs (jupyter_lab_config.py, jupyter_notebook_config.py)
 - **IPython** - Custom config (ipython_config.py)
+- **Claude** - todos (projects excluded - too large)
 
 ### Other
 - **SSH** - known_hosts (not secret, but useful)
+- **Zoxide** - Directory navigation database
 
 ## Usage
 
-### Backup (Old Machine)
+### Daily Workflow
+
+**After making changes to VS Code settings or other configs:**
 
 ```bash
-cd ~/nix-darwin/user-data
-./backup.sh
+sync-user-data  # Backup + commit + push (one command)
 ```
 
-This creates:
+This automatically:
+1. Backs up all configs to `user-data/`
+2. Commits changes to git
+3. Pushes to remote repository
+
+### Manual Backup
+
+```bash
+backup-user-data  # Run backup.sh manually
+```
+
+This creates/updates:
 ```
 user-data/
 ├── app-configs/
@@ -42,19 +57,14 @@ user-data/
 │   ├── gemini/
 │   └── iterm2/
 ├── user-content/
-│   ├── vscode-snippets/
+│   ├── vscode/
+│   │   ├── settings.json
+│   │   ├── argv.json
+│   │   ├── snippets/
+│   │   └── spell-dictionary.txt
 │   ├── jupyter/
 │   └── ipython/
 └── ssh_known_hosts
-```
-
-**Then copy to external storage:**
-```bash
-# To external drive
-cp -r ~/nix-darwin/user-data /Volumes/ExternalDrive/nix-darwin-userdata-backup
-
-# Or to cloud (after ensuring no secrets)
-# zip -r userdata-backup.zip user-data/
 ```
 
 ### Restore (New Machine)
@@ -62,27 +72,19 @@ cp -r ~/nix-darwin/user-data /Volumes/ExternalDrive/nix-darwin-userdata-backup
 1. **Clone nix-darwin repo:**
    ```bash
    git clone <your-nix-darwin-repo> ~/nix-darwin
+   cd ~/nix-darwin
    ```
 
-2. **Copy user-data/ from backup:**
-   ```bash
-   # From external drive
-   cp -r /Volumes/ExternalDrive/nix-darwin-userdata-backup/* ~/nix-darwin/user-data/
-
-   # Or extract from zip
-   # unzip userdata-backup.zip -d ~/nix-darwin/
-   ```
+2. **User data is already included** in the git repo (no need to copy from external drive)
 
 3. **Run restore:**
    ```bash
-   cd ~/nix-darwin/user-data
-   ./restore.sh
+   restore-user-data
    ```
 
 4. **Build nix-darwin:**
    ```bash
-   cd ~/nix-darwin
-   # First-time setup (see docs/getting-started/installation.md)
+   # First-time setup (see docs/guides/installation.md)
    sudo nix run nix-darwin -- switch --flake .#mbp-jimmy
    ```
 
@@ -93,8 +95,15 @@ cp -r ~/nix-darwin/user-data /Volumes/ExternalDrive/nix-darwin-userdata-backup
 After rebuilding with zsh.nix, use these shortcuts:
 
 ```bash
-backup-user-data    # Run backup.sh
-restore-user-data   # Run restore.sh
+backup-user-data    # Backup configs to user-data/
+restore-user-data   # Restore configs from user-data/
+sync-user-data      # Backup + commit + push (recommended)
+```
+
+**Typical workflow:**
+```bash
+# Edit VS Code settings in UI (Cmd+,)
+sync-user-data      # One command to backup and sync to git
 ```
 
 ## What's NOT Here
@@ -107,52 +116,59 @@ These are managed elsewhere:
 | **AWS credentials** | `hosts/*/secrets.yaml` | sops-nix (encrypted in git) |
 | **Git config** | `home/jimmy/programs/git.nix` | Declarative Nix config |
 | **Zsh config** | `home/jimmy/shell/zsh.nix` | Declarative Nix config |
-| **VS Code settings** | `home/jimmy/programs/vscode.nix` | Declarative Nix config |
+| **VS Code extensions** | `home/jimmy/programs/vscode.nix` | Declarative Nix config |
 | **Packages** | `modules/shared/packages.nix` | Declarative Nix config |
 | **Homebrew apps** | `modules/darwin/homebrew.nix` | Declarative Nix config |
 
-## Git Ignore
+## Version Control
 
-The `.gitignore` in this directory prevents backing up user data to git:
-- Too large (VS Code snippets, etc.)
-- Too personal (iTerm2 preferences with colors, etc.)
-- Changes frequently
+**All user-data is now version controlled in git** for easy sync across machines.
 
-**Only these files are committed:**
-- `.gitignore`
-- `README.md` (this file)
-- `backup.sh`
-- `restore.sh`
+The `.gitignore` in this directory excludes very large or machine-specific files:
+- VS Code projects cache
+- Temporary files
+- Machine-specific metadata
+
+**Committed to git:**
+- Scripts: `backup.sh`, `restore.sh`
+- Documentation: `README.md`, `.gitignore`
+- **All backed up configs**: VS Code settings, app configs, user content
+- Synced automatically via `sync-user-data` command
 
 ## Complete New Machine Setup
 
 Full workflow for setting up a new Mac from scratch:
 
-1. **Install Nix** (see `docs/getting-started/installation.md`)
+1. **Install Nix** (see `docs/guides/installation.md`)
 2. **Generate age key** (see `secrets/SETUP.md`)
-3. **Clone nix-darwin repo** with your configs
-4. **Copy user-data/ backup** to `~/nix-darwin/user-data/`
-5. **Run initial build** (this decrypts secrets automatically)
-6. **Run restore script** to restore non-secret user data
-7. **Restart shell** and enjoy!
+3. **Clone nix-darwin repo** (includes user-data in git)
+4. **Run initial build** (decrypts secrets automatically)
+5. **Run restore-user-data** (restores configs to system)
+6. **Restart shell** and enjoy!
 
-See `docs/guides/new-machine-setup.md` for detailed walkthrough.
+See `docs/guides/installation.md` for detailed walkthrough.
 
 ## Maintenance
 
-**When to backup:**
-- Before major system upgrade
+**When to sync:**
+- After changing VS Code settings
 - After customizing Claude/Continue.dev configs
 - After creating new VS Code snippets
-- Monthly (if actively customizing)
+- After modifying any backed up config
 
-**Storage recommendations:**
-- **External Drive**: Time Machine backup or separate encrypted drive
-- **Cloud**: Encrypt before uploading (contains preferences but not secrets)
-- **NAS**: Keep alongside Time Machine backups
+**Workflow:**
+```bash
+sync-user-data  # One command: backup + commit + push
+```
+
+**Additional backup recommendations:**
+- Git repository serves as primary backup (synced to remote)
+- Optional: External Time Machine backup for complete system restore
+- Optional: Cloud backup of entire nix-darwin repo (no secrets to worry about - encrypted via sops)
 
 ## See Also
 
-- [Secrets Management Guide](../docs/guides/secrets-management.md) - For sops-nix encrypted secrets
-- [New Machine Setup](../docs/guides/new-machine-setup.md) - Complete setup walkthrough
+- [Secrets Guide](../docs/guides/secrets.md) - For sops-nix encrypted secrets
+- [Installation Guide](../docs/guides/installation.md) - Complete setup walkthrough
+- [Backup & Recovery Guide](../docs/guides/backup-and-recovery.md) - Complete backup strategy
 - [Architecture Overview](../docs/architecture/overview.md) - How everything fits together

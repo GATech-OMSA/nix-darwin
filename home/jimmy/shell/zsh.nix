@@ -1627,6 +1627,57 @@ EOF
         ~/nix-darwin/user-data/restore.sh
       }
 
+      # Sync user data: Backup + Commit + Push
+      function sync-user-data() {
+        echo "🔄 Syncing user data..."
+        echo ""
+
+        # Run backup
+        if ! backup-user-data; then
+          echo "❌ Backup failed"
+          return 1
+        fi
+
+        echo ""
+        echo "📝 Committing changes..."
+
+        # Check if in git repo
+        if [ ! -d ~/nix-darwin/.git ]; then
+          echo "❌ Error: Not in a git repository"
+          return 1
+        fi
+
+        # Change to nix-darwin directory
+        cd ~/nix-darwin
+
+        # Check if there are changes in user-data
+        if ! git diff --quiet user-data/ || ! git diff --cached --quiet user-data/; then
+          # Stage all user-data changes
+          git add user-data/
+
+          # Create commit with timestamp
+          local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+          git commit -m "Sync user-data: $timestamp"
+
+          echo "✅ Changes committed"
+          echo ""
+          echo "📤 Pushing to remote..."
+
+          # Push to remote
+          if git push; then
+            echo "✅ Sync complete!"
+          else
+            echo "❌ Push failed"
+            return 1
+          fi
+        else
+          echo "✅ No changes to sync"
+        fi
+
+        # Return to previous directory
+        cd - > /dev/null
+      }
+
       # Edit encrypted secrets with sops
       function edit-secrets() {
         local hostname=$(hostname -s)

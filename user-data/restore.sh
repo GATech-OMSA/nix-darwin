@@ -68,11 +68,25 @@ if [ -d "$BACKUP_DIR/user-content" ]; then
     echo "  ✅ VS Code snippets"
   fi
 
+  # VS Code settings (NOT managed by Nix)
+  if [ -f "$BACKUP_DIR/user-content/vscode/settings.json" ]; then
+    mkdir -p ~/Library/Application\ Support/Code/User
+    cp "$BACKUP_DIR/user-content/vscode/settings.json" ~/Library/Application\ Support/Code/User/
+    echo "  ✅ VS Code settings.json"
+  fi
+
   # VS Code spell dictionary
   if [ -f "$BACKUP_DIR/user-content/vscode/spell-dictionary.txt" ]; then
     mkdir -p ~/.vscode
     cp "$BACKUP_DIR/user-content/vscode/spell-dictionary.txt" ~/.vscode/
     echo "  ✅ VS Code spell dictionary"
+  fi
+
+  # VS Code argv.json (CLI config)
+  if [ -f "$BACKUP_DIR/user-content/vscode/argv.json" ]; then
+    mkdir -p ~/.vscode
+    cp "$BACKUP_DIR/user-content/vscode/argv.json" ~/.vscode/
+    echo "  ✅ VS Code argv.json"
   fi
 
   # Jupyter configs

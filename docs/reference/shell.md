@@ -508,6 +508,33 @@ cleanup-all
 # - Temporary files
 ```
 
+### User Data Functions
+
+Manage application configs and user content that can't be managed declaratively:
+
+```bash
+backup-user-data   # Backup configs to user-data/
+restore-user-data  # Restore configs from user-data/
+sync-user-data     # Backup + git commit + push (one command)
+```
+
+**What gets backed up:**
+- VS Code settings, argv.json, spell dictionary, snippets
+- iTerm2 preferences
+- Claude, Continue.dev, Gemini configs
+- Cursor configs
+- Jupyter and IPython configs
+- SSH known_hosts, Zoxide database
+- Claude todos
+
+**Example workflow:**
+```bash
+# Change VS Code settings in UI
+sync-user-data     # Automatically: backup → commit → push
+```
+
+See: [user-data/README.md](../../user-data/README.md)
+
 ### Work-Specific Functions
 
 **Only available when `MACHINE_MODE="work"`**
