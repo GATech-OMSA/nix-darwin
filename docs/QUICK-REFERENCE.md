@@ -19,6 +19,55 @@ gitconf                          # Edit git config
 zshconf                          # Edit zsh config
 vscodeconf                       # Edit VS Code config
 awsconf                          # Edit AWS config
+
+# Quick Opens
+vs                               # Open VS Code here
+f                                # Open Finder here
+```
+
+---
+
+## App Launchers
+
+```bash
+# AI/LLM
+claude                           # Open Claude
+gpt                              # Open ChatGPT
+pplx                             # Open Perplexity
+obs                              # Open Obsidian
+
+# Development
+cursor                           # Open Cursor
+cur                              # Open Cursor (short)
+
+# Browsers
+ff                               # Open Firefox
+orion                            # Open Orion
+
+# Communication
+zoom                             # Open Zoom
+wa                               # Open WhatsApp
+
+# Other
+tv                               # Open TradingView
+vpn                              # Open ProtonVPN
+pdf                              # Open PDF Expert
+shot                             # Open Shottr
+alfred                           # Open Alfred
+```
+
+---
+
+## Workflow Helpers
+
+```bash
+show file.txt                    # Reveal in Finder
+ql image.png                     # Quick Look preview
+cat file.txt | copy              # Copy to clipboard
+paste                            # Paste from clipboard
+port 3000                        # Check what's on port
+killport 3000                    # Kill process on port
+newproj myapp                    # Create project + open VS Code
 ```
 
 ---

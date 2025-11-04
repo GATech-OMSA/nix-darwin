@@ -76,18 +76,66 @@
       reload = "source ~/.zshrc && echo '✅ .zshrc reloaded'";
       restart = "exec zsh";
 
+      # Quick open shortcuts
+      vs = "code .";          # Open VS Code in current directory
+      vscode = "code .";      # Alias for vs (full name)
+      f = "open .";           # Open Finder in current directory
+      finder = "open .";      # Alias for f (full name)
+
       # Configuration shortcuts
       nixconf = "code ~/nix-darwin";
-      zshconf = "$EDITOR ~/nix-darwin/home/jimmy/shell/zsh.nix";
-      gitconf = "$EDITOR ~/nix-darwin/home/jimmy/programs/git.nix";
-      vscodeconf = "$EDITOR ~/nix-darwin/home/jimmy/programs/vscode.nix";
-      condaconf = "$EDITOR ~/.condarc";
-      awsconf = "$EDITOR ~/.aws/config";
-      jupyterconf = "$EDITOR ~/.jupyter/jupyter_notebook_config.py";
+      zshconf = "code --wait ~/nix-darwin/home/jimmy/shell/zsh.nix";
+      gitconf = "code --wait ~/nix-darwin/home/jimmy/programs/git.nix";
+      vscodeconf = "code --wait ~/nix-darwin/home/jimmy/programs/vscode.nix";
+      condaconf = "code --wait ~/.condarc";
+      awsconf = "code --wait ~/.aws/config";
+      jupyterconf = "code --wait ~/.jupyter/jupyter_notebook_config.py";
+      zshrc = "code --wait ~/.zshrc";
 
       # Nix-Darwin system management
       nix-rebuild = "sudo darwin-rebuild switch --flake ~/nix-darwin";
       nix-rollback = "sudo darwin-rebuild --rollback";
+
+      # ============================================
+      # APP LAUNCHERS
+      # ============================================
+      # Browsers
+      ff = "open -a Firefox";
+      orion = "open -a Orion";
+
+      # AI/LLM
+      claude = "open -a Claude";
+      gpt = "open -a ChatGPT";
+      pplx = "open -a Perplexity";
+      obs = "open -a Obsidian";
+      jan = "open -a Jan";
+
+      # Development
+      cursor = "open -a Cursor";
+      cur = "open -a Cursor";
+
+      # Productivity
+      pdf = "open -a 'PDF Expert'";
+      shot = "open -a Shottr";
+      alfred = "open -a Alfred";
+
+      # Communication
+      zoom = "open -a Zoom";
+      wa = "open -a WhatsApp";
+      whatsapp = "open -a WhatsApp";
+
+      # Other
+      tv = "open -a TradingView";
+      vpn = "open -a ProtonVPN";
+
+      # ============================================
+      # WORKFLOW HELPERS
+      # ============================================
+      show = "open -R";        # Reveal in Finder
+      ql = "qlmanage -p";      # Quick Look preview
+      copy = "pbcopy";         # Pipe to clipboard
+      paste = "pbpaste";       # Paste from clipboard
+      port = "lsof -i :";      # Check what's on port
 
       # Safety aliases
       cp = "cp -i";
@@ -136,13 +184,13 @@
       ll = "eza -al --icons --group-directories-first";
       la = "eza -a --icons --group-directories-first";
       lt = "eza --tree --level=2 --icons";
-      
+
       cat = "bat --style=plain --paging=never";
       catp = "bat -p";
-      
+
       grep = "rg";
       rgi = "rg -i";
-      
+
       find = "fd";
       du = "dust";
       df = "duf";
@@ -499,6 +547,21 @@
         git clone "$1" && cd "$(basename "$1" .git)"
       }
 
+      # Create new project and open in VS Code
+      function newproj() {
+        if [ -z "$1" ]; then
+          echo "Usage: newproj <project-name>"
+          return 1
+        fi
+        mkdir -p ~/Dev/"$1" && cd ~/Dev/"$1" && code .
+        echo "✅ Created and opened project: ~/Dev/$1"
+      }
+
+      # Alias for kill-port (no hyphen)
+      function killport() {
+        kill-port "$@"
+      }
+
       # ============================================
       # SYSTEM INFO FUNCTION
       # ============================================
@@ -525,29 +588,6 @@
         fi
         if command -v kubectl &> /dev/null; then
           echo "Kubectl: $(kubectl version --client --short 2>&1 | head -1)"
-        fi
-      }
-
-      # ============================================
-      # PYTHON ENVIRONMENT INFO
-      # ============================================
-      function pyenv-info() {
-        echo "=== Python Environment Info ==="
-        echo "Machine: $MACHINE_MODE"
-        if [ -n "$VIRTUAL_ENV" ]; then
-          echo "Virtual Env: $VIRTUAL_ENV"
-        elif [ -n "$CONDA_DEFAULT_ENV" ]; then
-          echo "Micromamba Env: $CONDA_DEFAULT_ENV"
-        else
-          echo "No virtual environment active"
-        fi
-        echo "Python: $(which python)"
-        echo "Version: $(python --version 2>&1)"
-        if command -v pip &> /dev/null; then
-          echo "Pip: $(pip --version)"
-        fi
-        if command -v uv &> /dev/null; then
-          echo "UV: $(uv --version)"
         fi
       }
 
@@ -861,9 +901,9 @@ EOF
             ((errors++))
           fi
 
-          echo "  📦 Upgrading casks..."
-          if brew upgrade --cask; then
-            echo "  ✅ Casks upgraded"
+          echo "  📦 Upgrading all casks (including auto-update apps)..."
+          if brew cu -afy; then
+            echo "  ✅ All casks upgraded"
           else
             echo "  ❌ Cask upgrade failed" >&2
             ((errors++))
@@ -2046,11 +2086,34 @@ EOF
         which micromamba || echo "  Not found"
         micromamba --version 2>&1 | head -n1 || echo "  Not installed"
         echo ""
+        echo "📦 Available Micromamba Environments:"
+        # Check base environment
+        if [ -d "$HOME/micromamba" ]; then
+          if [ -n "$CONDA_DEFAULT_ENV" ] && [ "$CONDA_DEFAULT_ENV" = "base" ]; then
+            echo "  * base"
+          else
+            echo "    base"
+          fi
+        fi
+        # Check named environments
+        if [ -d "$HOME/micromamba/envs" ]; then
+          for env in "$HOME/micromamba/envs"/*; do
+            if [ -d "$env" ]; then
+              local env_name=$(basename "$env")
+              if [ -n "$CONDA_DEFAULT_ENV" ] && [ "$CONDA_DEFAULT_ENV" = "$env_name" ]; then
+                echo "  * $env_name"
+              else
+                echo "    $env_name"
+              fi
+            fi
+          done
+        fi
+        echo ""
         if [ -n "$VIRTUAL_ENV" ]; then
-          echo "✅ Active Virtual Environment:"
+          echo "✅ Active UV/Venv Virtual Environment:"
           echo "  Path: $VIRTUAL_ENV"
           echo "  Python: $(python --version 2>&1)"
-        else
+        elif [ -z "$CONDA_DEFAULT_ENV" ]; then
           echo "ℹ️  No virtual environment active"
         fi
         echo ""

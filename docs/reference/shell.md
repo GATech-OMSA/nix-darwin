@@ -11,6 +11,9 @@
 - [Overview](#overview)
 - [Zsh Configuration](#zsh-configuration)
   - [Modern CLI Aliases](#modern-cli-aliases)
+  - [Quick Open Shortcuts](#quick-open-shortcuts)
+  - [App Launchers](#app-launchers)
+  - [Workflow Helpers](#workflow-helpers)
   - [Navigation Aliases](#navigation-aliases)
   - [Python & UV Aliases](#python--uv-aliases)
   - [Docker Aliases](#docker-aliases)
@@ -91,6 +94,108 @@ lt              # Tree view of current directory
 cat config.json # Pretty-printed JSON with syntax highlighting
 grep "error"    # Fast search with ripgrep
 find ".md"      # Find all markdown files
+```
+
+### Quick Open Shortcuts
+
+Quickly open applications and directories:
+
+| Alias    | Command    | Description                    |
+| -------- | ---------- | ------------------------------ |
+| `vs`     | `code .`   | Open VS Code in current dir    |
+| `vscode` | `code .`   | Alias for vs (full name)       |
+| `f`      | `open .`   | Open Finder in current dir     |
+| `finder` | `open .`   | Alias for f (full name)        |
+
+**Examples:**
+
+```bash
+vs              # Opens current directory in VS Code
+cd ~/Dev/project && vs  # Navigate and open
+f               # Opens current directory in Finder
+```
+
+### App Launchers
+
+Open GUI applications from terminal (all lowercase):
+
+**Browsers:**
+
+| Alias   | Command              | App     |
+| ------- | -------------------- | ------- |
+| `ff`    | `open -a Firefox`    | Firefox |
+| `orion` | `open -a Orion`      | Orion   |
+
+**AI/LLM:**
+
+| Alias    | Command                 | App        |
+| -------- | ----------------------- | ---------- |
+| `claude` | `open -a Claude`        | Claude     |
+| `gpt`    | `open -a ChatGPT`       | ChatGPT    |
+| `pplx`   | `open -a Perplexity`    | Perplexity |
+| `obs`    | `open -a Obsidian`      | Obsidian   |
+| `jan`    | `open -a Jan`           | Jan        |
+
+**Development:**
+
+| Alias    | Command              | App    |
+| -------- | -------------------- | ------ |
+| `cursor` | `open -a Cursor`     | Cursor |
+| `cur`    | `open -a Cursor`     | Short  |
+
+**Productivity:**
+
+| Alias    | Command                     | App         |
+| -------- | --------------------------- | ----------- |
+| `pdf`    | `open -a 'PDF Expert'`      | PDF Expert  |
+| `shot`   | `open -a Shottr`            | Shottr      |
+| `alfred` | `open -a Alfred`            | Alfred      |
+
+**Communication:**
+
+| Alias      | Command                | App      |
+| ---------- | ---------------------- | -------- |
+| `zoom`     | `open -a Zoom`         | Zoom     |
+| `wa`       | `open -a WhatsApp`     | WhatsApp |
+| `whatsapp` | `open -a WhatsApp`     | Full name|
+
+**Other:**
+
+| Alias  | Command                  | App         |
+| ------ | ------------------------ | ----------- |
+| `tv`   | `open -a TradingView`    | TradingView |
+| `vpn`  | `open -a ProtonVPN`      | ProtonVPN   |
+
+**Examples:**
+
+```bash
+gpt              # Open ChatGPT
+claude           # Open Claude
+obs              # Open Obsidian for notes
+cursor           # Open Cursor IDE
+ff               # Open Firefox
+```
+
+### Workflow Helpers
+
+Productivity shortcuts for common operations:
+
+| Alias   | Command        | Description                    |
+| ------- | -------------- | ------------------------------ |
+| `show`  | `open -R`      | Reveal file in Finder          |
+| `ql`    | `qlmanage -p`  | Quick Look preview             |
+| `copy`  | `pbcopy`       | Pipe to clipboard              |
+| `paste` | `pbpaste`      | Paste from clipboard           |
+| `port`  | `lsof -i :`    | Check what's running on port   |
+
+**Examples:**
+
+```bash
+show file.txt       # Reveal file in Finder
+ql image.png        # Quick Look preview
+cat file.txt | copy # Copy file contents to clipboard
+paste               # Paste clipboard contents
+port 3000           # Check what's on port 3000
 ```
 
 ### Navigation Aliases
@@ -371,6 +476,7 @@ Miscellaneous useful aliases:
 mkcd dirname        # Create directory and cd into it
 extract file.zip    # Extract any archive type
 backup file.txt     # Create timestamped backup
+newproj myapp       # Create ~/Dev/myapp and open in VS Code
 ```
 
 ### Search & Info
@@ -379,6 +485,9 @@ backup file.txt     # Create timestamped backup
 histgrep searchterm # Search command history
 sysinfo            # Complete system information
 pyenv-info         # Python environment details
+port 3000          # Check what's running on port 3000
+killport 3000      # Kill process running on port 3000
+kill-port 3000     # Alternative (with hyphen)
 ```
 
 ### Network
