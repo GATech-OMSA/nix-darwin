@@ -32,6 +32,7 @@ secrets/secrets.yaml
 # User data secrets
 user-data/secrets/
 user-data/app-configs/claude.json    # Contains PII (email, UUIDs)
+user-data/user-content/claude/       # Claude Code user-content (todos, etc.)
 
 # Credential file patterns (various formats)
 *_credentials.txt
@@ -98,7 +99,6 @@ Planning
 .claude/
 claudedocs/
 CLAUDE.md
-
 # Cursor
 .cursor/
 

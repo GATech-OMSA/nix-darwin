@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, myLib, ... }:
 
 {
   # Work machine-specific configuration
@@ -43,7 +43,7 @@
   };
 
   # Work-specific shell functions
-  programs.zsh.initExtra = ''
+  programs.zsh.initContent = ''
     # HRStringCrypter helper
     function crypter() {
       if command -v micromamba &> /dev/null && command -v python &> /dev/null; then

@@ -113,6 +113,7 @@
       # Development
       cursor = "open -a Cursor";
       cur = "open -a Cursor";
+      cc = "claude";  # Claude Code CLI in terminal
 
       # Productivity
       pdf = "open -a 'PDF Expert'";
