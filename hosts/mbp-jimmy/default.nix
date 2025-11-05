@@ -12,6 +12,7 @@
   users.users.${username} = {
     name = username;
     home = "/Users/${username}";
+    shell = pkgs.zsh;
   };
 
   # Set primary user (required for some nix-darwin features)
