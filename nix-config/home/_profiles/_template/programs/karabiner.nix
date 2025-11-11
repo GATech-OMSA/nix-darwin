@@ -6,7 +6,7 @@ let
 
   # Karabiner config directory
   karabinerConfigDir = "${config.home.homeDirectory}/.config/karabiner";
-  karabinerUserData = "${config.home.homeDirectory}/nix-darwin/machine-backups/${machineId}/user-content/karabiner";
+  karabinerUserData = "${config.home.homeDirectory}/nix-darwin/workspace/${machineId}/user-content/karabiner";
 in
 
 {

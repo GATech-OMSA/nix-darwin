@@ -5,7 +5,7 @@
 
 {
   # Machine identity (choose unique ID)
-  machineId = "CHANGE-ME";  # Example: "mbp-jimmy-2021" or "mbp-work-2024"
+  machineId = "CHANGE-ME";  # Example: "mbp-2021" or  "macbook-pro-m1";
 
   # Profile selection
   profileName = "personal";  # Options: "personal" | "work" | "minimal"
