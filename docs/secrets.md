@@ -349,7 +349,7 @@ Found 12 existing secret(s):
 ✓ SOPS age key: ~/.config/sops/age/keys.txt
 ✓ Alias file with potential secrets: ~/.config/zsh/aliases.zsh
 
-These secrets should be encrypted in nix-config/hosts/mbp-jimmy/secrets.yaml
+These secrets should be encrypted in nix-config/hosts/macbook-pro-m1/secrets.yaml
 See docs/secrets.md for SOPS setup instructions
 
 To change scan depth: export SECRET_SCAN_DEPTH=3  # Default: 4
