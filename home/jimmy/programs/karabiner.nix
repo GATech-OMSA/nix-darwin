@@ -1,4 +1,4 @@
-{ config, pkgs, lib, myLib, hostname, ... }:
+{ config, pkgs, lib, myLib, hostname, username, ... }:
 
 let
   # Toggle for custom keybindings
@@ -6,7 +6,7 @@ let
 
   # Karabiner config directory
   karabinerConfigDir = "${config.home.homeDirectory}/.config/karabiner";
-  karabinerUserData = "${config.home.homeDirectory}/nix-darwin/user-data/user-content/karabiner";
+  karabinerUserData = "${config.home.homeDirectory}/nix-darwin/user-data-${username}/user-content/karabiner";
 in
 
 {

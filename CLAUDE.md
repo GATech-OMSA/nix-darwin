@@ -634,41 +634,102 @@ Custom plugins require manual installation:
 
 **MANDATORY: Reference planning docs before starting work**
 
-**Before Any Phase Work:**
-1. Read `claudedocs/planning/PROGRESS.md` - check phase status, tasks, dependencies
+#### Planning Document Lifecycle
+
+**Document Flow:**
+```
+BACKLOG.md           → Raw ideas and intake
+    ↓ (grooming)
+PROGRESS.md          → Active work (todo + in-progress only)
+    ↓ (completion)
+COMPLETED.md         → Historical record (completed tasks)
+```
+
+**File Purposes:**
+- **BACKLOG.md**: Ungroomed ideas, future improvements, user requests
+- **PROGRESS.md**: Current phase tasks only (todo/in-progress), living work document
+- **COMPLETED.md**: Archive of finished work (simple table format)
+
+#### Before Starting Work
+
+1. Read `PROGRESS.md` - check current phase status, tasks, dependencies
 2. Create feature branch: `git checkout -b feature/phase-X-description`
+3. Mark task as `in_progress` in PROGRESS.md
 
-**During Execution:**
-- Mark tasks `in_progress` in PROGRESS.md when starting
-- Update completion status in PROGRESS.md immediately after finishing
-- Reference task numbers (e.g., "Task 2.1") in commit messages
+#### During Execution
 
-**After Phase Completion:**
+- Update task status in PROGRESS.md as you work
+- Reference task numbers in commit messages (e.g., "Task 6.1: Add config system")
+- Keep only active tasks visible in PROGRESS.md
+
+#### After Task Completion
+
+1. Mark task complete in PROGRESS.md
+2. Immediately move completed task to COMPLETED.md:
+   - Simple table row: `| #6.1 | Config system setup | 2025-11-07 | 2.5h | Phase 6 |`
+   - Remove from PROGRESS.md
+3. Update phase completion percentage in PROGRESS.md
+
+#### After Phase Completion
+
 1. Create `claudedocs/completed/phase-X/PHASE-X-COMPLETION-SUMMARY.md`
-2. Update PROGRESS.md: Mark phase complete, update metrics
-3. Archive detailed task documentation to completed/ directory
+2. Move ALL phase tasks from PROGRESS.md to COMPLETED.md
+3. Update PROGRESS.md: Next phase becomes current
 4. Run validation checkpoint from PROGRESS.md
+5. Archive detailed design docs to `claudedocs/completed/phase-X/`
 
-**Adding New Tasks:**
-1. Add to `claudedocs/planning/BACKLOG.md` with classification and effort
-2. Periodic review: prioritize using impact-effort matrix
-3. Move prioritized items from BACKLOG.md to PROGRESS.md
+#### Adding New Tasks
 
-**Required Updates:**
-- PROGRESS.md: Task status changes (mandatory)
-- BACKLOG.md: New ideas and intake (as needed)
-- CLAUDE.md: Only if significant (see Section 13)
+**New Ideas:**
+1. Add to BACKLOG.md with brief description and estimated effort
+2. Tag with category (architecture, config, docs, etc.)
 
-**PM Agent Usage Pattern:**
+**Grooming (Periodic):**
+1. Review BACKLOG.md items
+2. Prioritize using impact-effort matrix
+3. For selected items: Create detailed breakdown in PROGRESS.md
+4. Remove groomed items from BACKLOG.md
+
+**Breakdown Pattern:**
+- Task number: `#X.Y` (phase.task)
+- Description: What needs to be done
+- Effort: Hours estimate
+- Priority: 🔴 Critical, 🟡 Important, 🟢 Nice-to-have
+- Dependencies: Which tasks must complete first
+
+#### Document Maintenance Rules
+
+**PROGRESS.md:**
+- Keep ONLY active phase tasks
+- Remove completed tasks immediately → move to COMPLETED.md
+- Update completion percentages in real-time
+- Simple, scannable format
+
+**BACKLOG.md:**
+- Brief descriptions only
+- No detailed breakdowns (those go in PROGRESS.md)
+- Review monthly, groom quarterly
+
+**COMPLETED.md:**
+- Simple table format:
+  ```markdown
+  | Task | Description | Completed | Effort | Phase |
+  |------|-------------|-----------|--------|-------|
+  | #1.1 | Duplicates removal | 2025-11-06 | 2h | Phase 1 |
+  ```
+- Append only (chronological history)
+- Annual archive to `claudedocs/archive/completed-YYYY.md`
+
+#### PM Agent Usage Pattern
 
 When using PM agent for backlog grooming or phase planning:
 
 1. Read PROGRESS.md to identify last planned phase
-2. If next phase undefined → Create detailed breakdown (task numbers, hours, deliverables)
+2. If next phase undefined → Create detailed breakdown
 3. If next phase already defined → Skip to phase after that
 4. Never re-groom already-defined phases
 
-Example: Phase 5 defined (11 tasks) + 1 backlog item → PM agent creates Phase 6 breakdown (NOT re-analyze Phase 5)
+**Example**: Phase 5 defined (11 tasks) + backlog items → PM agent creates Phase 6 breakdown (NOT re-analyze Phase 5)
 
 ---
 

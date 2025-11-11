@@ -1,8 +1,8 @@
-{ config, pkgs, lib, hostname, myLib, ... }:
+{ config, pkgs, lib, hostname, myLib, machineType, ... }:
 
 let
   # Conditional email based on machine type
-  gitEmail = myLib.selectByMachine hostname {
+  gitEmail = myLib.selectByMachineType machineType {
     personal = "jimmy-jain@users.noreply.github.com";
     work = "user@example.com";
   };

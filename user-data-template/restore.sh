@@ -10,7 +10,7 @@ echo ""
 
 if [ ! -d "$BACKUP_DIR/app-configs" ] && [ ! -d "$BACKUP_DIR/user-content" ]; then
   echo "❌ No backups found in $BACKUP_DIR"
-  echo "   Run backup.sh on your old machine first, then copy user-data/ folder"
+  echo "   Run backup.sh on your old machine first, then copy this directory"
   exit 1
 fi
 

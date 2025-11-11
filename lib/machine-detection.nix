@@ -1,23 +1,23 @@
 # Machine Detection Helpers
 #
-# Provides hostname-independent machine type detection with local override support.
+# Provides machine type checking functions that work directly with machineType.
+#
+# DEPRECATION NOTE:
+#   Hostname-based functions (getMachineType, requireKnownMachine) are deprecated.
+#   Use machineType directly from machineConfig (flake.nix) instead.
 #
 # Purpose:
-#   - Decouple configuration from specific hostnames
-#   - Enable flexible machine type detection
-#   - Support local overrides for testing
-#   - Provide validation for known machines
+#   - Provide backward-compatible type checking
+#   - Support direct machineType comparisons
+#   - Enable migration from hostname to machineType
 #
 # Functions:
-#   - getMachineType: Get machine type with priority system
-#   - isPersonal: Check if personal machine
-#   - isWork: Check if work machine
-#   - requireKnownMachine: Validate machine is recognized
-#
-# Priority System:
-#   1. Local override (hosts/local-override.nix) - highest priority
-#   2. Machine mapping (hosts/machines.nix)
-#   3. Unknown machine - throws error if validation enabled
+#   - isPersonalType: Check if machineType is "personal" (NEW - preferred)
+#   - isWorkType: Check if machineType is "work" (NEW - preferred)
+#   - isPersonal: Check if hostname maps to personal (DEPRECATED)
+#   - isWork: Check if hostname maps to work (DEPRECATED)
+#   - getMachineType: Get type from hostname (DEPRECATED)
+#   - requireKnownMachine: Validate hostname (DEPRECATED)
 
 { lib }:
 
@@ -34,7 +34,81 @@ let
     else null;
 
 in rec {
-  # Get machine type with priority: local override > mapping > unknown
+  # ==================================================
+  # NEW API: Direct machineType functions (PREFERRED)
+  # ==================================================
+
+  # Check if machine type is personal
+  #
+  # Args:
+  #   machineType: String - The machine type from machineConfig
+  #
+  # Returns:
+  #   Bool - true if machineType is "personal"
+  #
+  # Example:
+  #   isPersonalType "personal" => true
+  #   isPersonalType "work" => false
+  #
+  # Usage in modules:
+  #   lib.mkIf (myLib.isPersonalType machineType) { ... }
+  isPersonalType = machineType: machineType == "personal";
+
+  # Check if machine type is work
+  #
+  # Args:
+  #   machineType: String - The machine type from machineConfig
+  #
+  # Returns:
+  #   Bool - true if machineType is "work"
+  #
+  # Example:
+  #   isWorkType "work" => true
+  #   isWorkType "personal" => false
+  #
+  # Usage in modules:
+  #   lib.mkIf (myLib.isWorkType machineType) { ... }
+  isWorkType = machineType: machineType == "work";
+
+  # Select value based on machine type
+  #
+  # Args:
+  #   machineType: String - The machine type from machineConfig
+  #   values: AttrSet - Map of machine type to value
+  #
+  # Returns:
+  #   Any - Value for machine type, or default if provided
+  #
+  # Throws:
+  #   Error if no value for machine type and no default
+  #
+  # Example:
+  #   selectByMachineType "work" { personal = "X"; work = "Y"; }
+  #   => "Y"
+  #
+  # Usage in modules:
+  #   email = myLib.selectByMachineType machineType {
+  #     personal = "personal@example.com";
+  #     work = "work@example.com";
+  #   };
+  selectByMachineType = machineType: values:
+    let
+      hasDefault = values ? default;
+    in
+      if values ? ${machineType} then
+        values.${machineType}
+      else if hasDefault then
+        values.default
+      else
+        throw "No value for machine type '${machineType}' and no default provided";
+
+  # ==================================================
+  # DEPRECATED API: Hostname-based functions
+  # ==================================================
+  # These are kept for backward compatibility only.
+  # Use the new API (isPersonalType, isWorkType, selectByMachineType) instead.
+
+  # DEPRECATED: Get machine type with priority: local override > mapping > unknown
   #
   # Args:
   #   hostname: String - The machine hostname
@@ -57,7 +131,8 @@ in rec {
       # Unknown machine
       "unknown";
 
-  # Check if machine is personal type
+  # DEPRECATED: Check if machine is personal type
+  # Use isPersonalType instead
   #
   # Args:
   #   hostname: String - The machine hostname
@@ -71,7 +146,8 @@ in rec {
   isPersonal = hostname:
     (getMachineType hostname) == "personal";
 
-  # Check if machine is work type
+  # DEPRECATED: Check if machine is work type
+  # Use isWorkType instead
   #
   # Args:
   #   hostname: String - The machine hostname
@@ -85,8 +161,9 @@ in rec {
   isWork = hostname:
     (getMachineType hostname) == "work";
 
-  # Validate that machine is recognized (not "unknown")
+  # DEPRECATED: Validate that machine is recognized (not "unknown")
   # Throws error if machine is not in mapping and no local override exists
+  # This function is still used in flake.nix for backward compatibility
   #
   # Args:
   #   hostname: String - The machine hostname
@@ -120,8 +197,9 @@ in rec {
       else
         type;
 
-  # Select value based on machine type with fallback support
-  # This is re-exported from default.nix but uses the new getMachineType
+  # DEPRECATED: Select value based on machine type with fallback support
+  # Use selectByMachineType instead
+  # This is kept for backward compatibility only
   #
   # Args:
   #   hostname: String - The machine hostname

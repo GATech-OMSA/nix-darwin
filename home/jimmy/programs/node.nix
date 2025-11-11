@@ -1,13 +1,13 @@
-{ config, pkgs, lib, hostname, myLib, ... }:
+{ config, pkgs, lib, hostname, myLib, machineType, ... }:
 
 let
   # Machine-specific NPM config
-  npmEmail = myLib.selectByMachine hostname {
+  npmEmail = myLib.selectByMachineType machineType {
     personal = "jimmy-jain@users.noreply.github.com";
     work = "user@example.com";
   };
 
-  npmAuthor = myLib.selectByMachine hostname {
+  npmAuthor = myLib.selectByMachineType machineType {
     personal = "Jim";
     work = "Jim";
   };

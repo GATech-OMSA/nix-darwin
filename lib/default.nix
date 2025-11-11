@@ -18,21 +18,36 @@ rec {
   # Re-export machine detection functions for compatibility
   # These now use the flexible machine detection system from machine-detection.nix
 
+  # NEW API: Direct machineType functions (PREFERRED)
+  # Check if machine type is personal
+  isPersonalType = machineDetection.isPersonalType;
+
+  # Check if machine type is work
+  isWorkType = machineDetection.isWorkType;
+
+  # Select value based on machine type (direct)
+  # Usage: selectByMachineType machineType { personal = "X"; work = "Y"; }
+  selectByMachineType = machineDetection.selectByMachineType;
+
+  # DEPRECATED API: Hostname-based functions (for backward compatibility)
   # Determine machine type from hostname
   # Returns: "personal" | "work" | "unknown"
   # Now uses hosts/machines.nix mapping with local override support
   machineType = machineDetection.getMachineType;
 
-  # Check if machine is personal
+  # DEPRECATED: Check if machine is personal
+  # Use isPersonalType instead
   isPersonal = machineDetection.isPersonal;
 
-  # Check if machine is work
+  # DEPRECATED: Check if machine is work
+  # Use isWorkType instead
   isWork = machineDetection.isWork;
 
-  # Validate machine is recognized (throws error if unknown)
+  # DEPRECATED: Validate machine is recognized (throws error if unknown)
   requireKnownMachine = machineDetection.requireKnownMachine;
 
-  # Select value based on machine type
+  # DEPRECATED: Select value based on machine type
+  # Use selectByMachineType instead
   # Usage: selectByMachine hostname { personal = "X"; work = "Y"; default = "Z"; }
   selectByMachine = machineDetection.selectByMachine;
 

@@ -22,13 +22,11 @@ let
     "${homeDir}/.secrets/credentials.env.enc"
   ];
 
-  # SSH keys (both personal and work)
+  # SSH private keys (both personal and work)
+  # NOTE: Public keys (.pub) and known_hosts are excluded - they're not secrets
   sshFiles = [
     "${homeDir}/.ssh/id_ed25519"
-    "${homeDir}/.ssh/id_ed25519.pub"
     "${homeDir}/.ssh/id_ed25519_work"
-    "${homeDir}/.ssh/id_ed25519_work.pub"
-    "${homeDir}/.ssh/known_hosts"
   ];
 
   # Database connection files (pattern: ~/.db/{database_type}/{environment})
@@ -102,8 +100,9 @@ let
   ];
 
   # Repository-specific secret paths (relative to repo root)
+  # Note: user-data-*/ matches any username (user-data-jimmy/, user-data-alice/, etc.)
   repoSecrets = [
-    "user-data/secrets/*"
+    "user-data-*/secrets/*"
     "hosts/*/secrets.yaml"
   ];
 

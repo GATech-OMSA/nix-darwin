@@ -159,7 +159,7 @@ in
       orion = "open -a Orion";
 
       # AI/LLM
-      claude = "open -a Claude";
+      cld = "open -a Claude";
       gpt = "open -a ChatGPT";
       pplx = "open -a Perplexity";
       obs = "open -a Obsidian";
@@ -736,24 +736,24 @@ in
 
       # Backup user data (runs backup.sh)
       function backup-user-data() {
-        if [ ! -f ${nixDarwinDir}/user-data/backup.sh ]; then
+        if [ ! -f ${nixDarwinDir}/user-data-${username}/backup.sh ]; then
           echo "❌ Error: backup script not found"
-          echo "Expected: ${nixDarwinDir}/user-data/backup.sh"
+          echo "Expected: ${nixDarwinDir}/user-data-${username}/backup.sh"
           return 1
         fi
         echo "📦 Running user data backup..."
-        ${nixDarwinDir}/user-data/backup.sh
+        ${nixDarwinDir}/user-data-${username}/backup.sh
       }
 
       # Restore user data from backup (runs restore.sh)
       function restore-user-data() {
-        if [ ! -f ${nixDarwinDir}/user-data/restore.sh ]; then
+        if [ ! -f ${nixDarwinDir}/user-data-${username}/restore.sh ]; then
           echo "❌ Error: restore script not found"
-          echo "Expected: ${nixDarwinDir}/user-data/restore.sh"
+          echo "Expected: ${nixDarwinDir}/user-data-${username}/restore.sh"
           return 1
         fi
         echo "📦 Restoring user data from backup..."
-        ${nixDarwinDir}/user-data/restore.sh
+        ${nixDarwinDir}/user-data-${username}/restore.sh
       }
 
       # Sync user data: Backup + Commit + Push
@@ -783,9 +783,9 @@ in
         cd ${nixDarwinDir}
 
         # Check if there are changes in user-data
-        if ! git diff --quiet user-data/ || ! git diff --cached --quiet user-data/; then
+        if ! git diff --quiet user-data-${username}/ || ! git diff --cached --quiet user-data-${username}/; then
           # Stage all user-data changes
-          git add user-data/
+          git add user-data-${username}/
 
           # Create commit with timestamp
           local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
@@ -1159,7 +1159,7 @@ EOF
         echo "📦 Syncing user data to nix-darwin repository..."
         local errors=0
         local nix_darwin="${nixDarwinDir}"
-        local user_data="$nix_darwin/user-data/user-content"
+        local user_data="$nix_darwin/user-data-${username}/user-content"
 
         # Check if nix-darwin exists
         if [ ! -d "$nix_darwin" ]; then
@@ -1507,36 +1507,35 @@ EOF
         fi
       }
 
-      # Helper: Confirm risky operation
+            # Helper: Confirm risky operation
       __cleanup_confirm() {
         local operation="$1"
         local description="$2"
         local risk="$3"  # low, medium, high
         local yes_flag="$4"
 
-        # Skip if --yes flag
-        [[ "$yes_flag" == "true" ]] && return 0
+      #   # Skip if --yes flag
+      #   [[ "$yes_flag" == "true" ]] && return 0
 
-        # Show warning based on risk level
+      #   # Show warning based on risk level
         case "$risk" in
           high)
-            echo -e "\033[31m⚠️  HIGH RISK OPERATION\033[0m"
+      #       echo -e "\\033[31m⚠️  HIGH RISK OPERATION\\033[0m"
             ;;
           medium)
-            echo -e "\033[33m⚠️  Medium Risk Operation\033[0m"
+      #       echo -e "\\033[33m⚠️  Medium Risk Operation\\033[0m"
             ;;
         esac
 
-        [[ -n "$description" ]] && echo -e "\033[1m$description\033[0m"
+      #   [[ -n "$description" ]] && echo -e "\\033[1m$description\\033[0m"
         echo ""
 
-        read -p "Continue with $operation? [y/N] " -n 1 -r
-        echo
-        [[ ! $REPLY =~ ^[Yy]$ ]] && {
-          echo -e "\033[33mSkipped: $operation\033[0m"
+        if confirm "Continue with $operation?"; then
+          return 0
+        else
+      #     echo -e "\\033[33mSkipped: $operation\\033[0m"
           return 1
-        }
-        return 0
+        fi
       }
 
       # ============================================
@@ -2949,24 +2948,24 @@ EOF
 
       # Backup non-secret user data
       function backup-user-data() {
-        if [ ! -f ~/nix-darwin/user-data/backup.sh ]; then
+        if [ ! -f ~/nix-darwin/user-data-${username}/backup.sh ]; then
           echo "❌ Error: backup script not found"
-          echo "Expected: ~/nix-darwin/user-data/backup.sh"
+          echo "Expected: ~/nix-darwin/user-data-${username}/backup.sh"
           return 1
         fi
         echo "📦 Running user data backup..."
-        ~/nix-darwin/user-data/backup.sh
+        ~/nix-darwin/user-data-${username}/backup.sh
       }
 
       # Restore user data from backup
       function restore-user-data() {
-        if [ ! -f ~/nix-darwin/user-data/restore.sh ]; then
+        if [ ! -f ~/nix-darwin/user-data-${username}/restore.sh ]; then
           echo "❌ Error: restore script not found"
-          echo "Expected: ~/nix-darwin/user-data/restore.sh"
+          echo "Expected: ~/nix-darwin/user-data-${username}/restore.sh"
           return 1
         fi
         echo "📦 Restoring user data from backup..."
-        ~/nix-darwin/user-data/restore.sh
+        ~/nix-darwin/user-data-${username}/restore.sh
       }
 
       # Sync user data: Backup + Commit + Push
@@ -2993,9 +2992,9 @@ EOF
         cd ~/nix-darwin
 
         # Check if there are changes in user-data
-        if ! git diff --quiet user-data/ || ! git diff --cached --quiet user-data/; then
+        if ! git diff --quiet user-data-${username}/ || ! git diff --cached --quiet user-data-${username}/; then
           # Stage all user-data changes
-          git add user-data/
+          git add user-data-${username}/
 
           # Create commit with timestamp
           local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
@@ -3036,13 +3035,13 @@ EOF
           echo ""
           echo "See: ~/nix-darwin/secrets/SETUP.md"
           return 1
-        }
+        fi
 
         if ! command -v sops &> /dev/null; then
           echo "❌ Error: sops not found"
           echo "Install with: brew install sops"
           return 1
-        }
+        fi
 
         # Show informational warning
         warn "Editing Encrypted Secrets" "INFO"
@@ -3296,7 +3295,7 @@ TEMPLATE
         echo ""
         echo "📚 Documentation:"
         echo "  ~/nix-darwin/secrets/SETUP.md"
-        echo "  ~/nix-darwin/user-data/README.md"
+        echo "  ~/nix-darwin/user-data-${username}/README.md"
         echo "================================================"
       }
 

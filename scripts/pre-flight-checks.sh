@@ -289,20 +289,18 @@ check_required_files() {
 check_secrets_encrypted() {
   print_check "Checking secrets encryption..."
 
-  local secrets_files=(
-    "$NIX_DARWIN_DIR/hosts/mbp-jimmy/secrets.yaml"
-    "$NIX_DARWIN_DIR/hosts/mbp-work/secrets.yaml"
-  )
+  local secrets_files
+  secrets_files=$(find "$NIX_DARWIN_DIR/hosts" -name "secrets.yaml" -not -path "*/_template/*")
 
   local unencrypted=0
-  for file in "${secrets_files[@]}"; do
+  for file in $secrets_files; do
     if [[ -f "$file" ]]; then
-      # Check if file is binary (encrypted)
-      if file "$file" | grep -q "data"; then
-        # Binary file = encrypted
+      # Check if file contains sops and mac keys (encrypted)
+      if grep -q "sops:" "$file" && grep -q "mac:" "$file"; then
+        # Encrypted file
         continue
       else
-        # Text file = not encrypted
+        # Not encrypted
         print_critical "Secrets file is not encrypted: $file"
         print_info "Run: sops -e -i $file"
         ((unencrypted++))

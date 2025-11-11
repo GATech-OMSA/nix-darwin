@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, ... }:
+{ config, pkgs, lib, hostname, myLib, machineType, ... }:
 
 {
   # SSH configuration - Declarative management
@@ -63,7 +63,7 @@
       # };
 
       # Work-specific SSH configurations (only on work Mac)
-    } // lib.optionalAttrs (myLib.isWork hostname) {
+    } // lib.optionalAttrs (myLib.isWorkType machineType) {
       # Example: Work bastion host
       # "work-bastion" = {
       #   hostname = "bastion.company.com";

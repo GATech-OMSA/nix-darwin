@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, ... }:
+{ config, pkgs, lib, hostname, myLib, machineType, ... }:
 
 let
   # Dock apps configuration (left to right order)
@@ -29,7 +29,7 @@ let
   ];
 
   # Select apps based on machine type
-  persistentApps = myLib.selectByMachine hostname {
+  persistentApps = myLib.selectByMachineType machineType {
     work = workDockApps;
     personal = personalDockApps;
   };

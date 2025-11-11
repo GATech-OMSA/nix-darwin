@@ -674,11 +674,11 @@ rec {
             if (.matches | type == "array") then
               .matches[] |
               "   • \(.env) (Account: \(.id))\n" +
-              (.roles[] | "     → \(.project)-\(.env)" + (if . != "support" then "-\(. )" else "" end) + " (\(.) role)")
+              (.roles[] | "     → \($proj.key)-\(.env)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)")
             else
               .matches |
               "   • \(.env) (Account: \(.id))\n" +
-              (.roles[] | "     → \(.project)-\(.env)" + (if . != "support" then "-\(. )" else "" end) + " (\(.) role)")
+              (.roles[] | "     → \($proj.key)-\(.env)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)")
             end
           ) +
           "\n"
@@ -828,7 +828,7 @@ rec {
                     ["support"]
                   end
                 )[] |
-                "     → \($proj.key)-\(.key)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)"
+                "     → \($proj.key)-\(.key)" + (if . != "support" then "-\(.)" else "" end) + " (\.) role)"
               )
             ] | join("\n")
           end

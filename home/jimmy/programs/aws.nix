@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, ... }:
+{ config, pkgs, lib, hostname, myLib, machineType, ... }:
 
 let
   # CA bundle path for corporate certificates (work machines only)
@@ -112,7 +112,7 @@ in
   # Manages ~/.aws/config (NOT credentials - those stay in ~/.zsh_secrets)
 
   # AWS config file - select based on machine type
-  home.file.".aws/config".text = myLib.selectByMachine hostname {
+  home.file.".aws/config".text = myLib.selectByMachineType machineType {
     personal = personalConfig;
     work = workConfig;
   };
