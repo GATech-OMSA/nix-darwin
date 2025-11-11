@@ -522,42 +522,25 @@ After setup, you have:
 
 ---
 
-## Comprehensive Documentation
+## Documentation
 
-This repository includes **17 well-organized documentation files** covering every aspect:
+**Focused learning with comprehensive reference**
 
-### Start Here
+### Quick Start
 
-1. **[START-HERE.md](docs/START-HERE.md)** 📍 - Main entry point (read this first!)
-2. **[QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** ⚡ - One-page cheat sheet (print and keep visible)
-3. **[Documentation Hub](docs/index.md)** - Complete documentation index
+1. **[QUICKSTART.md](docs/QUICKSTART.md)**
+2. **[LEARNING.md](docs/LEARNING.md)**
+3. **[Documentation Hub](docs/index.md)**
 
-### Documentation Sections
+### Comprehensive Reference
 
-**Guides (6 files)** - Practical, task-oriented documentation:
+For detailed documentation on specific topics, see **[docs/archive/](docs/archive/)**:
 
-- **[Installation Guide](docs/guides/installation.md)** - Complete setup
-- **[Usage Guide](docs/guides/usage.md)** - Daily usage, adding packages/aliases
-- **[Backup & Recovery](docs/guides/backup-and-recovery.md)** - Safety and disaster recovery
-- **[Secrets Management](docs/guides/secrets.md)** - Managing encrypted secrets
-- **[Learning Modern CLI](docs/guides/learning.md)** - Modern tools and multi-machine setup
-- **[Troubleshooting](docs/guides/troubleshooting.md)** - Common issues and solutions
+- **Guides (12 files)** - Installation, usage, security, testing, multi-machine setup, troubleshooting
+- **Reference (6 files)** - System, shell, languages, infrastructure, tools, AWS schema
+- **Architecture (9 files)** - Overview, reference, ADRs
+- **Appendix** - FAQ (100+ questions), glossary, resources, changelog
 
-**Reference (5 files)** - Exhaustive documentation:
-
-- **[System Reference](docs/reference/system.md)** - Nix-Darwin, Home Manager
-- **[Shell Reference](docs/reference/shell.md)** - Zsh, Git, Starship
-- **[Languages Reference](docs/reference/languages.md)** - Python, Node.js
-- **[Infrastructure Reference](docs/reference/infrastructure.md)** - AWS, Docker, Kubernetes, Terraform
-- **[Tools Reference](docs/reference/tools.md)** - VS Code, AI/ML, Modern CLI, macOS
-
-**Architecture (2 files)** - System design:
-
-- **[Architecture Overview](docs/architecture/overview.md)** - How it all works
-- **[Architecture Reference](docs/architecture/reference.md)** - File structure + best practices
-
-**Appendix (1 file)** - All-in-one reference:
-
-- **[FAQ & Reference](docs/appendix/faq.md)** - FAQ, Glossary, Resources, Changelog
+**Structure:** 2 primary guides + 28 comprehensive references
 
 ---

@@ -1,0 +1,138 @@
+{
+  "// INSTRUCTIONS": "This is a template for AWS accounts configuration",
+  "// STEP 1": "Copy this file to ~/.aws/accounts.json",
+  "// STEP 2": "Update with your actual AWS account IDs, regions, and project names",
+  "// STEP 3": "Ensure your ~/.aws/config has matching SSO profiles",
+  "// STEP 4": "Run: awslist to verify configuration loaded correctly",
+  "// STRUCTURE": "Each top-level key is a 'project' (or domain)",
+  "// PROFILES": "Each project contains an array of 'profiles' (environments + roles)",
+  "// GENERATED ALIASES": "Project 'my-project' with 'dev' env creates: mpdev, mpdev-developer, mpdev-poweruser",
+
+  "work-domain": {
+    "description": "Work AWS Organization",
+    "profiles": [
+      {
+        "name": "work-domain",
+        "alias": "wd",
+        "account_id": "123456789012",
+        "env": "prod",
+        "role": "AdministratorAccess",
+        "region": "us-east-1",
+        "description": "Work domain production account"
+      },
+      {
+        "name": "work-nonprod",
+        "alias": "wdnp",
+        "account_id": "234567890123",
+        "env": "dev",
+        "role": "PowerUserAccess",
+        "region": "us-east-1",
+        "description": "Work domain non-production account"
+      }
+    ]
+  },
+
+  "my-project": {
+    "description": "Example Multi-Environment Project",
+    "profiles": [
+      {
+        "name": "my-project-dev",
+        "alias": "mp",
+        "account_id": "345678901234",
+        "env": "dev",
+        "role": "PowerUserAccess",
+        "region": "us-west-2",
+        "description": "My Project development environment"
+      },
+      {
+        "name": "my-project-dev-developer",
+        "alias": "mp",
+        "account_id": "345678901234",
+        "env": "dev",
+        "role": "DeveloperAccess",
+        "region": "us-west-2",
+        "description": "My Project dev with limited developer access"
+      },
+      {
+        "name": "my-project-qa",
+        "alias": "mp",
+        "account_id": "456789012345",
+        "env": "qa",
+        "role": "PowerUserAccess",
+        "region": "us-west-2",
+        "description": "My Project QA environment"
+      },
+      {
+        "name": "my-project-prod",
+        "alias": "mp",
+        "account_id": "567890123456",
+        "env": "prod",
+        "role": "ReadOnlyAccess",
+        "region": "us-west-2",
+        "description": "My Project production (read-only)"
+      },
+      {
+        "name": "my-project-prod-admin",
+        "alias": "mp",
+        "account_id": "567890123456",
+        "env": "prod",
+        "role": "AdministratorAccess",
+        "region": "us-west-2",
+        "description": "My Project production (admin access)"
+      }
+    ]
+  },
+
+  "personal": {
+    "description": "Personal AWS Account",
+    "profiles": [
+      {
+        "name": "personal",
+        "alias": "pers",
+        "account_id": "098765432109",
+        "env": "prod",
+        "role": "AdministratorAccess",
+        "region": "us-east-1",
+        "description": "Personal AWS account"
+      }
+    ]
+  },
+
+  "// FIELD DEFINITIONS": {
+    "name": "Profile name (must match ~/.aws/config profile name)",
+    "alias": "Short project alias (2-4 chars) - used for generated aliases",
+    "account_id": "12-digit AWS account ID",
+    "env": "Environment (dev, qa, uat, stage, prod, sbx, etc.)",
+    "role": "IAM role name (PowerUserAccess, AdministratorAccess, etc.)",
+    "region": "Default AWS region (us-east-1, us-west-2, etc.)",
+    "description": "Human-readable description"
+  },
+
+  "// GENERATED ALIASES": {
+    "my-project dev PowerUserAccess": "mpdev (awsuse mp dev)",
+    "my-project dev DeveloperAccess": "mpdev-developer (awsuse mp dev developer)",
+    "my-project qa PowerUserAccess": "mpqa (awsuse mp qa)",
+    "my-project prod ReadOnlyAccess": "mpprod (awsuse mp prod)",
+    "my-project prod AdministratorAccess": "mpprod-admin (awsuse mp prod admin)"
+  },
+
+  "// USAGE EXAMPLES": {
+    "switch_profile": "awsuse mp dev           # Switch to my-project dev (PowerUserAccess)",
+    "switch_with_role": "awsuse mp dev developer  # Switch to my-project dev (DeveloperAccess)",
+    "sso_login": "awslogin mp qa          # Login to my-project qa + switch profile",
+    "current_profile": "awswho                   # Show current AWS profile",
+    "list_profiles": "awslist                  # List all configured profiles",
+    "search_profiles": "awsfind prod             # Search profiles containing 'prod'",
+    "filter_profiles": "awsfilter dev region=us-west-2  # Filter dev profiles in us-west-2",
+    "use_alias": "mpdev                   # Generated alias (same as awsuse mp dev)"
+  },
+
+  "// NOTES": {
+    "sso_profiles": "Ensure ~/.aws/config has matching [profile <name>] sections with sso_* settings",
+    "aws_config_example": "See docs/guides/multi-machine-setup.md for ~/.aws/config SSO setup",
+    "env_values": "Use consistent env values: dev, qa, uat, stage, prod, sbx (sandbox)",
+    "role_values": "Common IAM roles: PowerUserAccess, AdministratorAccess, ReadOnlyAccess, DeveloperAccess, ViewOnlyAccess",
+    "regions": "Common AWS regions: us-east-1, us-west-2, eu-west-1, ap-southeast-1",
+    "multi_account": "For organizations with many accounts, group by project/team for easier management"
+  }
+}
