@@ -15,7 +15,7 @@ set -o pipefail
 # CONFIGURATION
 # ============================================================================
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT_VERSION="1.0.0"
 DRY_RUN=false
 
@@ -121,7 +121,7 @@ check_config_files() {
     error "Missing configuration files/directories: ${missing_files[*]}"
     echo ""
     echo "Run configure.sh first to create configuration:"
-    echo "  ./scripts/configure.sh"
+    echo "  ./scripts/setup/configure.sh"
     exit 1
   fi
 
@@ -181,7 +181,7 @@ check_and_handle_secrets() {
       echo ""
       echo "4. Or re-create secrets.yaml from scratch:"
       echo "   rm $SECRETS_FILE"
-      echo "    ./scripts/configure.sh"
+      echo "    ./scripts/setup/configure.sh"
       echo ""
       exit 1
     fi
@@ -393,7 +393,7 @@ What this script does:
 
 Three-Script Setup Workflow:
   1. ./scripts/bootstrap.sh  → Install prerequisites (Nix, nix-darwin, SOPS, age)
-  2. ./scripts/configure.sh  → Create configuration files and directories
+  2. ./scripts/setup/configure.sh  → Create configuration files and directories
   3. ./scripts/activate.sh   → Build and activate system (this script)
 
 Prerequisites:
@@ -403,7 +403,7 @@ Prerequisites:
     • nix-config/hosts/{machineId}/
 
   If missing, run:
-    ./scripts/configure.sh
+    ./scripts/setup/configure.sh
 
 After activation:
   Restart your shell:

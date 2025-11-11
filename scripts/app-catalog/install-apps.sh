@@ -25,7 +25,7 @@ set -e
 # ============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CATALOG_FILE="$REPO_ROOT/config/awesome-apps.yaml"
 HOMEBREW_NIX="$REPO_ROOT/modules/darwin/homebrew.nix"
 TEMP_DIR=$(mktemp -d)

@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BACKUP_DIR="$REPO_ROOT/user-data"
 TEMP_RESTORE_DIR="/tmp/nix-darwin-restore-test-$$"
 VERBOSE=0

@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 
 # Script metadata
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Default configuration
 SCAN_DEPTH="${SECRET_SCAN_DEPTH:-4}"
@@ -257,10 +257,19 @@ while IFS= read -r -d '' env_file; do
   scan_and_dedupe "Environment file" "$env_file" "env_${basename_file//[^a-zA-Z0-9_]/_}"
 done < <(find "$HOME" -maxdepth "$SCAN_DEPTH" -type f \
   \( -name ".env" -o -name ".env.*" -o -name ".envrc" \) \
+  ! -path "*/.Trash/*" \
+  ! -path "*/Library/Caches/*" \
+  ! -path "*/.cache/*" \
+  ! -path "*/tmp/*" \
+  ! -path "*/Library/Logs/*" \
   ! -path "*/node_modules/*" \
+  ! -path "*/.venv/*" \
+  ! -path "*/venv/*" \
+  ! -path "*/__pycache__/*" \
   ! -path "*/.git/*" \
   ! -path "*/dist/*" \
   ! -path "*/build/*" \
+  ! -path "*/target/*" \
   -print0 2>/dev/null)
 
 # Scan wildcard patterns (limit to 10 each to avoid spam)
@@ -269,8 +278,19 @@ while IFS= read -r -d '' file; do
   scan_and_dedupe "Secret file" "$file" "secret_${basename_file//[^a-zA-Z0-9_]/_}"
 done < <(find "$HOME" -maxdepth "$SCAN_DEPTH" -type f \
   -iname "*secret*" \
+  ! -path "*/.Trash/*" \
+  ! -path "*/Library/Caches/*" \
+  ! -path "*/.cache/*" \
+  ! -path "*/tmp/*" \
+  ! -path "*/Library/Logs/*" \
   ! -path "*/node_modules/*" \
+  ! -path "*/.venv/*" \
+  ! -path "*/venv/*" \
+  ! -path "*/__pycache__/*" \
   ! -path "*/.git/*" \
+  ! -path "*/dist/*" \
+  ! -path "*/build/*" \
+  ! -path "*/target/*" \
   ! -name "*.md" \
   -print0 2>/dev/null | head -z -n 10)
 
@@ -279,8 +299,19 @@ while IFS= read -r -d '' file; do
   scan_and_dedupe "Credential file" "$file" "credential_${basename_file//[^a-zA-Z0-9_]/_}"
 done < <(find "$HOME" -maxdepth "$SCAN_DEPTH" -type f \
   -iname "*credential*" \
+  ! -path "*/.Trash/*" \
+  ! -path "*/Library/Caches/*" \
+  ! -path "*/.cache/*" \
+  ! -path "*/tmp/*" \
+  ! -path "*/Library/Logs/*" \
   ! -path "*/node_modules/*" \
+  ! -path "*/.venv/*" \
+  ! -path "*/venv/*" \
+  ! -path "*/__pycache__/*" \
   ! -path "*/.git/*" \
+  ! -path "*/dist/*" \
+  ! -path "*/build/*" \
+  ! -path "*/target/*" \
   ! -name "*.md" \
   -print0 2>/dev/null | head -z -n 10)
 
@@ -290,8 +321,19 @@ while IFS= read -r -d '' file; do
   scan_and_dedupe "Certificate" "$file" "cert_${basename_file//[^a-zA-Z0-9_]/_}"
 done < <(find "$HOME" -maxdepth "$SCAN_DEPTH" -type f \
   \( -name "*.pem" -o -name "*.p12" -o -name "*.pfx" -o -name "*.key" \) \
+  ! -path "*/.Trash/*" \
+  ! -path "*/Library/Caches/*" \
+  ! -path "*/.cache/*" \
+  ! -path "*/tmp/*" \
+  ! -path "*/Library/Logs/*" \
   ! -path "*/node_modules/*" \
+  ! -path "*/.venv/*" \
+  ! -path "*/venv/*" \
+  ! -path "*/__pycache__/*" \
   ! -path "*/.git/*" \
+  ! -path "*/dist/*" \
+  ! -path "*/build/*" \
+  ! -path "*/target/*" \
   -print0 2>/dev/null | head -z -n 10)
 
 # ==== Step 4: Display results ====
@@ -381,6 +423,6 @@ echo "  • Backup: $BACKUP_FILE"
 echo "  • Updated: $SECRETS_FILE"
 echo ""
 info "Next steps:"
-echo "  1. Review the updated secrets: scripts/secrets/view-secrets.sh"
-echo "  2. Edit if needed: scripts/secrets/edit-secrets.sh"
+echo "  1. Review the updated secrets: ./scripts/secrets/view-secrets.sh"
+echo "  2. Edit if needed: ./scripts/secrets/edit-secrets.sh"
 echo "  3. Rebuild system: nix-rebuild && exec zsh"

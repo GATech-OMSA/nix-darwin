@@ -6,8 +6,8 @@
 
 set -e  # Exit on error
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEMPLATE_DIR="$REPO_ROOT/hosts/_template"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+TEMPLATE_DIR="$REPO_ROOT/nix-config/hosts/_template"
 
 # ANSI color codes
 GREEN='\033[0;32m'
@@ -39,7 +39,7 @@ if [ -z "$HOSTNAME" ]; then
 fi
 
 # Check if hostname already exists
-if [ -d "$REPO_ROOT/hosts/$HOSTNAME" ]; then
+if [ -d "$REPO_ROOT/nix-config/hosts/$HOSTNAME" ]; then
   echo -e "${RED}Error: Host '$HOSTNAME' already exists${NC}"
   exit 1
 fi
@@ -131,16 +131,16 @@ echo -e "${GREEN}🚀 Creating configuration...${NC}"
 
 # Step 1: Copy template
 echo "  📁 Copying template to hosts/$HOSTNAME/"
-cp -r "$TEMPLATE_DIR" "$REPO_ROOT/hosts/$HOSTNAME"
+cp -r "$TEMPLATE_DIR" "$REPO_ROOT/nix-config/hosts/$HOSTNAME"
 
 # Step 2: Update default.nix
 echo "  ✏️  Customizing hosts/$HOSTNAME/default.nix"
-sed -i '' "s/REPLACE_WITH_COMPUTER_NAME/$COMPUTER_NAME/g" "$REPO_ROOT/hosts/$HOSTNAME/default.nix"
+sed -i '' "s/REPLACE_WITH_COMPUTER_NAME/$COMPUTER_NAME/g" "$REPO_ROOT/nix-config/hosts/$HOSTNAME/default.nix"
 
 # Step 3: Update machines.nix
 echo "  ✏️  Adding to hosts/machines.nix"
 # Insert before the closing brace
-sed -i '' "s/^}$/  \"$HOSTNAME\" = \"$MACHINE_TYPE\";\n}/" "$REPO_ROOT/hosts/machines.nix"
+sed -i '' "s/^}$/  \"$HOSTNAME\" = \"$MACHINE_TYPE\";\n}/" "$REPO_ROOT/nix-config/hosts/machines.nix"
 
 # Step 4: Show flake.nix addition
 echo ""

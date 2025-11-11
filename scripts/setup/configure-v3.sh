@@ -24,8 +24,8 @@ set -e
 # CONFIGURATION
 # ============================================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_ROOT="$SCRIPT_DIR"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DRY_RUN=false
 
 # Parse arguments
@@ -543,8 +543,8 @@ page_review() {
     "" \
     "  $REPO_ROOT/config/user-config.nix" \
     "  $REPO_ROOT/config/machine-config.nix" \
-    "  $REPO_ROOT/hosts/${CONFIG[machineId]}/default.nix" \
-    "  $REPO_ROOT/hosts/${CONFIG[machineId]}/secrets.yaml"
+    "  $REPO_ROOT/nix-config/hosts/${CONFIG[machineId]}/default.nix" \
+    "  $REPO_ROOT/nix-config/hosts/${CONFIG[machineId]}/secrets.yaml"
 
   navigation_hint
 

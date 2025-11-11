@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERBOSE=0
 TOTAL_CHECKS=0
 PASSED_CHECKS=0

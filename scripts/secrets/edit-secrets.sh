@@ -23,7 +23,7 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Parse options
 MACHINE_ID="${1:-}"
@@ -45,8 +45,8 @@ if [ -z "$MACHINE_ID" ]; then
     echo "Usage: $(basename "$0") [MACHINE_ID]"
     echo ""
     echo "Example:"
-    echo "  ./edit-secrets.sh mbp-jimmy"
-    echo "  ./edit-secrets.sh  # Auto-detect from config"
+    echo "  ./scripts/secrets/edit-secrets.sh mbp-jimmy"
+    echo "  ./scripts/secrets/edit-secrets.sh  # Auto-detect from config"
     exit 1
   fi
 fi
@@ -99,7 +99,7 @@ if sops "$SECRETS_FILE"; then
   success "Secrets updated successfully"
   echo ""
   info "Next steps:"
-  echo "  1. Verify changes: ./view-secrets.sh"
+  echo "  1. Verify changes: ./scripts/secrets/view-secrets.sh"
   echo "  2. Rebuild system: nix-rebuild && exec zsh"
 else
   error "SOPS editor exited with error"

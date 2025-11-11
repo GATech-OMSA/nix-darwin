@@ -459,7 +459,7 @@ Prerequisites:
 
 After bootstrap:
   Run the configuration script:
-    ./configure.sh
+    ./scripts/setup/configure.sh
 
 For more information:
   docs/guides/installation.md

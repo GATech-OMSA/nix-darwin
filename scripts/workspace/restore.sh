@@ -27,7 +27,7 @@ echo ""
 
 if [ ! -d "$BACKUP_DIR/app-configs" ] && [ ! -d "$BACKUP_DIR/user-content" ]; then
   echo "❌ No backups found in $BACKUP_DIR"
-  echo "   Run backup.sh $MACHINE_ID first to create backups"
+  echo "   Run ./scripts/workspace/backup.sh $MACHINE_ID first to create backups"
   exit 1
 fi
 

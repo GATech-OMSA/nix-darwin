@@ -22,7 +22,7 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MACHINE_ID="${1:-}"
 
 # Auto-detect machine ID if not provided

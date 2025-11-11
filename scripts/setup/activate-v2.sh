@@ -25,8 +25,8 @@ set -e
 # CONFIGURATION
 # ============================================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_ROOT="$SCRIPT_DIR"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DRY_RUN=false
 
 # Parse arguments
@@ -169,7 +169,7 @@ run_preflight_checks() {
   # Check 2: Host directory exists
   echo ""
   gum style --foreground="$PALETTE_BLUE" "Checking host directory..."
-  if [ -d "$REPO_ROOT/hosts/$MACHINE_ID" ]; then
+  if [ -d "$REPO_ROOT/nix-config/hosts/$MACHINE_ID" ]; then
     success "Host directory exists: hosts/$MACHINE_ID/"
     ((checks_passed++))
   else
@@ -236,7 +236,7 @@ run_preflight_checks() {
 encrypt_secrets() {
   section "🔐 Secrets Encryption"
 
-  local SECRETS_FILE="$REPO_ROOT/hosts/$MACHINE_ID/secrets.yaml"
+  local SECRETS_FILE="$REPO_ROOT/nix-config/hosts/$MACHINE_ID/secrets.yaml"
 
   if [ ! -f "$SECRETS_FILE" ]; then
     warning "No secrets.yaml found - skipping encryption"

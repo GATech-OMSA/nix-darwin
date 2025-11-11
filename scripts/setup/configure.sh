@@ -15,7 +15,7 @@ set -o pipefail
 # CONFIGURATION
 # ============================================================================
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT_VERSION="1.0.0"
 DRY_RUN=false
 FORCE_MODE=false
@@ -236,7 +236,7 @@ check_prerequisites() {
     warning "These tools are required for nix-darwin configuration"
     echo ""
     echo "To install missing prerequisites, run:"
-    echo -e "  ${BOLD}./bootstrap.sh${NC}"
+    echo -e "  ${BOLD}./scripts/setup/./scripts/setup/bootstrap.sh${NC}"
     echo ""
     exit 1
   fi
@@ -838,10 +838,10 @@ EOF
 create_hosts_directory() {
   print_step "◆ Creating Host Directory"
 
-  if [ -d "$REPO_ROOT/hosts/$MACHINE_ID" ]; then
+  if [ -d "$REPO_ROOT/nix-config/hosts/$MACHINE_ID" ]; then
     if [ "$FORCE_MODE" = true ]; then
       warning "Removing existing hosts/$MACHINE_ID/"
-      rm -rf "$REPO_ROOT/hosts/$MACHINE_ID"
+      rm -rf "$REPO_ROOT/nix-config/hosts/$MACHINE_ID"
       success "Removed hosts/$MACHINE_ID/"
       echo ""
     else
@@ -987,7 +987,7 @@ update_sops_yaml() {
   if [ ! -f "$AGE_KEY_FILE" ]; then
     error "Age key not found at $AGE_KEY_FILE"
     echo ""
-    echo "Please run bootstrap.sh first to generate your age key"
+    echo "Please run ./scripts/setup/bootstrap.sh first to generate your age key"
     exit 1
   fi
 
@@ -1370,7 +1370,7 @@ create_secrets_file() {
 
   info "Creating plaintext secrets.yaml template..."
   info "This file will NOT be encrypted yet - please review it to add or remove secrets"
-  info "before running ./activate.sh. That step will encrypt the file automatically."
+  info "before running ./scripts/setup/activate.sh. That step will encrypt the file automatically."
   echo ""
 
   # Create comprehensive plaintext template matching secrets-personal.nix structure
@@ -1542,7 +1542,7 @@ EOF
   echo "  • Edit file:     vim $SECRETS_FILE"
   echo ""
   echo "Encryption (choose one):"
-  echo "  • Automatic:     ./activate.sh (encrypts automatically)"
+  echo "  • Automatic:     ./scripts/setup/activate.sh (encrypts automatically)"
   echo "  • Manual:        SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops -e -i $SECRETS_FILE"
   echo ""
   echo "After encryption:"
@@ -1558,7 +1558,7 @@ EOF
   echo "📋 Secrets Review Checklist"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
-  echo "Before running ./activate.sh, you should:"
+  echo "Before running ./scripts/setup/activate.sh, you should:"
   echo ""
   echo "  ☐ Review $SECRETS_FILE for sensitive data"
   echo "  ☐ Add any additional secrets (API keys, tokens)"
@@ -1721,7 +1721,7 @@ show_verification_checklist() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "Once verified, run the activation script:"
-  echo -e "  ${BOLD}${GREEN}./activate.sh${NC}"
+  echo -e "  ${BOLD}${GREEN}./scripts/setup/activate.sh${NC}"
   echo ""
   echo "This will:"
   echo "  1. Build your nix-darwin configuration"
@@ -1754,12 +1754,12 @@ What this script does:
   6. Provides verification checklist
 
 Prerequisites:
-  Run bootstrap.sh first to install required tools:
-    ./bootstrap.sh
+  Run ./scripts/setup/bootstrap.sh first to install required tools:
+    ././scripts/setup/bootstrap.sh
 
 After configuration:
   Review the generated files, then run:
-    ./activate.sh
+    ./scripts/setup/activate.sh
 
 For more information:
   docs/guides/installation.md
@@ -1838,7 +1838,7 @@ else
   echo "   • Uncomment optional sections you need"
   echo "   • Add custom secrets as needed"
   echo ""
-  echo "3. Encryption happens automatically via ./activate.sh"
+  echo "3. Encryption happens automatically via ./scripts/setup/activate.sh"
   echo ""
 fi
 

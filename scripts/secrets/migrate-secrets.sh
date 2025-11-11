@@ -18,7 +18,7 @@ warning() { echo -e "${YELLOW}⚠${NC} $1"; }
 error() { echo -e "${RED}✗${NC} $1"; }
 
 # Configuration
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OLD_SECRETS=".temp/deprecated/hosts/mbp-jimmy/secrets.yaml"
 NEW_SECRETS_DIR="nix-config/hosts/macbook-pro-m1"
 NEW_SECRETS="$NEW_SECRETS_DIR/secrets.yaml"
