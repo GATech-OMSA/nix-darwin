@@ -7,7 +7,7 @@ let
   # Derive paths dynamically
   nixDarwinDir = "${config.home.homeDirectory}/nix-darwin";
   homeDir = config.home.homeDirectory;
-  machineBackupsDir = "${nixDarwinDir}/machine-backups/${machineId}";
+  machineBackupsDir = "${nixDarwinDir}/workspace/${machineId}";
 in
 {
   # ENHANCED Zsh configuration - Complete declarative shell setup
@@ -117,59 +117,60 @@ in
       # Nix-Darwin system management
       # nix-rebuild runs with pre-flight checks by default
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      nix-rebuild = "${nixDarwinDir}/scripts/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure";
+      # Automatically restarts shell on success to load new configuration
+      nix-rebuild = "${nixDarwinDir}/scripts/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
 
       # Skip pre-flight checks for emergency rebuilds (use with caution)
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure";
+      # Automatically restarts shell on success to load new configuration
+      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
 
       # Debug mode with verbose output for troubleshooting
       # Shows detailed build logs, stack traces, and Home Manager activation details
       # Usage: nix-rebuild-debug (for full rebuild with debug info)
-      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure --show-trace --verbose --print-build-logs";
+      # Automatically restarts shell on success to load new configuration
+      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure --show-trace --verbose --print-build-logs && exec zsh";
 
-      # Check configuration without building
+      # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
 
-      # Run pre-flight checks manually (without rebuilding)
+      # Run pre-flight checks manually (without rebuilding, no shell restart needed)
       nix-preflight = "${nixDarwinDir}/scripts/pre-flight-checks.sh";
 
-      # System health check - Validate nix-darwin system state
-      # Usage: health-check (normal) | health-check --verbose (detailed)
-      health-check = "${nixDarwinDir}/scripts/health-check.sh";
-      system-health = "${nixDarwinDir}/scripts/health-check.sh";
+      # System health check - Validate nix-darwin system state (no shell restart needed)
+      # Usage: nix-health-check (normal) | nix-health-check --verbose (detailed)
+      nix-health-check = "${nixDarwinDir}/scripts/health-check.sh";
+      nix-health = "${nixDarwinDir}/scripts/health-check.sh";  # Shorter alternate
 
-      # Compare configurations between generations
-      # Usage: config-diff (current vs previous) | config-diff --generations N M
-      config-diff = "${nixDarwinDir}/scripts/config-diff.sh";
-      config-diff-packages = "${nixDarwinDir}/scripts/config-diff.sh --packages-only";
-      config-diff-verbose = "${nixDarwinDir}/scripts/config-diff.sh --verbose";
+      # Compare configurations between generations (no shell restart needed)
+      # Usage: nix-config-diff (current vs previous) | nix-config-diff --generations N M
+      nix-config-diff = "${nixDarwinDir}/scripts/config-diff.sh";
+      nix-config-diff-packages = "${nixDarwinDir}/scripts/config-diff.sh --packages-only";
+      nix-config-diff-verbose = "${nixDarwinDir}/scripts/config-diff.sh --verbose";
 
-      nix-rollback = "sudo darwin-rebuild --rollback";
-
-      # Test suite aliases
-      test-all = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh";
-      test-build = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category build";
-      test-security = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category security";
-      test-lib = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category lib";
-      test-integration = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category integration";
-      test-quick = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --dry-run";
-      test-verbose = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --verbose";
+      # Rollback to previous generation and restart shell
+      nix-rollback = "sudo darwin-rebuild --rollback && exec zsh";
 
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
-      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure";
-      home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate";
+      # Automatically restarts shell on success
+      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
+      nix-home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && exec zsh";
 
       # Scaffold new machine configuration from template
-      scaffold-machine = "${nixDarwinDir}/scripts/scaffold-new-machine.sh";
-      new-machine = "${nixDarwinDir}/scripts/scaffold-new-machine.sh";
+      nix-scaffold-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
+      nix-new-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
 
       # Secret management (Secret Management v2.0)
-      rescan-secrets = "${nixDarwinDir}/scripts/rescan-secrets.sh";
-      edit-secrets = "${nixDarwinDir}/scripts/edit-secrets.sh";
-      view-secrets = "${nixDarwinDir}/scripts/view-secrets.sh";
-      backup-secrets = "${nixDarwinDir}/scripts/backup-secrets.sh";
+      # Tier 3: domain-action pattern for namespace grouping
+      secret-rescan = "${nixDarwinDir}/scripts/secrets/rescan-secrets.sh";
+      secret-edit = "${nixDarwinDir}/scripts/secrets/edit-secrets.sh";
+      secret-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
+      secret-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
+      secret-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
+
+      # Maintenance & validation
+      nix-verify-backups = "${nixDarwinDir}/scripts/maintenance/verify-backups.sh";
 
       # ============================================
       # WORKFLOW HELPERS
@@ -191,10 +192,6 @@ in
       # ============================================
       # NIX DEVELOPMENT
       # ============================================
-      ns = "nix-shell";
-      nd = "nix develop";
-      nb = "nix build";
-      nf = "nix flake";
       se = "sops -e -i";  # SOPS edit secrets
 
       # ============================================
@@ -206,7 +203,7 @@ in
       "~" = "cd ~";
       "-" = "cd -";
 
-      # Quick directories
+      # Quick directories (cd operations)
       dev = "cd ~/Dev";
       downloads = "cd ~/Downloads";
       desktop = "cd ~/Desktop";
@@ -214,6 +211,12 @@ in
       apps = "cd ~/Applications";
       down = "cd ~/Downloads";
       desk = "cd ~/Desktop";
+
+      # Finder operations (Tier 5: f + target)
+      fdev = "open ~/Dev";
+      fdown = "open ~/Downloads";
+      fdesk = "open ~/Desktop";
+      fdocs = "open ~/Documents";
 
       # Personal projects
       learning = "cd ~/Dev/learning";
@@ -275,11 +278,12 @@ in
       format = "ruff format .";
       "lint-fix" = "ruff check --fix .";
 
-      # Environment management
-      "list-envs" = "micromamba env list";
-      lsenv = "micromamba env list";
-      condalist = "conda env list";
-      mambalist = "micromamba env list";
+      # Micromamba (Tier 4: abbreviated domain)
+      # Note: m-act and m-deact use functions (not aliases) to show usage help
+      m-create = "micromamba create";
+      m-list = "micromamba env list";
+      m-install = "micromamba install";
+      m-remove = "micromamba remove";
 
       # ============================================
       # AWS
@@ -417,13 +421,13 @@ in
             set +a
 
             # Count loaded variables
-            local cred_count=$(grep -c '^export' "$HOME/.secrets/credentials.env" 2>/dev/null || echo "0")
-            if [ "$cred_count" -gt 0 ]; then
+            local cred_count=$(grep -c '^export' "$HOME/.secrets/credentials.env" 2>/dev/null)
+            if [ "$cred_count" -gt 0 ] 2>/dev/null; then
               echo "🔐 Loaded $cred_count credentials"
             fi
 
             # Clean up decrypted file for security
-            rm "$HOME/.secrets/credentials.env" 2>/dev/null
+            command rm -f "$HOME/.secrets/credentials.env" 2>/dev/null
           fi
         fi
       elif [ -f "$HOME/.secrets/credentials.env" ]; then
@@ -737,40 +741,40 @@ in
       }
 
       # ============================================
-      # USER DATA BACKUP & RESTORE
+      # WORKSPACE BACKUP & RESTORE
       # ============================================
 
-      # Backup user data (runs backup.sh)
-      function backup-user-data() {
-        if [ ! -f ${machineBackupsDir}/backup.sh ]; then
+      # Backup workspace data (calls scripts/workspace/backup.sh)
+      function backup-workspace() {
+        local backup_script="${nixDarwinDir}/scripts/workspace/backup.sh"
+        if [ ! -f "$backup_script" ]; then
           echo "❌ Error: backup script not found"
-          echo "Expected: ${machineBackupsDir}/backup.sh"
-          echo "Machine ID: ${machineId}"
+          echo "Expected: $backup_script"
           return 1
         fi
-        echo "📦 Running machine data backup for: ${machineId}"
-        ${machineBackupsDir}/backup.sh
+        echo "📦 Running workspace backup for: ${machineId}"
+        "$backup_script" "${machineId}"
       }
 
-      # Restore user data from backup (runs restore.sh)
-      function restore-user-data() {
-        if [ ! -f ${machineBackupsDir}/restore.sh ]; then
+      # Restore workspace data from backup (calls scripts/workspace/restore.sh)
+      function restore-workspace() {
+        local restore_script="${nixDarwinDir}/scripts/workspace/restore.sh"
+        if [ ! -f "$restore_script" ]; then
           echo "❌ Error: restore script not found"
-          echo "Expected: ${machineBackupsDir}/restore.sh"
-          echo "Machine ID: ${machineId}"
+          echo "Expected: $restore_script"
           return 1
         fi
-        echo "📦 Restoring machine data from backup for: ${machineId}"
-        ${machineBackupsDir}/restore.sh
+        echo "📦 Restoring workspace from backup for: ${machineId}"
+        "$restore_script" "${machineId}"
       }
 
-      # Sync user data: Backup + Commit + Push
-      function sync-user-data() {
-        echo "🔄 Syncing machine data for: ${machineId}"
+      # Sync workspace: Backup + Commit + Push
+      function sync-workspace() {
+        echo "🔄 Syncing workspace for: ${machineId}"
         echo ""
 
         # Run backup
-        if ! backup-user-data; then
+        if ! backup-workspace; then
           echo "❌ Backup failed"
           return 1
         fi
@@ -790,14 +794,14 @@ in
         # Change to nix-darwin directory
         cd ${nixDarwinDir}
 
-        # Check if there are changes in machine-backups
-        if ! git diff --quiet machine-backups/${machineId}/ || ! git diff --cached --quiet machine-backups/${machineId}/; then
-          # Stage all machine-backups changes
-          git add machine-backups/${machineId}/
+        # Check if there are changes in workspace
+        if ! git diff --quiet workspace/${machineId}/ || ! git diff --cached --quiet workspace/${machineId}/; then
+          # Stage all workspace changes
+          git add workspace/${machineId}/
 
           # Create commit with timestamp
           local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-          git commit -m "Sync machine-backups (${machineId}): $timestamp"
+          git commit -m "Sync workspace (${machineId}): $timestamp"
 
           echo "✅ Changes committed"
           echo ""
@@ -819,12 +823,13 @@ in
         cd "$prev_dir"
       }
 
-      # Migrate from old user-data-* to machine-backups structure
-      function migrate-to-machine-backups() {
-        local old_path="${nixDarwinDir}/user-data-${username}"
+      # Migrate from old user-data-* or machine-backups to workspace structure
+      function migrate-to-workspace() {
+        local old_user_data="${nixDarwinDir}/user-data-${username}"
+        local old_machine_backups="${nixDarwinDir}/machine-backups/${machineId}"
         local new_path="${machineBackupsDir}"
 
-        echo "🔄 Migration Helper: user-data-* → machine-backups/"
+        echo "🔄 Migration Helper: user-data-* or machine-backups/ → workspace/"
         echo ""
 
         # Check if machineId is set
@@ -833,15 +838,22 @@ in
           return 1
         fi
 
+        # Check which old path exists
+        local old_path=""
+        if [ -d "$old_machine_backups" ]; then
+          old_path="$old_machine_backups"
+          echo "Found: machine-backups structure"
+        elif [ -d "$old_user_data" ]; then
+          old_path="$old_user_data"
+          echo "Found: user-data structure"
+        else
+          echo "✅ No migration needed - old paths don't exist"
+          return 0
+        fi
+
         echo "Source: $old_path"
         echo "Target: $new_path"
         echo ""
-
-        # Check if old path exists
-        if [ ! -d "$old_path" ]; then
-          echo "✅ No migration needed - old path doesn't exist"
-          return 0
-        fi
 
         # Check if new path already exists
         if [ -d "$new_path" ]; then
@@ -850,8 +862,8 @@ in
           return 1
         fi
 
-        # Create machine-backups directory if needed
-        mkdir -p "${nixDarwinDir}/machine-backups"
+        # Create workspace directory if needed
+        mkdir -p "${nixDarwinDir}/workspace"
 
         # Move the directory
         echo "Moving: $old_path → $new_path"
@@ -862,8 +874,8 @@ in
           echo ""
           echo "Next steps:"
           echo "  1. Verify files: ls -la $new_path"
-          echo "  2. Test backup: backup-user-data"
-          echo "  3. Commit changes: g aa && g cm 'Migrate to machine-backups structure'"
+          echo "  2. Test backup: backup-workspace"
+          echo "  3. Commit changes: g aa && g cm 'Migrate to workspace structure'"
         else
           echo "❌ Migration failed"
           return 1
@@ -1204,78 +1216,6 @@ EOF
           echo "✅ Homebrew update completed successfully"
         else
           echo "⚠️  Homebrew update completed with $errors error(s)"
-          return 1
-        fi
-      }
-
-      # ============================================
-      # USER DATA SYNC
-      # ============================================
-
-      # Sync user-data from home directory to nix-darwin repository
-      # Backs up VS Code settings, Karabiner config, and other user preferences
-      function sync-user-data() {
-        echo "📦 Syncing user data to nix-darwin repository..."
-        local errors=0
-        local nix_darwin="${nixDarwinDir}"
-        local user_data="$nix_darwin/user-data-${username}/user-content"
-
-        # Check if nix-darwin exists
-        if [ ! -d "$nix_darwin" ]; then
-          echo "❌ Error: ${nixDarwinDir} directory not found"
-          return 1
-        fi
-
-        # Sync VS Code settings
-        if [ -d "$HOME/Library/Application Support/Code/User" ]; then
-          echo "  📝 Syncing VS Code settings..."
-          mkdir -p "$user_data/vscode"
-
-          # Copy settings.json
-          if [ -f "$HOME/Library/Application Support/Code/User/settings.json" ]; then
-            cp "$HOME/Library/Application Support/Code/User/settings.json" \
-               "$user_data/vscode/settings.json"
-            echo "  ✅ VS Code settings synced"
-          fi
-
-          # Copy keybindings.json
-          if [ -f "$HOME/Library/Application Support/Code/User/keybindings.json" ]; then
-            cp "$HOME/Library/Application Support/Code/User/keybindings.json" \
-               "$user_data/vscode/keybindings.json"
-            echo "  ✅ VS Code keybindings synced"
-          fi
-        else
-          echo "  ⚠️  VS Code User directory not found"
-        fi
-
-        # Sync Karabiner config
-        if [ -d "$HOME/.config/karabiner" ]; then
-          echo "  ⌨️  Syncing Karabiner configuration..."
-          mkdir -p "$user_data/karabiner"
-
-          # Copy main config
-          if [ -f "$HOME/.config/karabiner/karabiner.json" ]; then
-            cp "$HOME/.config/karabiner/karabiner.json" \
-               "$user_data/karabiner/karabiner.json"
-            echo "  ✅ Karabiner config synced"
-          fi
-
-          # Copy complex modifications
-          if [ -d "$HOME/.config/karabiner/assets/complex_modifications" ]; then
-            mkdir -p "$user_data/karabiner/assets/complex_modifications"
-            cp -r "$HOME/.config/karabiner/assets/complex_modifications/"* \
-               "$user_data/karabiner/assets/complex_modifications/" 2>/dev/null || true
-            echo "  ✅ Karabiner complex modifications synced"
-          fi
-        else
-          echo "  ⚠️  Karabiner config directory not found (may not be installed yet)"
-        fi
-
-        if [ $errors -eq 0 ]; then
-          echo "✅ User data sync completed successfully"
-          echo "  💡 Don't forget to commit changes: cd ${nixDarwinDir} && git add user-data && git commit"
-        else
-          echo "⚠️  User data sync completed with $errors error(s)"
           return 1
         fi
       }
@@ -3005,79 +2945,6 @@ EOF
       # BACKUP & SECRETS MANAGEMENT
       # ============================================
 
-      # Backup non-secret user data
-      function backup-user-data() {
-        if [ ! -f ~/nix-darwin/user-data-${username}/backup.sh ]; then
-          echo "❌ Error: backup script not found"
-          echo "Expected: ~/nix-darwin/user-data-${username}/backup.sh"
-          return 1
-        fi
-        echo "📦 Running user data backup..."
-        ~/nix-darwin/user-data-${username}/backup.sh
-      }
-
-      # Restore user data from backup
-      function restore-user-data() {
-        if [ ! -f ~/nix-darwin/user-data-${username}/restore.sh ]; then
-          echo "❌ Error: restore script not found"
-          echo "Expected: ~/nix-darwin/user-data-${username}/restore.sh"
-          return 1
-        fi
-        echo "📦 Restoring user data from backup..."
-        ~/nix-darwin/user-data-${username}/restore.sh
-      }
-
-      # Sync user data: Backup + Commit + Push
-      function sync-user-data() {
-        echo "🔄 Syncing user data..."
-        echo ""
-
-        # Run backup
-        if ! backup-user-data; then
-          echo "❌ Backup failed"
-          return 1
-        fi
-
-        echo ""
-        echo "📝 Committing changes..."
-
-        # Check if in git repo
-        if [ ! -d ~/nix-darwin/.git ]; then
-          echo "❌ Error: Not in a git repository"
-          return 1
-        fi
-
-        # Change to nix-darwin directory
-        cd ~/nix-darwin
-
-        # Check if there are changes in user-data
-        if ! git diff --quiet user-data-${username}/ || ! git diff --cached --quiet user-data-${username}/; then
-          # Stage all user-data changes
-          git add user-data-${username}/
-
-          # Create commit with timestamp
-          local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-          git commit -m "Sync user-data: $timestamp"
-
-          echo "✅ Changes committed"
-          echo ""
-          echo "📤 Pushing to remote..."
-
-          # Push to remote
-          if git push; then
-            echo "✅ Sync complete!"
-          else
-            echo "❌ Push failed"
-            return 1
-          fi
-        else
-          echo "✅ No changes to sync"
-        fi
-
-        # Return to previous directory
-        cd - > /dev/null
-      }
-
       # Edit encrypted secrets with sops (system-level secrets)
       function edit-secrets() {
         # Read machineId from config (username-agnostic)
@@ -3372,23 +3239,24 @@ TEMPLATE
         echo "================================================"
         echo "💡 Useful commands:"
         echo "  edit-secrets         - Edit encrypted secrets"
-        echo "  backup-user-data     - Backup non-secret data"
-        echo "  restore-user-data    - Restore from backup"
+        echo "  backup-workspace     - Backup workspace data"
+        echo "  restore-workspace    - Restore workspace from backup"
+        echo "  sync-workspace       - Backup + Commit + Push"
         echo "  nix-rebuild          - Apply secrets after changes"
         echo ""
         echo "📚 Documentation:"
         echo "  ~/nix-darwin/secrets/SETUP.md"
-        echo "  ~/nix-darwin/user-data-${username}/README.md"
+        echo "  ~/nix-darwin/workspace/${machineId}/README.md"
         echo "================================================"
       }
 
       # Validate all secrets are properly encrypted
       function secrets-check() {
-        if [ -x ~/nix-darwin/scripts/check-secrets-encrypted.sh ]; then
-          ~/nix-darwin/scripts/check-secrets-encrypted.sh
+        if [ -x ~/nix-darwin/scripts/validation/check-secrets-encrypted.sh ]; then
+          ~/nix-darwin/scripts/validation/check-secrets-encrypted.sh
         else
           echo "❌ Error: Validation script not found"
-          echo "Expected: ~/nix-darwin/scripts/check-secrets-encrypted.sh"
+          echo "Expected: ~/nix-darwin/scripts/validation/check-secrets-encrypted.sh"
           return 1
         fi
       }

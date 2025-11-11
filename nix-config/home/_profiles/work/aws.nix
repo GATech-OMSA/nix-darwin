@@ -1,7 +1,8 @@
 # home/_profiles/work/aws.nix
 #
 # AWS configuration for work profile
-# Integrates with lib/aws-helpers.nix for multi-role functionality
+# - AWS helper functions for multi-account SSO workflows
+# - Integrates with lib/aws-helpers.nix for project-based account management
 
 { config, pkgs, lib, myLib, ... }:
 

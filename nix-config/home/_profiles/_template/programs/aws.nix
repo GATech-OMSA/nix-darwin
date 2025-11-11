@@ -111,11 +111,31 @@ in
   # AWS CLI configuration - Declarative management
   # Manages ~/.aws/config (NOT credentials - those stay in ~/.zsh_secrets)
 
-  # AWS config file - select based on machine type
-  home.file.".aws/config".text = myLib.selectByMachineType machineType {
-    personal = personalConfig;
-    work = workConfig;
-  };
+  # AWS config file - writable (not read-only symlink) for VS Code editing
+  # Uses home.activation to create regular file instead of /nix/store symlink
+  home.activation.aws-config = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    # Create .aws directory
+    $DRY_RUN_CMD mkdir -p $HOME/.aws
+
+    # Prepare config content (select based on machine type)
+    config_file="$HOME/.aws/config"
+    config_content='${myLib.selectByMachineType machineType {
+      personal = personalConfig;
+      work = workConfig;
+    }}'
+
+    # Remove symlink if it exists (from old config)
+    if [[ -L "$config_file" ]]; then
+      $DRY_RUN_CMD rm "$config_file"
+    fi
+
+    # Update only if different or doesn't exist
+    if [[ ! -f "$config_file" ]] || ! echo "$config_content" | $DRY_RUN_CMD diff -q - "$config_file" >/dev/null 2>&1; then
+      $DRY_RUN_CMD echo "$config_content" > "$config_file"
+      $DRY_RUN_CMD chmod 644 "$config_file"
+      echo "✅ Updated writable ~/.aws/config"
+    fi
+  '';
 
   # Note: AWS credentials should NEVER be in Nix
   # Personal machine: Use ~/.zsh_secrets or `aws configure`

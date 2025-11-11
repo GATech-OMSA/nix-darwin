@@ -245,6 +245,7 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 ### Development Guides
 - 📋 [Development Workflow](claudedocs/guides/DEVELOPMENT-WORKFLOW.md) - Project workflow and task management
 - 📋 [Project Workflow](claudedocs/guides/project-workflow.md) - Project-based task management
+- 📋 [Alias Philosophy](claudedocs/guides/ALIAS-PHILOSOPHY.md) - Five-tier alias naming system and safety guidelines
 
 ### Reference Documentation
 - 📋 [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md) - AWS SSO multi-account configuration

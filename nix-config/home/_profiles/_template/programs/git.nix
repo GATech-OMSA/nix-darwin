@@ -91,10 +91,10 @@
 
       # Checkout
       co = "checkout";
-      cod = "checkout . --";
+      discard = "checkout . --";  # Renamed from 'cod' for safety (discards all changes)
 
       # Reset
-      rh = "reset HEAD";
+      unstage-all = "reset HEAD";  # Renamed from 'rh' for safety (unstages everything)
       unstage = "reset HEAD --";
       undo = "reset HEAD~1 --mixed";
       undo-commit = "reset --soft HEAD^";
@@ -105,7 +105,7 @@
       ap = "add -p";
 
       # Clean
-      cdf = "clean -df";
+      clean-untracked = "clean -df";  # Renamed from 'cdf' for safety (removes all untracked files)
 
       # Branch
       b = "branch";

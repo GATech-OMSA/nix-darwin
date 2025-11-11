@@ -7,6 +7,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2025-11-10
+
+### 🗂️ Script Reorganization & Workspace Overhaul
+
+Major infrastructure cleanup with script organization, workspace centralization, and alias philosophy documentation.
+
+### ✨ Added
+
+- **Script Organization** - Purpose-based subdirectory structure
+  - Created `scripts/secrets/` - 6 secret management scripts
+  - Created `scripts/setup/` - 11 setup/bootstrap scripts
+  - Created `scripts/maintenance/` - 7 system maintenance scripts
+  - Created `scripts/workspace/` - 2 backup/restore scripts (centralized)
+  - Created `scripts/validation/` - 7 validation scripts
+  - Created `scripts/testing/` - 3 test utilities
+  - Created `scripts/profiles/` - 1 profile switching script
+  - Existing: `scripts/app-catalog/` (Homebrew management)
+  - Existing: `scripts/docs/` (Documentation utilities)
+
+- **Workspace Centralization** - Universal parameterized scripts
+  - `scripts/workspace/backup.sh <machineId>` - Centralized backup script
+  - `scripts/workspace/restore.sh <machineId>` - Centralized restore script
+  - Shell functions pass machineId from config/machine-config.nix
+  - Automatic workspace structure creation on first backup
+  - Age key backup to `workspace/<machineId>/backups/`
+
+- **Alias Philosophy Guide** - Five-tier naming system
+  - Created `claudedocs/guides/ALIAS-PHILOSOPHY.md`
+  - Tier 1: Ultra-frequent tools (1 char) - g, d, k, c, f
+  - Tier 2: Frequent operations (tool+action) - gs, ga, dps
+  - Tier 3: Domain operations (domain-action) - nix-rebuild, secret-edit
+  - Tier 4: Abbreviated domain (letter-action) - m-act, m-list
+  - Tier 5: Navigation - Simple words + f-prefix
+  - Safety Rule: Dangerous operations = descriptive names (3+ chars minimum)
+
+- **Workspace Documentation**
+  - `workspace/README.md` - Complete workspace structure guide
+  - `workspace/.gitignore` - Gitignores all machine directories (*)
+  - Documents setup flow, backup/restore usage, age key security
+
+### 🔧 Changed
+
+- **Shell Functions Updated** - All script paths corrected
+  - Secret scripts: Point to `scripts/secrets/*`
+  - Validation scripts: Point to `scripts/validation/*`
+  - Setup scripts: Point to `scripts/setup/*`
+  - Workspace scripts: Point to `scripts/workspace/*` with machineId parameter
+  - Reload function fixed: Uses `command rm -f` to bypass alias confirmation
+
+- **Git Aliases Renamed** - Safety improvements
+  - `cod` → `discard` (discards ALL changes)
+  - `cdf` → `clean-untracked` (removes ALL untracked)
+  - `rh` → `unstage-all` (unstages everything)
+
+- **Configure.sh Simplified** - Removed workspace-template logic
+  - Creates `workspace/<machineId>/backups/` for age key
+  - Removed template copy logic (backup.sh creates structure)
+  - Cleaner setup flow with automatic structure creation
+
+### 🗑️ Removed
+
+- **Duplicate Scripts** - Cleaned up root directory
+  - Removed `scripts/pre-flight-checks.sh` (duplicate)
+  - Removed all 16 scripts from root (now in subdirectories)
+
+- **Workspace Template Overhead** - Simplified approach
+  - Removed `workspace-template/` directory
+  - Scripts create structure automatically on first run
+  - Reduced maintenance burden and file count
+
+### 🐛 Fixed
+
+- **Shell Reload Hanging** - Fixed confirmation prompt issue
+  - Changed `rm "$HOME/.secrets/credentials.env"` to `command rm -f`
+  - Bypasses interactive alias (`rm='rm -i'`)
+  - Shell reloads instantly without hanging
+
+- **Script Path References** - Updated all shell functions
+  - Fixed broken secret management aliases
+  - Fixed workspace backup/restore references
+  - Fixed validation script paths
+
+### 📚 Documentation
+
+- Updated CLAUDE.md with script organization structure
+- Created ALIAS-PHILOSOPHY.md with five-tier naming system
+- Updated workspace/ README with complete usage guide
+- Archived project to `archive/2025-11-script-reorganization/`
+
+### 📊 Statistics
+
+- **Files Changed**: 29 files
+  - Modified: 7 files
+  - Renamed: 16 scripts (git detected as renames)
+  - Deleted: 5 files
+  - Added: 4 files
+- **Development Time**: ~8 hours across 4 sessions
+- **Branch**: feature/aws-workflow-enhancement (expanded scope)
+
+### 🎓 Key Learning
+
+Scope expansion can be positive - when discovering organizational debt during implementation, fixing root causes yields infrastructure improvements beyond the original goal.
+
+---
+
 ## [2.1.0] - 2025-11-10
 
 ### 🔐 Secret Management v2.0 - Enhanced Scanning & Lifecycle Tools

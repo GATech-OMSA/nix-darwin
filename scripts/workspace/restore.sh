@@ -1,16 +1,33 @@
 #!/bin/bash
 # Restore non-secret application data and user content
 # Run this after setting up a new machine and cloning nix-darwin
+#
+# Usage: restore.sh <machineId>
+# Example: restore.sh macbook-pro-m1
 
 set -e
 
-BACKUP_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Get machineId from parameter or environment variable
+MACHINE_ID="${1:-${MACHINE_ID}}"
+
+if [ -z "$MACHINE_ID" ]; then
+  echo "❌ Error: machineId required"
+  echo "Usage: $0 <machineId>"
+  echo "   or: MACHINE_ID=<machineId> $0"
+  exit 1
+fi
+
+# Determine nix-darwin directory (2 levels up from scripts/workspace/)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+NIX_DARWIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BACKUP_DIR="${NIX_DARWIN_DIR}/workspace/${MACHINE_ID}"
+
 echo "📦 Restoring user data from $BACKUP_DIR"
 echo ""
 
 if [ ! -d "$BACKUP_DIR/app-configs" ] && [ ! -d "$BACKUP_DIR/user-content" ]; then
   echo "❌ No backups found in $BACKUP_DIR"
-  echo "   Run backup.sh on your old machine first, then copy this directory"
+  echo "   Run backup.sh $MACHINE_ID first to create backups"
   exit 1
 fi
 

@@ -16,6 +16,11 @@
     fwfhub = "cd ~/Dev/workforce-hub";
     fap = "cd ~/Dev/webMethods/api";
     fdeploys = "cd ~/Dev/production-deploys";
+
+    # ============================================
+    # AWS CONFIGURATION
+    # ============================================
+    edit-aws = "$EDITOR ~/.aws/config";
   };
 
   # ============================================

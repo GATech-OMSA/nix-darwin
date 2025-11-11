@@ -948,19 +948,13 @@ create_workspace_directory() {
     success "workspace/$MACHINE_ID/ already exists"
     info "Workspace is machine-specific and gitignored"
   else
-    info "Creating workspace/$MACHINE_ID/ from template..."
+    info "Creating workspace/$MACHINE_ID/ directory..."
 
-    # Copy workspace template if it exists
-    if [ -d "$REPO_ROOT/workspace-template" ]; then
-      cp -R "$REPO_ROOT/workspace-template" "$WORKSPACE_DIR"
-      CREATED_DIRS+=("$WORKSPACE_DIR")
-      success "Created workspace/$MACHINE_ID/ from template"
-    else
-      # Create minimal workspace structure
-      mkdir -p "$WORKSPACE_DIR"/{app-configs,user-content,backups}
-      CREATED_DIRS+=("$WORKSPACE_DIR")
-      success "Created workspace/$MACHINE_ID/ with basic structure"
-    fi
+    # Create workspace directory (backup.sh will create subdirectories)
+    mkdir -p "$WORKSPACE_DIR/backups"
+    CREATED_DIRS+=("$WORKSPACE_DIR")
+    success "Created workspace/$MACHINE_ID/"
+    info "Run 'backup-workspace' to populate with application data"
   fi
 
   # Backup age key
@@ -1501,7 +1495,7 @@ EOF
     echo "" >> "$SECRETS_FILE"
   elif [ "$MACHINE_TYPE" = "work" ]; then
     echo "# AWS account mapping (work profile - add your account IDs)" >> "$SECRETS_FILE"
-    echo "# Template: nix-config/home/_profiles/work/accounts.json.template" >> "$SECRETS_FILE"
+    echo "# Template: templates/aws/accounts.json.template" >> "$SECRETS_FILE"
     echo "# aws_accounts: |" >> "$SECRETS_FILE"
     echo "#   {" >> "$SECRETS_FILE"
     echo "#     \"work-domain\": {" >> "$SECRETS_FILE"
@@ -1516,6 +1510,7 @@ EOF
     echo "#   }" >> "$SECRETS_FILE"
     echo "" >> "$SECRETS_FILE"
   fi
+
 
   # SSH keys
   if [ -d "$HOME/.ssh" ]; then

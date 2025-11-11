@@ -1,0 +1,9 @@
+# Workspace - Machine-Specific Data
+# All machine directories are gitignored for privacy
+
+# Ignore all machine directories
+*/
+
+# Keep .gitignore and README tracked
+!.gitignore
+!README.md

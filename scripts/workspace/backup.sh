@@ -1,10 +1,29 @@
 #!/bin/bash
 # Backup non-secret application data and user content
 # This backs up data that can't be managed declaratively by Nix
+#
+# Usage: backup.sh <machineId>
+# Example: backup.sh macbook-pro-m1
 
 set -e
 
-BACKUP_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Get machineId from parameter or environment variable
+MACHINE_ID="${1:-${MACHINE_ID}}"
+
+if [ -z "$MACHINE_ID" ]; then
+  echo "❌ Error: machineId required"
+  echo "Usage: $0 <machineId>"
+  echo "   or: MACHINE_ID=<machineId> $0"
+  exit 1
+fi
+
+# Determine nix-darwin directory (2 levels up from scripts/workspace/)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+NIX_DARWIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BACKUP_DIR="${NIX_DARWIN_DIR}/workspace/${MACHINE_ID}"
+
+mkdir -p "$BACKUP_DIR"
+
 echo "📦 Backing up user data to $BACKUP_DIR"
 echo ""
 
@@ -96,7 +115,7 @@ if [ -d ~/.vscode/extensions ]; then
   # Generate extensions list (filter out symlinks from Nix)
   ls -1 ~/.vscode/extensions | grep -v "^extensions.json$" > "$BACKUP_DIR/vscode/extensions-list.txt"
 
-  local ext_count=$(wc -l < "$BACKUP_DIR/vscode/extensions-list.txt" 2>/dev/null | tr -d ' ')
+  ext_count=$(wc -l < "$BACKUP_DIR/vscode/extensions-list.txt" 2>/dev/null | tr -d ' ')
 
   # Generate install script
   cat > "$BACKUP_DIR/vscode/install-extensions.sh" <<'INSTALL_SCRIPT'

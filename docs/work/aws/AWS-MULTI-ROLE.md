@@ -14,6 +14,7 @@ The enhanced AWS helper system now supports **multiple IAM roles per environment
 ✅ **Role-based access** - Support (read-only), developer, admin, custom roles
 ✅ **Enhanced discovery** - `awslist` groups by project, `awswhere` does reverse lookup
 ✅ **Session management** - `awscheck` shows status of all profiles
+✅ **Writable config** - `~/.aws/config` is editable for temporary testing (regenerated on rebuild)
 
 ---
 
