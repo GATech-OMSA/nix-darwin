@@ -2,6 +2,9 @@
 result
 result-*
 
+# Machine type override (for local testing)
+hosts/local-override.nix
+
 # Secrets (keep encrypted versions, ignore unencrypted)
 secrets/secrets.yaml.dec
 secrets/*.dec
@@ -92,13 +95,15 @@ Temporary Items
 # Obsidian
 .obsidian
 
-# Planning notes
-Planning
-
 # Claude
 .claude/
-claudedocs/
-CLAUDE.md
+
+# SOPS (root level config - user-specific)
+.sops.yaml
+
+# AWS directory (contains credentials and user-specific config)
+.aws/
+
 # Cursor
 .cursor/
 

@@ -12,7 +12,9 @@
 |---------|-----------|---------|
 | Command not found | `nix-rebuild && exec zsh` | [Shell Issues](#shell-issues) |
 | Build fails | `nix-rollback` | [Build Errors](#build-errors) |
+| Need debug info | `nix-rebuild-debug` | [Debugging](#debugging-with-verbose-output) |
 | Git aliases broken | Use `g` prefix: `g s` | [Git Problems](#git-problems) |
+| Commit blocked by hook | `chmod 600 <file>` | [Git Problems](#commit-blocked-by-pre-commit-hook) |
 | Slow shell | Check plugins | [Performance](#performance-problems) |
 | Secrets won't decrypt | Check age key | [Secrets Issues](#secrets-issues) |
 | Python venv not working | Re-enter directory | [Python Issues](#python-issues) |
@@ -161,8 +163,11 @@ nix-rebuild
 ```bash
 # Cancel with Ctrl+C
 
-# Check what's building
-darwin-rebuild switch --flake . --show-trace -v
+# Debug what's building with verbose output
+nix-rebuild-debug
+
+# Or manually with full flags
+darwin-rebuild switch --flake . --show-trace --verbose --print-build-logs
 
 # Check disk space
 duf
@@ -172,6 +177,38 @@ nix-clean
 
 # Try again
 nix-rebuild
+```
+
+### Debugging with Verbose Output
+
+**When to use debug mode:**
+- Home Manager activation failures
+- Configuration changes not applying
+- Build succeeds but changes don't work
+- Need to see what's happening during rebuild
+
+**Debug commands:**
+```bash
+# Full verbose rebuild (recommended for troubleshooting)
+nix-rebuild-debug
+
+# Check configuration without building
+nix-check
+
+# Manual debug (equivalent to nix-rebuild-debug)
+darwin-rebuild switch --flake ~/nix-darwin --show-trace --verbose --print-build-logs
+```
+
+**What debug output shows:**
+- ✅ Detailed build logs for each derivation
+- ✅ Full stack traces on errors
+- ✅ Home Manager activation steps
+- ✅ File installation and linking operations
+- ✅ Script execution output
+
+**Tip:** Pipe to file for analysis:
+```bash
+nix-rebuild-debug 2>&1 | tee rebuild.log
 ```
 
 ---
@@ -347,6 +384,94 @@ g remote set-url origin git@github.com:user/repo.git
 # Or use credential helper
 g config --global credential.helper osxkeychain
 ```
+
+### Commit blocked by pre-commit hook
+
+**Symptom:** `❌ BLOCKED: Insecure file permissions detected`
+
+**Cause:** Credential file has insecure permissions (not 600)
+
+**Fix:**
+```bash
+# Fix the file permissions as shown in error
+chmod 600 <file-path>
+
+# Retry commit
+git commit -m "message"
+```
+
+**Example:**
+```bash
+# Error shows:
+# File: ~/.aws/credentials
+# Current: 644 (readable by group/others)
+# Required: 600 (owner read/write only)
+
+# Fix it:
+chmod 600 ~/.aws/credentials
+
+# Retry:
+git commit -m "update config"
+```
+
+### Hook blocking valid change
+
+**Symptom:** Hook blocks commit but file permissions are actually correct
+
+**Diagnosis:**
+```bash
+# Verify actual permissions
+ls -la <file>
+
+# Check if it's a symlink
+file <file>
+
+# If symlink, check target
+ls -la $(readlink <file>)
+```
+
+**Solutions:**
+
+**If hook is wrong (bug):**
+```bash
+# Bypass and report issue
+git commit --no-verify -m "message"
+
+# Report the issue so hook can be fixed
+```
+
+**If permissions are actually wrong:**
+```bash
+# Fix permissions
+chmod 600 <file>
+
+# Retry commit
+git commit -m "message"
+```
+
+### Emergency bypass of hooks
+
+**When to use:**
+- ✅ Emergency production fix needed NOW
+- ✅ Reverting broken change to unblock team
+- ✅ Hook has a bug blocking valid change
+
+**When NOT to use:**
+- ❌ "I'll fix permissions later" (fix now!)
+- ❌ "The warning is annoying" (warnings exist for security)
+- ❌ "It's just dev environment" (security matters everywhere)
+
+**How to bypass:**
+```bash
+# Skip pre-commit hook
+git commit --no-verify -m "emergency fix"
+
+# Skip both hooks
+git commit --no-verify -m "fix"
+git push --no-verify
+```
+
+**After bypass:** Fix the underlying issue immediately!
 
 ---
 

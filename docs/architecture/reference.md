@@ -667,7 +667,7 @@ Machine-specific configuration that differentiates personal and work Macs.
 {
   home.sessionVariables = {
     MACHINE_MODE = "work";
-    AWS_PROFILE = "work-domain";
+    AWS_PROFILE = "example-corp";
   };
 
   home.shellAliases = {
@@ -1217,7 +1217,7 @@ nix-rollback  # Instant undo!
 # ✅ Good: Explained
 home.shellAliases = {
   # AWS SSO login - requires browser authentication
-  awslogin = "aws sso login --profile work-domain";
+  awslogin = "aws sso login --profile example-corp";
 
   # Quick disk usage - shows human-readable sizes
   du-summary = "du -h -d 1 | sort -hr";

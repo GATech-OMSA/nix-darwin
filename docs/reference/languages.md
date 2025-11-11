@@ -956,6 +956,6 @@ nix-rebuild
 
 **Related Documentation:**
 - [Shell Reference](shell.md) - All shell aliases and functions
-- [VS Code Reference](vscode.md) - Python extension settings
+- [VS Code Reference](tools.md#vs-code) - Python extension settings
 - [Tools Reference](tools.md) - VS Code and development tools
-- [Nix Darwin Reference](nix-darwin.md) - System configuration
+- [Nix Darwin Reference](system.md) - System configuration

@@ -204,6 +204,26 @@ Returns to original directory
 
 **Applied:** As part of `darwin-rebuild switch`
 
+### User Preferences vs Machine Settings
+
+**Important Distinction:**
+
+Within the user layer, there's a critical separation between:
+
+1. **User Preferences** (cross-machine) - Your personal workflow choices
+   - Editor, shell theme, keybindings
+   - Tool configurations (Starship, fzf, bat)
+   - Git aliases and workflow preferences
+   - Same on all machines you use
+
+2. **Machine Settings** (context-specific) - Machine type and purpose
+   - AWS profiles, git email
+   - Work vs personal project shortcuts
+   - Corporate compliance configurations
+   - Different between work and personal machines
+
+**See**: [User vs Machine Config Separation](../../claudedocs/USER-VS-MACHINE-CONFIG-SEPARATION.md) for detailed guide
+
 ### Interaction
 
 ```
@@ -213,7 +233,9 @@ System Layer (root)
     ↓ uses
 User Layer (jimmy)
     ↓ configures
-[User Applications] → [Personalized for jimmy]
+[User Preferences] → [Same everywhere]
+    ↓ applies
+[Machine Settings] → [Work vs Personal]
 ```
 
 ---
@@ -669,7 +691,7 @@ Result: All packages installed (git, curl, python3, neofetch)
 {
   home.sessionVariables = {
     MACHINE_MODE = "work";
-    AWS_PROFILE = "work-domain";
+    AWS_PROFILE = "example-corp";
     AWS_REGION = "us-east-1";
   };
 
@@ -698,7 +720,7 @@ Result: All packages installed (git, curl, python3, neofetch)
   programs.zsh.initExtra = ''
     # AWS SSO login function
     awslogin() {
-      aws sso login --profile work-domain
+      aws sso login --profile example-corp
     }
 
     # Check AWS identity
@@ -1287,8 +1309,8 @@ homebrew.casks = [
 ## Next Steps
 
 - **[File Structure](reference.md)** - Detailed file organization
-- **[Getting Started](../getting-started/installation.md)** - Install nix-darwin
-- **[Migration Guide](../getting-started/migration.md)** - Move from other systems
+- **[Getting Started](../guides/installation.md)** - Install nix-darwin
+- **[Migration Guide](../guides/installation.md)** - Move from other systems
 
 ---
 

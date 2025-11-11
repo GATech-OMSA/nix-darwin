@@ -2,70 +2,178 @@
 
 rec {
   # ==================================================
-  # AWS PROFILE ALIAS GENERATOR
+  # ACCOUNTS.JSON INTEGRATION
   # ==================================================
-  # Generate AWS profile switching aliases for quick environment switching
+  loadAccountsJson =
+    let accountsPath = "${builtins.getEnv "HOME"}/.aws/accounts.json";
+    in if builtins.pathExists accountsPath
+       then builtins.fromJSON (builtins.readFile accountsPath)
+       else {};
+
+  # Generate AWS helper functions using accounts.json
+  mkAwsAccountHelper =
+    let accounts = loadAccountsJson;
+    in ''
+      function awsuse() {
+        local project="$1"
+        local env="$2"
+        local role="$3"
+
+        if [[ -z "$project" || -z "$env" ]]; then
+          echo "Usage: awsuse <project|alias> <env> [role]"
+          echo ""
+          echo "Available accounts:"
+          jq -r 'to_entries[] | "  \(.key) (\(.value.alias)): \(.value.accounts | keys | join(", "))"' ~/.aws/accounts.json
+          return 1
+        fi
+
+        # Resolve alias to project name
+        local resolved_project=$(jq -r --arg input "$project" 'to_entries[] | select(.key == $input or .value.alias == $input) | .key' ~/.aws/accounts.json)
+
+        if [[ -z "$resolved_project" ]]; then
+          echo "❌ Project not found: $project"
+          return 1
+        fi
+
+        # Get account data (can be string or object)
+        local account_data=$(jq -r --arg proj "$resolved_project" --arg env "$env" '.[$proj].accounts[$env] // empty' ~/.aws/accounts.json)
+
+        if [[ -z "$account_data" ]]; then
+          echo "❌ Account not found: $resolved_project/$env"
+          echo "Available for $resolved_project:" $(jq -r --arg proj "$resolved_project" '.[$proj].accounts | keys | join(", ")' ~/.aws/accounts.json)
+          return 1
+        fi
+
+        # Extract account ID (works for both string and object)
+        local account_id=$(echo "$account_data" | jq -r 'if type == "string" then . else .id end' 2>/dev/null || echo "$account_data")
+
+        # Determine role (default to support if not specified)
+        if [[ -z "$role" ]]; then
+          role=$(jq -r --arg proj "$resolved_project" '.[$proj].default_role // "support"' ~/.aws/accounts.json)
+        fi
+
+        # Construct profile name (support role doesn't add suffix for backward compatibility)
+        local profile
+        if [[ "$role" == "support" ]]; then
+          profile="''${resolved_project}-''${env}"
+        else
+          profile="''${resolved_project}-''${env}-''${role}"
+        fi
+
+        # Check if profile exists
+        if ! grep -q "\\[profile $profile\\]" ~/.aws/config 2>/dev/null; then
+          echo "❌ Profile not configured: $profile"
+          echo "💡 Run: awslogin $project $env $role"
+          return 1
+        fi
+
+        export AWS_PROFILE="$profile"
+        echo "$profile" > ~/.aws/.last_profile
+        echo "✅ Switched to: $profile"
+        echo "   Account: $account_id"
+        echo "   Role: $role"
+      }
+
+      function awslogin() {
+        local project="$1"
+        local env="$2"
+        local role="$3"
+
+        if [[ -z "$project" || -z "$env" ]]; then
+          echo "Usage: awslogin <project|alias> <env> [role]"
+          return 1
+        fi
+
+        # Resolve alias to project name
+        local resolved_project=$(jq -r --arg input "$project" 'to_entries[] | select(.key == $input or .value.alias == $input) | .key' ~/.aws/accounts.json)
+
+        # Determine role
+        if [[ -z "$role" ]]; then
+          role=$(jq -r --arg proj "$resolved_project" '.[$proj].default_role // "support"' ~/.aws/accounts.json)
+        fi
+
+        # Construct profile name
+        local profile
+        if [[ "$role" == "support" ]]; then
+          profile="''${resolved_project}-''${env}"
+        else
+          profile="''${resolved_project}-''${env}-''${role}"
+        fi
+
+        echo "🔐 Logging into: $profile"
+        aws sso login --profile "$profile"
+
+        if [[ $? -eq 0 ]]; then
+          export AWS_PROFILE="$profile"
+          echo "$profile" > ~/.aws/.last_profile
+          echo "✅ Logged in and switched to: $profile"
+        fi
+      }
+    '';
+
+  # Generate aliases from accounts.json
+  # Creates both default (support) and role-specific aliases
+  mkAwsAliasesFromJson =
+    let
+      accounts = loadAccountsJson;
+
+      # Get list of roles for an environment (returns list of role names)
+      getRolesForEnv = accountData:
+        if builtins.isString accountData then []
+        else if builtins.hasAttr "additional_roles" accountData
+        then accountData.additional_roles
+        else [];
+
+      mkProjectAliases = project: data:
+        let
+          alias = data.alias;
+          envs = builtins.attrNames data.accounts;
+          defaultRole = data.default_role or "support";
+
+          # For each environment, create default alias + role-specific aliases
+          mkEnvAliases = env:
+            let
+              accountData = data.accounts.${env};
+              additionalRoles = getRolesForEnv accountData;
+
+              # Default alias (support role)
+              defaultAlias = {
+                name = "${alias}${env}";
+                value = "awsuse ${project} ${env}";
+              };
+
+              # Additional role aliases
+              roleAliases = map (role: {
+                name = "${alias}${env}-${role}";
+                value = "awsuse ${project} ${env} ${role}";
+              }) additionalRoles;
+            in
+            [ defaultAlias ] ++ roleAliases;
+
+          allAliases = lib.concatMap mkEnvAliases envs;
+        in
+        lib.listToAttrs allAliases;
+    in
+    lib.foldl' (acc: name: acc // (mkProjectAliases name accounts.${name})) {} (builtins.attrNames accounts);
+
+  # ==================================================
+  # DEPRECATED: Generic AWS Profile Aliases
+  # ==================================================
+  # These functions create generic aliases like "awsdev" which are ambiguous
+  # in multi-project setups. Use mkAwsAliasesFromJson instead, which creates
+  # project-specific aliases like "tidev", "psdev", etc.
   #
-  # Usage:
-  #   mkAwsProfileAliases {
-  #     project = "tririga-integrations";
-  #     environments = [ "dev" "sbx" "qa" "prod" ];
-  #   }
-  #
-  # Generated aliases:
-  #   awsdev   → awsuse tririga-integrations-dev
-  #   awssbx   → awsuse tririga-integrations-sbx
-  #   awsqa    → awsuse tririga-integrations-qa
-  #   awsprod  → awsuse tririga-integrations-prod
-  #
+  # Kept for backwards compatibility but not recommended for new configurations.
+
   mkAwsProfileAliases = { project, environments }:
     lib.listToAttrs (map (env: {
       name = "aws${env}";
       value = "awsuse ${project}-${env}";
     }) environments);
 
-  # ==================================================
-  # MULTIPLE AWS PROJECT ALIASES
-  # ==================================================
-  # Generate AWS profile aliases for multiple projects
-  #
-  # Usage:
-  #   mkAwsProjectAliases [
-  #     { project = "tririga-integrations"; environments = [ "dev" "sbx" "qa" "prod" ]; }
-  #     { project = "project2"; environments = [ "dev" "prod" ]; }
-  #   ]
-  #
-  # Generated aliases:
-  #   awsdev   → awsuse tririga-integrations-dev
-  #   awssbx   → awsuse tririga-integrations-sbx
-  #   awsqa    → awsuse tririga-integrations-qa
-  #   awsprod  → awsuse tririga-integrations-prod
-  #   awsp2dev → awsuse project2-dev
-  #   awsp2prod → awsuse project2-prod
-  #
-  # Note: For multiple projects, use unique prefixes to avoid conflicts
-  #
   mkAwsProjectAliases = projects:
     lib.foldl' (acc: proj: acc // (mkAwsProfileAliases proj)) {} projects;
 
-  # ==================================================
-  # AWS PROFILE ALIAS GENERATOR (with prefix)
-  # ==================================================
-  # Generate AWS profile switching aliases with custom prefix
-  #
-  # Usage:
-  #   mkAwsProfileAliasesWithPrefix {
-  #     prefix = "ti";  # tririga-integrations
-  #     project = "tririga-integrations";
-  #     environments = [ "dev" "sbx" "qa" "prod" ];
-  #   }
-  #
-  # Generated aliases:
-  #   tidev   → awsuse tririga-integrations-dev
-  #   tisbx   → awsuse tririga-integrations-sbx
-  #   tiqa    → awsuse tririga-integrations-qa
-  #   tiprod  → awsuse tririga-integrations-prod
-  #
   mkAwsProfileAliasesWithPrefix = { prefix, project, environments }:
     lib.listToAttrs (map (env: {
       name = "${prefix}${env}";
@@ -73,37 +181,10 @@ rec {
     }) environments);
 
   # ==================================================
-  # AWS UNIVERSAL COMMAND GENERATOR
+  # DEPRECATED: AWS Universal Command Generator (Legacy)
   # ==================================================
-  # Generate universal AWS profile switching command with role support
-  #
-  # Pattern: awsuse <project> <env> [role]
-  # Default role: support
-  # Available roles: support, developer, data-engineer, data-scientist
-  #
-  # Corporate policy:
-  #   - developer role: only available in sbx environment
-  #   - support role: available in all environments (default)
-  #   - specialized roles (data-engineer, data-scientist): some projects only
-  #
-  # Usage:
-  #   mkAwsUniversalCommand {
-  #     projects = [
-  #       { name = "tririga-integrations"; short = "ti";
-  #         environments = ["dev" "sbx" "qa" "prod"];
-  #         roles = ["support" "developer" "data-engineer"]; }
-  #       { name = "hr-system"; short = "hr";
-  #         environments = ["qa" "prod"];
-  #         roles = ["support"]; }
-  #     ];
-  #   }
-  #
-  # Generated function: awsuse <project> <env> [role]
-  # Examples:
-  #   awsuse tririga-integrations dev         → ti-dev-support
-  #   awsuse tririga-integrations sbx developer → ti-sbx-developer
-  #   awsuse ti qa                            → ti-qa-support (short name)
-  #
+  # This function is superseded by mkAwsAccountHelper which automatically
+  # reads from accounts.json. Kept for backwards compatibility only.
   mkAwsUniversalCommand = { projects }:
     let
       # Generate project lookup map for short names
@@ -314,8 +395,10 @@ rec {
   # Generate AWS profile information commands
   #
   # Generated functions:
-  #   awswho   - Show current profile and session details
-  #   awslist  - List all available profiles from ~/.aws/config
+  #   awswho    - Show current profile and session details
+  #   awslist   - List all available profiles grouped by project
+  #   awswhere  - Reverse lookup: find project/env by account ID
+  #   awscheck  - Check SSO session status for all profiles
   #
   mkAwsInfoCommands = ''
     function awswho() {
@@ -343,27 +426,116 @@ rec {
     }
 
     function awslist() {
-      echo "📋 Available AWS Profiles:"
-      echo ""
-
-      if [ ! -f ~/.aws/config ]; then
-        echo "❌ No AWS config file found at ~/.aws/config"
+      if [ ! -f ~/.aws/accounts.json ]; then
+        echo "❌ No accounts.json found at ~/.aws/accounts.json"
         return 1
       fi
 
-      # Extract and format profile names
-      grep "^\[profile " ~/.aws/config | sed 's/\[profile /  /' | sed 's/\]//' | sort
-
-      echo ""
-      echo "Usage: awsuse <project> <env> [role]"
-      echo "   Or: awslogin <project> <env> [role]"
+      echo "📋 AWS Accounts (from accounts.json):"
       echo ""
 
+      # Group by project
+      jq -r 'to_entries[] |
+        "\n\(.key) (\(.value.alias))" +
+        (if .value.description then " - \(.value.description)" else "" end) +
+        "\n" +
+        (
+          .value.accounts | to_entries[] |
+          "  • \(.key | ljust(6)) (\(.value.id // .value | tostring))" +
+          (if .value.additional_roles then " → \(.value.additional_roles | join(", "))" else "" end)
+        )
+      ' ~/.aws/accounts.json 2>/dev/null || echo "Error parsing accounts.json"
+
+      echo ""
       if [ -n "$AWS_PROFILE" ]; then
-        echo "Current profile: $AWS_PROFILE ✅"
+        echo "Current: $AWS_PROFILE ✅"
       else
         echo "No profile currently set"
       fi
+      echo ""
+      echo "💡 Usage: awsuse <alias> <env> [role]"
+      echo "   Examples: tidev, awsuse ps qa, awsuse ti dev developer"
+    }
+
+    function awswhere() {
+      local account_id="$1"
+
+      if [[ -z "$account_id" ]]; then
+        echo "Usage: awswhere <account-id>"
+        echo "Example: awswhere 779846812095"
+        return 1
+      fi
+
+      if [ ! -f ~/.aws/accounts.json ]; then
+        echo "❌ No accounts.json found"
+        return 1
+      fi
+
+      echo "🔍 Searching for account: $account_id"
+      echo ""
+
+      local result=$(jq -r --arg id "$account_id" '
+        to_entries[] |
+        select(
+          .value.accounts | to_entries[] |
+          (.value == $id or .value.id == $id)
+        ) |
+        {
+          project: .key,
+          alias: .value.alias,
+          env: (
+            .value.accounts | to_entries[] |
+            select(.value == $id or .value.id == $id) |
+            .key
+          ),
+          roles: (
+            .value.accounts | to_entries[] |
+            select(.value == $id or .value.id == $id) |
+            if .value.additional_roles then
+              ["support"] + .value.additional_roles
+            else
+              ["support"]
+            end
+          )
+        } |
+        "📍 Project: \(.project) (\(.alias))\n   Environment: \(.env)\n   Profiles:\n" +
+        (.roles[] | "     • \(.project)-\(.env)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)")
+      ' ~/.aws/accounts.json)
+
+      if [[ -z "$result" ]]; then
+        echo "❌ Account ID not found: $account_id"
+        return 1
+      fi
+
+      echo "$result"
+      echo ""
+      echo "💡 Switch: awsuse <alias> <env> [role]"
+    }
+
+    function awscheck() {
+      echo "🔍 Checking SSO session status..."
+      echo ""
+
+      if [ ! -f ~/.aws/config ]; then
+        echo "❌ No AWS config found"
+        return 1
+      fi
+
+      # Get all profiles
+      local profiles=$(grep "^\[profile " ~/.aws/config | sed 's/\[profile //' | sed 's/\]//')
+
+      for profile in $profiles; do
+        printf "%-30s " "$profile:"
+        AWS_PROFILE=$profile aws sts get-caller-identity &>/dev/null
+        if [ $? -eq 0 ]; then
+          echo "✅ Active"
+        else
+          echo "❌ Expired/Not logged in"
+        fi
+      done
+
+      echo ""
+      echo "💡 Login: awslogin <project> <env> [role]"
     }
   '';
 

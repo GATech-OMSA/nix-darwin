@@ -111,7 +111,7 @@ Think of it as "NixOS for macOS" - but working alongside macOS rather than repla
 - Nix for CLI tools (reproducible, fast, version-controlled)
 - Homebrew for GUI apps (better macOS integration)
 
-See [Comparison Guide](../architecture/comparison.md) for details.
+See [Comparison Guide](../architecture/overview.md) for details.
 
 ### Is this worth the learning curve?
 
@@ -272,7 +272,7 @@ nix-rebuild
 # 5. App appears in Applications folder
 ```
 
-See [Adding Packages](../recipes/adding-packages.md).
+See [Adding Packages](../guides/usage.md#adding-packages).
 
 ### How do I add an alias?
 
@@ -296,7 +296,7 @@ myalias
 g myalias  # for git aliases
 ```
 
-See [Adding Aliases](../recipes/adding-aliases.md).
+See [Adding Aliases](../guides/usage.md#adding-aliases).
 
 ### Why do git aliases use `g` prefix?
 
@@ -323,7 +323,7 @@ g cm "msg"   # Commit
 g ps         # Push
 ```
 
-See [Git Reference](../reference/git.md).
+See [Git Reference](../reference/shell.md#git).
 
 ### How do I update packages?
 
@@ -349,7 +349,7 @@ update-brew
 - Weekly: `update-nix`
 - Monthly: `update-all`
 
-See [Update Guide](../guides/updates.md).
+See [Update Guide](../guides/usage.md#updates).
 
 ### Something broke after rebuild. How do I fix it?
 
@@ -383,7 +383,7 @@ nix-rebuild
 darwin-rebuild --list-generations
 ```
 
-See [Rollback Guide](../recipes/rollback-guide.md).
+See [Rollback Guide](../guides/backup-and-recovery.md#rollback).
 
 ---
 
@@ -485,7 +485,7 @@ home.packages = with pkgs; [
 | Setting      | Personal (mbp-jimmy) | Work (mbp-work)            |
 | ------------ | -------------------- | -------------------------- |
 | MACHINE_MODE | home                 | work                       |
-| AWS_PROFILE  | personal             | work-domain                |
+| AWS_PROFILE  | personal             | example-corp                |
 | Git email    | personal email       | work email                 |
 | Functions    | Standard             | AWS SSO (awslogin, awswho) |
 | Shortcuts    | Personal projects    | Work projects              |
@@ -500,7 +500,7 @@ else if hostname == "mbp-work" then
   load work.nix
 ```
 
-See [Multi-Machine Guide](../guides/multi-machine.md).
+See [Multi-Machine Guide](../guides/learning.md#multi-machine-setup).
 
 ---
 
@@ -532,7 +532,7 @@ which python      # Shows venv path
 4. Shows visual feedback
 5. Deactivates when leaving directory
 
-See [Python Reference](../reference/python.md#auto-activation).
+See [Python Reference](../reference/languages.md#python#auto-activation).
 
 ### Can I use pip instead of UV?
 
@@ -593,7 +593,7 @@ micromamba deactivate
 - **UV:** Fast, modern, pure Python
 - **Micromamba:** Conda-compatible, scientific packages
 
-See [Python Reference](../reference/python.md#micromamba).
+See [Python Reference](../reference/languages.md#python#micromamba).
 
 ---
 
@@ -666,7 +666,7 @@ alias.cm=commit -m
 ...
 ```
 
-See [Git Reference](../reference/git.md).
+See [Git Reference](../reference/shell.md#git).
 
 ### Can I use my own git aliases?
 
@@ -1154,7 +1154,7 @@ See [Secrets Guide](../guides/secrets.md#best-practices).
 - Rebuild
 - Machine-specific settings handled by mixins
 
-See [Multi-Machine Guide](../guides/multi-machine.md).
+See [Multi-Machine Guide](../guides/learning.md#multi-machine-setup).
 
 ### Can I test changes without committing?
 
@@ -1253,7 +1253,7 @@ g branch -D experiment/feature
 - Better for servers/fleets
 - More resources available
 
-See [Comparison](../architecture/comparison.md#vs-ansible).
+See [Comparison](../architecture/overview.md#vs-ansible).
 
 ### Nix-Darwin vs Chezmoi?
 
@@ -1281,7 +1281,7 @@ See [Comparison](../architecture/comparison.md#vs-ansible).
 
 **Use both?** Yes, some people use Chezmoi for dotfiles and Nix for packages.
 
-See [Comparison](../architecture/comparison.md#vs-chezmoi).
+See [Comparison](../architecture/overview.md#vs-chezmoi).
 
 ---
 
@@ -1291,9 +1291,9 @@ See [Comparison](../architecture/comparison.md#vs-chezmoi).
 
 **This Documentation:**
 
-- [Getting Started](../getting-started/installation.md)
-- [Daily Usage](../guides/daily-usage.md)
-- [Configuration](../guides/configuration.md)
+- [Getting Started](../guides/installation.md)
+- [Daily Usage](../guides/usage.md)
+- [Configuration](../guides/usage.md)
 - [Troubleshooting](../guides/troubleshooting.md)
 
 **External Resources:**
@@ -2336,8 +2336,8 @@ git help <command>
 
 ## Related Documentation
 
-- **[Installation Guide](../getting-started/installation.md)** - Fresh setup
-- **[Migration Guide](../getting-started/migration.md)** - Moving from other systems
+- **[Installation Guide](../guides/installation.md)** - Fresh setup
+- **[Migration Guide](../guides/installation.md)** - Moving from other systems
 - **[Troubleshooting](../guides/troubleshooting.md)** - Common issues
 - **[Architecture Overview](../architecture/overview.md)** - System design
 

@@ -291,6 +291,7 @@ jupyternotebook
 jwt
 kafka
 kappa
+Karabiner
 kendall
 keras
 kernelspec
@@ -372,6 +373,7 @@ ngoninit
 ngrx
 ngswitch
 ngtemplate
+nixpkgs
 nlargest
 nltk
 nn

@@ -3,6 +3,11 @@
 {
   # Work machine-specific configuration
 
+  # AWS CLI configuration with corporate CA bundle
+  programs.aws = {
+    caBundle = "~/.config/certs/cacert.pem";
+  };
+
   # Work-specific packages
   home.packages = with pkgs; [
     # ODBC drivers and database clients
@@ -33,13 +38,13 @@
   # Work-specific shell aliases
   programs.zsh.shellAliases = {
     # Project directory shortcuts
-    scst = "cd ~/Dev/scst";
-    ti = "cd ~/Dev/tririga";
-    ps-proj = "cd ~/Dev/paging-solution";
-    mp = "cd ~/Dev/misc-projects";
-    wfhub = "cd ~/Dev/workforce-hub";
-    ap = "cd ~/Dev/webMethods/api";
-    deploys = "cd ~/Dev/production-deploys";
+    fscst = "cd ~/Dev/scst";
+    fti = "cd ~/Dev/tririga";
+    fps-proj = "cd ~/Dev/paging-solution";
+    fmp = "cd ~/Dev/misc-projects";
+    fwfhub = "cd ~/Dev/workforce-hub";
+    fap = "cd ~/Dev/webMethods/api";
+    fdeploys = "cd ~/Dev/production-deploys";
   };
 
   # Work-specific shell functions
@@ -57,71 +62,26 @@
     }
 
     # ==================================================
-    # AWS UNIVERSAL COMMAND SYSTEM
+    # AWS HELPER FUNCTIONS
     # ==================================================
-    # Pattern: awsuse <project> <env> [role]
-    # Examples:
-    #   awsuse tririga-integrations dev        → ti-dev-support
-    #   awsuse ti sbx developer                → ti-sbx-developer
-    #   awslogin hr qa                         → hr-qa-support + SSO login
+    # AWS functions read from ~/.aws/accounts.json for project configuration.
     #
-    # Commands: awsuse, awslogin, awswho, awslist
-    # Profile auto-restores on shell start from ~/.aws/.last_profile
+    # Usage:
+    #   awsuse <project|alias> <env> [role]
+    #   awslogin <project|alias> <env> [role]
+    #   awswho, awslist, awswhere, awscheck
+    #
+    # Examples:
+    #   awsuse ti sbx                # tririga-integrations sbx (support role)
+    #   awsuse ti sbx developer      # tririga-integrations sbx (developer role)
+    #   awslogin ps dev              # paging-solution dev + SSO login
+    #
+    # Generated aliases from accounts.json:
+    #   tidev, tisbx, tiqa, tiprod, tidev-developer, tisbx-developer, etc.
 
-    ${myLib.aws.mkAwsUniversalCommand {
-      projects = [
-        {
-          name = "tririga-integrations";
-          short = "ti";
-          environments = [ "dev" "sbx" "qa" "prod" ];
-          roles = [ "support" "developer" "data-engineer" ];
-        }
-        {
-          name = "hr-system";
-          short = "hr";
-          environments = [ "qa" "prod" ];
-          roles = [ "support" "data-engineer" ];
-        }
-        {
-          name = "workforce-hub";
-          short = "wfh";
-          environments = [ "dev" "sbx" "qa" "prod" ];
-          roles = [ "support" "developer" ];
-        }
-        # Add more projects as needed:
-        # {
-        #   name = "project-name";
-        #   short = "proj";
-        #   environments = [ "dev" "qa" "prod" ];
-        #   roles = [ "support" ];
-        # }
-      ];
-    }}
-
-    ${myLib.aws.mkAwsSsoLogin {
-      projects = [
-        {
-          name = "tririga-integrations";
-          short = "ti";
-          environments = [ "dev" "sbx" "qa" "prod" ];
-          roles = [ "support" "developer" "data-engineer" ];
-        }
-        {
-          name = "hr-system";
-          short = "hr";
-          environments = [ "qa" "prod" ];
-          roles = [ "support" "data-engineer" ];
-        }
-        {
-          name = "workforce-hub";
-          short = "wfh";
-          environments = [ "dev" "sbx" "qa" "prod" ];
-          roles = [ "support" "developer" ];
-        }
-      ];
-    }}
-
+    ${myLib.aws.mkAwsAccountHelper}
     ${myLib.aws.mkAwsInfoCommands}
+    ${myLib.aws.mkAwsProfileAutoRestore}
 
     # ==================================================
     # DATABASE INSTANCE CONNECTORS (Environment Variables)

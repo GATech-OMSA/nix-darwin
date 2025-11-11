@@ -26,8 +26,9 @@
 
     # Only brew formulae that MUST be from Homebrew
     brews = [
-      "mas"  # Mac App Store CLI
-      "micromamba"  # Conda replacement (Nix build broken on macOS)
+      "mas"         # Mac App Store CLI
+      "micromamba"  # Conda replacement
+      "gemini-cli"  # Google Gemini CLI
     ];
 
     # GUI applications only
@@ -40,7 +41,7 @@
       "cursor"
       "visual-studio-code"
       "claude-code"
-      "docker"  # Changed from docker-desktop
+      "docker-desktop"  # Official name (docker is deprecated alias)
       "iterm2"
 
       # Productivity
@@ -52,7 +53,7 @@
       "chatgpt"
       "claude"
       "jan"
-      "ollama"  # Changed from ollama-app
+      "ollama-app"  # Official name (ollama is deprecated alias)
 
       # Utilities
       "appcleaner"

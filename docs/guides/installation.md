@@ -13,6 +13,7 @@
 3. [First Steps](#first-steps)
 4. [Additional Machines](#additional-machines)
 5. [Migration](#migration)
+6. [Multi-User Setup](#multi-user-setup)
 
 ---
 
@@ -528,7 +529,7 @@ Use mixins for machine-specific configuration:
 {
   home.sessionVariables = {
     MACHINE_MODE = "work";
-    AWS_PROFILE = "work-domain";
+    AWS_PROFILE = "example-corp";
   };
 
   home.shellAliases = {
@@ -866,11 +867,43 @@ rm -rf ~/.zshrc ~/.gitconfig ~/.config/nix
 
 ---
 
+## Multi-User Setup
+
+This configuration supports multiple users and usernames out of the box. If you want to:
+
+- **Use a different username** (not "jimmy")
+- **Share this config** with family members or team
+- **Manage multiple machines** with different users
+
+See the **[Multi-User Setup Guide](multi-user-setup.md)** for detailed instructions.
+
+**Quick Overview:**
+
+1. Edit `flake.nix` to add your machine with your username:
+   ```nix
+   darwinConfigurations."your-hostname" = mkDarwinSystem {
+     hostname = "your-hostname";
+     username = "your-username";  # ← Your username here
+     mixins = [ "base" "dev" "personal" ];
+   };
+   ```
+
+2. Copy home directory: `cp -r home/jimmy home/your-username`
+
+3. Create host config: `mkdir hosts/your-hostname`
+
+4. Run installation: `sudo nix run nix-darwin -- switch --flake .#your-hostname`
+
+All paths, aliases, and configurations automatically adapt to your username.
+
+---
+
 ## Next Steps
 
 1. **[Usage Guide](usage.md)** - Learn daily workflows
 2. **[Secrets Management](secrets.md)** - Set up encrypted secrets
 3. **[Learning Guide](learning.md)** - Learn modern CLI tools
+4. **[Multi-User Setup](multi-user-setup.md)** - Configure for different users
 
 ---
 

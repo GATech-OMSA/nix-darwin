@@ -4,7 +4,7 @@ let
   # Conditional email based on machine type
   gitEmail = myLib.selectByMachine hostname {
     personal = "jimmy-jain@users.noreply.github.com";
-    work = "first.last@work-domain.com";
+    work = "user@example.com";
   };
 in
 {

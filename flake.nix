@@ -35,10 +35,14 @@
 
       # Helper function for creating Darwin systems
       mkDarwinSystem = { hostname, system ? "aarch64-darwin", username, mixins ? [] }:
+        let
+          # Validate machine is recognized and get type
+          machineType = myLib.requireKnownMachine hostname;
+        in
         nix-darwin.lib.darwinSystem {
           inherit system;
           specialArgs = {
-            inherit inputs username hostname myLib;
+            inherit inputs username hostname myLib machineType;
           };
           modules = [
             # Apply overlays to nixpkgs
@@ -59,7 +63,7 @@
                 useUserPackages = true;
                 users.${username} = import ./home/${username};
                 extraSpecialArgs = {
-                  inherit inputs mixins hostname myLib;
+                  inherit inputs mixins hostname myLib machineType username;
                 };
                 verbose = true;
                 backupFileExtension = "hm-backup";
@@ -84,7 +88,7 @@
       darwinConfigurations."mbp-work" = mkDarwinSystem {
         hostname = "mbp-work";
         system = "aarch64-darwin";
-        username = "jimmy";  # Change if work username is different
+        username = "jimmy";
         mixins = [ "base" "dev" "work" ];
       };
 
@@ -92,5 +96,15 @@
       lib = myLib // {
         inherit mkDarwinSystem;
       };
+
+      # Expose secret paths for use in scripts and validation
+      # Usage: nix eval .#secretPaths --json
+      secretPaths = myLib.secrets.secretPaths;
+      secretGlobPatterns = myLib.secrets.secretGlobPatterns;
+      secretsByType = myLib.secrets.secretsByType;
+
+      # Expose machine type for current hostname (validation and testing)
+      # Usage: nix eval .#currentMachineType --json
+      currentMachineType = myLib.machineType (builtins.getEnv "HOSTNAME");
     };
 }

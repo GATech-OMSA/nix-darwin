@@ -1,7 +1,16 @@
 # Ignore large/personal data (not valuable for version control)
 
-# Claude conversation history (22M+ - too large)
-user-content/claude/projects/
+# Claude conversation history and temporary data
+app-configs/claude/projects/          # Conversation history (22M+ - too large)
+app-configs/claude/history.jsonl     # Conversation history
+app-configs/claude/debug/            # Debug logs
+app-configs/claude/logs/             # Application logs
+app-configs/claude/plugins/cache/    # Cached plugin data (regenerable)
+app-configs/claude/file-history/     # File history (large, regenerable)
+app-configs/claude/session-env/      # Session environment (temporary)
+app-configs/claude/shell-snapshots/  # Shell snapshots (temporary)
+app-configs/claude/statsig/          # Analytics data
+app-configs/claude/backups/          # Claude's own backups
 
 # Personal navigation history (rebuilds naturally)
 zoxide_database

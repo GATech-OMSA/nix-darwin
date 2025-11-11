@@ -7,35 +7,34 @@
 
 let
   inherit (inputs.nixpkgs) lib;
+
+  # Import machine detection helpers
+  machineDetection = import ./machine-detection.nix { inherit lib; };
 in
 rec {
   # ============================================
   # MACHINE TYPE HELPERS
   # ============================================
+  # Re-export machine detection functions for compatibility
+  # These now use the flexible machine detection system from machine-detection.nix
 
   # Determine machine type from hostname
   # Returns: "personal" | "work" | "unknown"
-  machineType = hostname:
-    if hostname == "mbp-jimmy" then "personal"
-    else if hostname == "mbp-work" then "work"
-    else "unknown";
+  # Now uses hosts/machines.nix mapping with local override support
+  machineType = machineDetection.getMachineType;
 
   # Check if machine is personal
-  isPersonal = hostname: (machineType hostname) == "personal";
+  isPersonal = machineDetection.isPersonal;
 
   # Check if machine is work
-  isWork = hostname: (machineType hostname) == "work";
+  isWork = machineDetection.isWork;
+
+  # Validate machine is recognized (throws error if unknown)
+  requireKnownMachine = machineDetection.requireKnownMachine;
 
   # Select value based on machine type
   # Usage: selectByMachine hostname { personal = "X"; work = "Y"; default = "Z"; }
-  selectByMachine = hostname: values:
-    let
-      type = machineType hostname;
-      hasDefault = values ? default;
-    in
-      if values ? ${type} then values.${type}
-      else if hasDefault then values.default
-      else throw "No value for machine type '${type}' and no default provided";
+  selectByMachine = machineDetection.selectByMachine;
 
   # Conditional import based on predicate
   # Usage: importIf isPersonal hostname ./personal.nix
@@ -70,53 +69,6 @@ rec {
         return $errors
       }
     '';
-
-  # Generate multiple update functions at once
-  # Usage: mkUpdateFunctions [ { name = ".."; command = ".."; description = ".." } ... ]
-  mkUpdateFunctions = functions:
-    lib.concatMapStringsSep "\n\n" mkUpdateFunction functions;
-
-  # Generate scaffold/project creation function
-  # Usage: mkScaffoldFunction {
-  #   name = "newproject";
-  #   baseDir = "$HOME/Dev";
-  #   description = "Create new project";
-  #   template = "touch README.md && git init";
-  # }
-  mkScaffoldFunction = { name, baseDir, description, template }:
-    ''
-      function ${name}() {
-        if [ -z "$1" ]; then
-          echo "Usage: ${name} <project-name>"
-          return 1
-        fi
-
-        local project_name="$1"
-        local project_dir="${baseDir}/$project_name"
-
-        if [ -d "$project_dir" ]; then
-          echo "❌ Project '$project_name' already exists at $project_dir"
-          return 1
-        fi
-
-        echo "📦 ${description}: $project_name"
-        mkdir -p "$project_dir"
-        cd "$project_dir"
-
-        ${template}
-
-        echo "✅ ${description} created: $project_name"
-        echo "📍 Location: $project_dir"
-
-        if command -v code &> /dev/null; then
-          code .
-        fi
-      }
-    '';
-
-  # Generate multiple scaffold functions
-  mkScaffoldFunctions = functions:
-    lib.concatMapStringsSep "\n\n" mkScaffoldFunction functions;
 
   # ============================================
   # ENVIRONMENT VARIABLE HELPERS
@@ -213,33 +165,6 @@ rec {
     '';
 
   # ============================================
-  # ENVIRONMENT MANAGEMENT
-  # ============================================
-
-  # Generate environment manager function (for conda, venv, etc.)
-  # Usage: mkEnvManagerFunction {
-  #   tool = "micromamba";
-  #   name = "activate-env";
-  #   action = "activate";
-  #   listCommand = "micromamba env list";
-  # }
-  mkEnvManagerFunction = { tool, name, action, listCommand ? null }:
-    ''
-      function ${name}() {
-        if [ -z "$1" ]; then
-          echo "Usage: ${name} <environment-name>"
-          ${lib.optionalString (listCommand != null) ''
-            echo ""
-            echo "Available environments:"
-            ${listCommand}
-          ''}
-        else
-          ${tool} ${action} "$1"
-        fi
-      }
-    '';
-
-  # ============================================
   # PACKAGE MANAGEMENT
   # ============================================
 
@@ -262,23 +187,6 @@ rec {
     ) groups);
 
   # ============================================
-  # TIMING HELPERS
-  # ============================================
-
-  # Wrap function with duration tracking
-  # Usage: mkTimedFunction { name = "long-task"; body = "sleep 5 && echo done"; }
-  mkTimedFunction = { name, body }:
-    ''
-      function ${name}() {
-        local start_time=$(date +%s)
-        ${body}
-        local end_time=$(date +%s)
-        local duration=$((end_time - start_time))
-        echo "⏱️  Duration: $((duration / 60))m $((duration % 60))s"
-      }
-    '';
-
-  # ============================================
   # FILE HELPERS
   # ============================================
 
@@ -293,30 +201,6 @@ rec {
   mkSourcePlugins = plugins:
     lib.concatMapStringsSep "\n" (p: mkSourceIfExists p.path) plugins;
 
-  # ============================================
-  # LIST & ATTRIBUTE SET UTILITIES
-  # ============================================
-
-  # Filter attributes by predicate
-  filterAttrs = pred: set:
-    lib.filterAttrs (name: value: pred name value) set;
-
-  # Map over attribute values
-  mapAttrValues = f: set:
-    lib.mapAttrs (name: value: f value) set;
-
-  # Create package group from list of names
-  # Usage: mkPackageGroup ["git" "vim" "curl"] pkgs
-  mkPackageGroup = names: pkgs:
-    map (name: pkgs.${name}) names;
-
-  # ============================================
-  # CLEANUP HELPERS
-  # ============================================
-
-  # Import cleanup helper library
-  # Provides: mkCleanupFunction, mkCleanupGroup, mkDiskSpaceReport, mkCleanupLog, etc.
-  cleanup = import ./cleanup.nix { inherit lib; pkgs = inputs.nixpkgs.legacyPackages.${builtins.currentSystem or "x86_64-darwin"}; };
 
   # ============================================
   # DATABASE & CREDENTIAL HELPERS
@@ -341,4 +225,24 @@ rec {
   # Import mixin helper library
   # Provides: mkMixin, mkConditionalMixinComponents, mergeMixins
   mixin = import ./mixin-helpers.nix { inherit lib; };
+
+  # ============================================
+  # SECRETS REGISTRY
+  # ============================================
+
+  # Import secrets registry
+  # Single source of truth for all credential and secret file locations
+  # Provides: secretPaths, secretsByType, secretGlobPatterns, helpers, stats, meta
+  secrets = import ./secrets-registry.nix { inherit lib; };
+
+  # ============================================
+  # WARNING SYSTEM
+  # ============================================
+
+  # Import warning system
+  # Provides confirmation prompts and warning messages for risky operations
+  # Functions: mkWarningMessage, mkConfirmPrompt, mkRiskyOperation, mkCriticalOperation,
+  #            mkPreFlightCheck, mkNixRebuildWarning, mkCleanupWarning, mkSecretsWarning,
+  #            mkGitForceWarning, mkWarningHelpers
+  warnings = import ./warnings.nix { inherit lib; };
 }

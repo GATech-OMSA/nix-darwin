@@ -28,7 +28,8 @@
   # Secrets are encrypted in hosts/mbp-work/secrets.yaml
   # To edit secrets: edit-secrets (uses your age key)
   # Secrets auto-decrypt on rebuild and are placed in /run/secrets/
-
+  # DISABLED: sops-nix module requires Go modules blocked by corporate proxy
+  /*
   sops = {
     defaultSopsFile = ./secrets.yaml;
     age.keyFile = "/Users/${username}/.config/sops/age/keys.txt";
@@ -238,6 +239,7 @@
       };
     };
   };
+  */
 
   # System state version
   system.stateVersion = 5;

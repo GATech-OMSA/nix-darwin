@@ -368,7 +368,7 @@ Your system automatically adjusts based on hostname:
 
 **Work Mac (`mbp-work`):**
 
-- Git email: first.last@work-domain.com
+- Git email: user@example.com
 - AWS: SSO with multiple profiles
 - Machine mode: 🏢 WORK
 - Work-specific shortcuts
@@ -437,3 +437,4 @@ See: [Backup Guide - Pre-Rebuild Safety](guides/backup-and-recovery.md#pre-rebui
 - See [Complete Documentation Index](index.md)
 
 ---
+Test change

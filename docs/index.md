@@ -21,6 +21,9 @@ Complete guides for common workflows:
 
 - **[Installation Guide](guides/installation.md)** - Complete setup (consolidates installation, quickstart, first steps, migration, new machine setup)
 - **[Usage Guide](guides/usage.md)** - Daily usage, adding packages/aliases, customization, updates (consolidates daily usage, configuration, updates, recipes)
+- **[System Health Check](guides/system-health.md)** - Comprehensive validation of system state with scoring and diagnostics
+- **[Security Configuration](guides/security.md)** - Security best practices, SOPS encryption, file permissions, git hooks, incident response
+- **[Multi-User Setup](guides/multi-user-setup.md)** - Using this config with different usernames, sharing with team/family
 - **[Backup & Recovery](guides/backup-and-recovery.md)** - Backup strategy, disaster recovery, pre-rebuild safety, rollback
 - **[Secrets Management](guides/secrets.md)** - Managing encrypted secrets with sops-nix, adding/updating/rotating secrets
 - **[Learning Modern CLI](guides/learning.md)** - Learn modern CLI tools (z, bat, rg, fd, fzf), multi-machine setup
@@ -101,7 +104,7 @@ This documentation is organized as:
 - START-HERE.md - Comprehensive introduction
 - QUICK-REFERENCE.md - Quick command reference
 
-**Guides (6 files):**
+**Guides (7 files):**
 - Practical, task-oriented documentation
 - Complete workflows and procedures
 
@@ -117,7 +120,7 @@ This documentation is organized as:
 - FAQ, Glossary, Resources, Changelog
 - All-in-one reference
 
-**Total: 16 well-organized files** (down from 42 original files)
+**Total: 17 well-organized files** (down from 42 original files)
 
 ---
 

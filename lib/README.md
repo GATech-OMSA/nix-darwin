@@ -54,7 +54,7 @@ Select value based on machine type (most useful!).
 ```nix
 gitEmail = myLib.selectByMachine hostname {
   personal = "jimmy-jain@users.noreply.github.com";
-  work = "first.last@work-domain.com";
+  work = "user@example.com";
   default = "fallback@email.com";  # optional
 };
 ```
@@ -107,35 +107,6 @@ function update-custom() {
   fi
   return $errors
 }
-```
-
-#### `mkScaffoldFunction`
-
-Create project scaffolding function.
-
-```nix
-myLib.mkScaffoldFunction {
-  name = "newproject";
-  baseDir = "$HOME/Dev";
-  description = "Create new project";
-  template = ''
-    touch README.md
-    git init
-    echo "# $project_name" > README.md
-  '';
-}
-```
-
-#### `mkTimedFunction`
-
-Wrap function with duration tracking.
-
-```nix
-myLib.mkTimedFunction {
-  name = "benchmark-task";
-  body = "heavy-computation";
-}
-# Outputs: ⏱️  Duration: 2m 30s
 ```
 
 ---
@@ -232,25 +203,6 @@ Eliminates 19+ manual argument checks.
 
 ---
 
-### Environment Management
-
-#### `mkEnvManagerFunction`
-
-Generate environment manager function (conda, venv, etc.).
-
-```nix
-myLib.mkEnvManagerFunction {
-  tool = "micromamba";
-  name = "activate-env";
-  action = "activate";
-  listCommand = "micromamba env list";
-}
-```
-
-Generates function with usage help and environment listing.
-
----
-
 ### Package Management
 
 #### `mkConditionalPackages`
@@ -286,14 +238,6 @@ home.packages = myLib.mkPackageGroups {
 ```
 
 Much cleaner than commenting/uncommenting individual packages!
-
-#### `mkPackageGroup`
-
-Simple package group from list of names.
-
-```nix
-home.packages = myLib.mkPackageGroup ["git" "vim" "curl"] pkgs;
-```
 
 ---
 
@@ -376,28 +320,6 @@ home.file.".config/starship.toml".source =
 **Real usage:** See `home/_mixins/base.nix:58-61`
 
 ---
-
-### Utility Functions
-
-#### `filterAttrs`
-
-Filter attribute set by predicate.
-
-```nix
-enabledPackages = myLib.filterAttrs
-  (name: pkg: pkg.meta.available or true)
-  allPackages;
-```
-
-#### `mapAttrValues`
-
-Map function over all attribute values.
-
-```nix
-upperCaseVars = myLib.mapAttrValues
-  (v: lib.toUpper v)
-  myVars;
-```
 
 ---
 
@@ -526,9 +448,9 @@ myLib.database.mkDatabaseConnector {
 }
 ```
 
-**Generated Function**: `dbconnect-oracle [environment]`  
-**Default Environment**: prod  
-**Available Environments**: prod, dev, qa, test  
+**Generated Function**: `dbconnect-oracle [environment]`
+**Default Environment**: prod
+**Available Environments**: prod, dev, qa, test
 **Features**: File permission validation (600), environment variable sourcing
 
 ### `mkDatabaseConnectors`
@@ -570,7 +492,7 @@ myLib.database.mkTokenHelper {
 }
 ```
 
-**Generated Function**: `git-token`  
+**Generated Function**: `git-token`
 **Features**: File permission validation (600), clipboard copy
 
 ### `mkTokenHelpers`

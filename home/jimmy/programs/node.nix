@@ -4,12 +4,12 @@ let
   # Machine-specific NPM config
   npmEmail = myLib.selectByMachine hostname {
     personal = "jimmy-jain@users.noreply.github.com";
-    work = "first.last@work-domain.com";
+    work = "user@example.com";
   };
 
   npmAuthor = myLib.selectByMachine hostname {
-    personal = "Jimmy Jain";
-    work = "First Last";
+    personal = "Jim";
+    work = "Jim";
   };
 in
 {

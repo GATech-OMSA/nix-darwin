@@ -120,11 +120,46 @@ if [ -f ~/.z ]; then
   echo "  ✅ Zoxide database"
 fi
 
-# Claude todos only (projects are too large - 22M+)
-if [ -d ~/.claude/todos ]; then
-  mkdir -p "$BACKUP_DIR/user-content/claude"
-  rsync -av --exclude='.DS_Store' ~/.claude/todos/ "$BACKUP_DIR/user-content/claude/todos/" 2>/dev/null || true
-  echo "  ✅ Claude todos"
+# Claude configuration and data
+if [ -d ~/.claude ]; then
+  mkdir -p "$BACKUP_DIR/app-configs/claude"
+
+  # Backup framework files (*.md)
+  for file in ~/.claude/*.md; do
+    if [ -f "$file" ]; then
+      cp "$file" "$BACKUP_DIR/app-configs/claude/" 2>/dev/null || true
+    fi
+  done
+
+  # Backup settings.json
+  if [ -f ~/.claude/settings.json ]; then
+    cp ~/.claude/settings.json "$BACKUP_DIR/app-configs/claude/"
+  fi
+
+  # Backup .superclaude-metadata.json
+  if [ -f ~/.claude/.superclaude-metadata.json ]; then
+    cp ~/.claude/.superclaude-metadata.json "$BACKUP_DIR/app-configs/claude/"
+  fi
+
+  # Backup custom commands (if exists)
+  if [ -d ~/.claude/commands ]; then
+    mkdir -p "$BACKUP_DIR/app-configs/claude/commands"
+    rsync -av --exclude='.DS_Store' ~/.claude/commands/ "$BACKUP_DIR/app-configs/claude/commands/" 2>/dev/null || true
+  fi
+
+  # Backup custom agents (if exists)
+  if [ -d ~/.claude/agents ]; then
+    mkdir -p "$BACKUP_DIR/app-configs/claude/agents"
+    rsync -av --exclude='.DS_Store' ~/.claude/agents/ "$BACKUP_DIR/app-configs/claude/agents/" 2>/dev/null || true
+  fi
+
+  # Backup todos (user-content, not app-configs)
+  if [ -d ~/.claude/todos ]; then
+    mkdir -p "$BACKUP_DIR/user-content/claude/todos"
+    rsync -av --exclude='.DS_Store' ~/.claude/todos/ "$BACKUP_DIR/user-content/claude/todos/" 2>/dev/null || true
+  fi
+
+  echo "  ✅ Claude config and data"
 fi
 
 echo ""

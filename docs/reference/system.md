@@ -115,7 +115,7 @@ darwin-rebuild switch --flake .
 update-all
 ```
 
-See [Update Guide](../guides/updates.md) for details.
+See [Update Guide](../guides/usage.md#updates) for details.
 
 ### Generations
 
@@ -206,7 +206,7 @@ nix-store --repair --verify --check-contents
 | `modules/shared/`  | Shared packages across machines    |
 | `home/jimmy/`      | User-level configurations          |
 
-See [File Structure](../architecture/file-structure.md) for details.
+See [File Structure](../architecture/reference.md) for details.
 
 ### Common Workflows Nix Darwin
 
@@ -216,7 +216,7 @@ See [File Structure](../architecture/file-structure.md) for details.
 2. Add package to `environment.systemPackages`
 3. Rebuild: `nix-rebuild`
 
-See [Adding Packages](../recipes/adding-packages.md).
+See [Adding Packages](../guides/usage.md#adding-packages).
 
 #### Modify Shell Configuration
 
@@ -243,7 +243,7 @@ See [Adding Packages](../recipes/adding-packages.md).
 | Variable       | Value                       | Set By                          |
 | -------------- | --------------------------- | ------------------------------- |
 | `MACHINE_MODE` | `home` or `work`            | Mixin (personal.nix / work.nix) |
-| `AWS_PROFILE`  | `personal` or `work-domain` | Mixin                           |
+| `AWS_PROFILE`  | `personal` or `example-corp` | Mixin                           |
 | `EDITOR`       | `code`                      | zsh.nix                         |
 | `PAGER`        | `less`                      | zsh.nix                         |
 
@@ -412,12 +412,12 @@ Mixins provide machine-specific configuration:
 {
   home.sessionVariables = {
     MACHINE_MODE = "work";
-    AWS_PROFILE = "work-domain";
+    AWS_PROFILE = "example-corp";
   };
 }
 ```
 
-See [Mixin Architecture](../architecture/mixins.md) for details.
+See [Mixin Architecture](../architecture/overview.md#mixin-system) for details.
 
 ### Activation
 
@@ -905,7 +905,7 @@ cleanup-all
 
 **Related Documentation:**
 
-- [Configuration Guide](../guides/configuration.md) - How to customize
-- [Update Guide](../guides/updates.md) - Update workflow
+- [Configuration Guide](../guides/usage.md) - How to customize
+- [Update Guide](../guides/usage.md#updates) - Update workflow
 - [Troubleshooting Guide](../guides/troubleshooting.md) - Fix common issues
 - [Architecture Overview](../architecture/overview.md) - System design

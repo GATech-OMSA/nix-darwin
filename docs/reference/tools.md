@@ -1784,6 +1784,6 @@ system.defaults = {
 - [Shell Reference](shell.md) - Zsh, Git, and Starship
 - [Languages Reference](languages.md) - Python and Node.js development
 - [Infrastructure Reference](infrastructure.md) - AWS, Docker, Kubernetes, Terraform
-- [Python Reference](python.md) - Python development setup
-- [Git Reference](git.md) - Git workflows
-- [Nix Darwin Reference](nix-darwin.md) - System configuration
+- [Python Reference](languages.md#python) - Python development setup
+- [Git Reference](shell.md#git) - Git workflows
+- [Nix Darwin Reference](system.md) - System configuration

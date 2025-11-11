@@ -10,6 +10,7 @@
 
 - [AWS](#aws)
   - [AWS Profiles](#aws-profiles)
+  - [Multi-Role Profile System](#multi-role-profile-system-work-mac)
   - [Basic AWS Aliases](#basic-aws-aliases)
   - [AWS SSO Workflow](#aws-sso-workflow)
   - [Work-Specific Functions](#work-specific-functions)
@@ -61,7 +62,7 @@
 | Machine          | Default Profile | Set By                      |
 | ---------------- | --------------- | --------------------------- |
 | **Personal Mac** | `personal`      | `home/_mixins/personal.nix` |
-| **Work Mac**     | `work-domain`   | `home/_mixins/work.nix`     |
+| **Work Mac**     | `example-corp`   | `home/_mixins/work.nix`     |
 
 **Environment Variable:**
 
@@ -73,8 +74,45 @@ echo $AWS_PROFILE
 # Output: personal
 
 # Work Mac
-# Output: work-domain
+# Output: example-corp
 ```
+
+---
+
+### Multi-Role Profile System (Work Mac)
+
+**Enhanced AWS profile management with multiple IAM roles per environment**
+
+The work Mac includes a comprehensive multi-role system that supports:
+- **Multiple profiles per project/environment** (e.g., `ti-dev`, `ti-dev-developer`)
+- **Dynamic alias generation** from `accounts.json`
+- **Role-based access control** (support, developer, admin, custom)
+- **Profile discovery** (`awslist`, `awswhere`)
+- **Session management** (`awscheck`, `awslogin`)
+
+**Quick Example:**
+
+```bash
+# Switch to support role (read-only)
+awsuse ti dev
+# or
+tidev
+
+# Switch to developer role (write access)
+awsuse ti dev developer
+# or
+tidev-developer
+
+# List all available profiles
+awslist
+
+# Check session status
+awscheck
+```
+
+**Complete Documentation:**
+- **[AWS Multi-Role Guide](../../claudedocs/AWS-MULTI-ROLE.md)** - Full schema, examples, and best practices
+- **[AWS Quick Reference](../../claudedocs/AWS-QUICK-REF.md)** - Command cheat sheet for daily use
 
 ---
 
@@ -120,7 +158,7 @@ echo $AWS_PROFILE
 
 | Function     | Command                               | Description          |
 | ------------ | ------------------------------------- | -------------------- |
-| `awslogin`   | `aws sso login --profile work-domain` | Login to AWS SSO     |
+| `awslogin`   | `aws sso login --profile example-corp` | Login to AWS SSO     |
 | `awslogout`  | Clear SSO cache                       | Logout from SSO      |
 | `awsrefresh` | Re-login to SSO                       | Refresh credentials  |
 | `awscheck`   | `aws sts get-caller-identity`         | Check session status |
@@ -164,7 +202,7 @@ awscheck
 
 # If valid:
 # {
-#   "UserId": "AROAXXXXXXXXX:jimmy@work-domain.com",
+#   "UserId": "AROAXXXXXXXXX:jimmy@example-corp.com",
 #   "Account": "123456789012",
 #   "Arn": "arn:aws:sts::123456789012:assumed-role/..."
 # }
@@ -183,8 +221,8 @@ awscheck
 
 | Alias     | Command                               | Description                |
 | --------- | ------------------------------------- | -------------------------- |
-| `awsdev`  | `export AWS_PROFILE=work-domain-dev`  | Switch to dev environment  |
-| `awsprod` | `export AWS_PROFILE=work-domain-prod` | Switch to prod environment |
+| `awsdev`  | `export AWS_PROFILE=example-corp-dev`  | Switch to dev environment  |
+| `awsprod` | `export AWS_PROFILE=example-corp-prod` | Switch to prod environment |
 
 **Navigation Shortcuts:**
 
@@ -200,7 +238,7 @@ awscheck
 # Switch to dev environment
 awsdev
 echo $AWS_PROFILE
-# Output: work-domain-dev
+# Output: example-corp-dev
 
 aws s3 ls
 # Lists S3 buckets in dev account
@@ -208,7 +246,7 @@ aws s3 ls
 # Switch to prod environment
 awsprod
 echo $AWS_PROFILE
-# Output: work-domain-prod
+# Output: example-corp-prod
 
 # Open VPN
 vpn
@@ -301,22 +339,22 @@ Located at `~/.aws/config`:
 region = us-east-1
 output = json
 
-[profile work-domain]
-sso_start_url = https://work-domain.awsapps.com/start
+[profile example-corp]
+sso_start_url = https://example-corp.awsapps.com/start
 sso_region = us-east-1
 sso_account_id = 123456789012
 sso_role_name = AdministratorAccess
 region = us-east-1
 output = json
 
-[profile work-domain-dev]
+[profile example-corp-dev]
 role_arn = arn:aws:iam::111111111111:role/DevRole
-source_profile = work-domain
+source_profile = example-corp
 region = us-east-1
 
-[profile work-domain-prod]
+[profile example-corp-prod]
 role_arn = arn:aws:iam::222222222222:role/ProdRole
-source_profile = work-domain
+source_profile = example-corp
 region = us-east-1
 ```
 
@@ -507,10 +545,10 @@ awsrefresh
 **Profile Not Found:**
 
 ```bash
-# Error: Profile 'work-domain' not found
+# Error: Profile 'example-corp' not found
 
 # Check config exists
-cat ~/.aws/config | grep work-domain
+cat ~/.aws/config | grep example-corp
 
 # If missing, add to ~/.aws/config
 code ~/.aws/config
@@ -2020,7 +2058,7 @@ home.sessionVariables = {
 ```nix
 home.sessionVariables = {
   MACHINE_MODE = "work";
-  AWS_PROFILE = "work-domain";
+  AWS_PROFILE = "example-corp";
 };
 ```
 

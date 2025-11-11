@@ -3,14 +3,7 @@
 {
   # Base configuration for all machines
   # Essential tools and settings that every machine should have
-
-  home.packages = with pkgs; [
-    # Essential CLI tools
-    wget
-    curl
-    tree
-    htop
-  ];
+  # Note: wget, curl, tree, htop installed system-wide in modules/shared/packages.nix
 
   # Zoxide - smarter cd command
   programs.zoxide = {

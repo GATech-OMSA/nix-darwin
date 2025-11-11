@@ -1,12 +1,12 @@
-{ config, pkgs, lib, inputs, mixins, hostname, myLib, ... }:
+{ config, pkgs, lib, inputs, mixins, hostname, myLib, username, ... }:
 
 {
-  # Home Manager configuration for jimmy
+  # Home Manager configuration for user
   # This is the main entry point for user-level configuration
 
   home = {
-    username = "jimmy";
-    homeDirectory = "/Users/jimmy";
+    inherit username;
+    homeDirectory = "/Users/${username}";
     stateVersion = "24.05";  # Check home-manager releases
 
     # Session variables
@@ -20,7 +20,7 @@
       # Python
       PYTHONDONTWRITEBYTECODE = "1";
       PYTHONUNBUFFERED = "1";
-      UV_PYTHON_PREFERENCE = "only-managed";
+      # UV_PYTHON_PREFERENCE defined in development/python.nix
 
       # AWS
       AWS_PAGER = "";
@@ -44,7 +44,7 @@
     activation = {
       installGitHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
         # Install git hooks for secrets validation
-        NIX_DARWIN_DIR="$HOME/nix-darwin"
+        NIX_DARWIN_DIR="${config.home.homeDirectory}/nix-darwin"
 
         # Only install if .git directory exists
         if [ -d "$NIX_DARWIN_DIR/.git" ]; then
@@ -109,13 +109,32 @@ for pattern in "''${SECRETS_PATHS[@]}"; do
     # Check if staged for commit
     rel_path="''${secrets_file#$HOME/nix-darwin/}"
     if git diff --cached --name-only | grep -q "$rel_path"; then
-      # Must be binary (SOPS encrypted)
-      if file "$secrets_file" | grep -q "ASCII text"; then
-        echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
-        echo "   Please encrypt with: sops -e -i $secrets_file"
-        exit 1
+      # SOPS can encrypt in two formats:
+      # 1. Binary format (completely encrypted)
+      # 2. YAML format (encrypted values with SOPS metadata)
+
+      # Check for binary format
+      if ! file "$secrets_file" | grep -q "ASCII text"; then
+        echo "  ✅ Encrypted (binary): $rel_path"
+        continue
       fi
-      echo "  ✅ Encrypted: $rel_path"
+
+      # Check for SOPS YAML format (has sops: metadata section)
+      if grep -q "^sops:" "$secrets_file" && grep -q "mac:" "$secrets_file"; then
+        echo "  ✅ Encrypted (YAML): $rel_path"
+        continue
+      fi
+
+      # Check for SOPS encrypted values (ENC[AES256_GCM pattern)
+      if grep -q "ENC\[AES256_GCM" "$secrets_file"; then
+        echo "  ✅ Encrypted (YAML): $rel_path"
+        continue
+      fi
+
+      # Not encrypted
+      echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
+      echo "   Please encrypt with: sops -e -i $secrets_file"
+      exit 1
     fi
   done
 done
@@ -150,12 +169,29 @@ for pattern in "''${SECRETS_PATHS[@]}"; do
   for secrets_file in $pattern; do
     [ -f "$secrets_file" ] || continue
 
-    # Must be binary (SOPS encrypted)
-    if file "$secrets_file" | grep -q "ASCII text"; then
-      echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
-      echo "   Please encrypt with: sops -e -i $secrets_file"
-      error_found=1
+    # SOPS can encrypt in two formats:
+    # 1. Binary format (completely encrypted)
+    # 2. YAML format (encrypted values with SOPS metadata)
+
+    # Check for binary format (skip ASCII text check if binary)
+    if ! file "$secrets_file" | grep -q "ASCII text"; then
+      continue
     fi
+
+    # Check for SOPS YAML format (has sops: metadata section)
+    if grep -q "^sops:" "$secrets_file" && grep -q "mac:" "$secrets_file"; then
+      continue
+    fi
+
+    # Check for SOPS encrypted values (ENC[AES256_GCM pattern)
+    if grep -q "ENC\[AES256_GCM" "$secrets_file"; then
+      continue
+    fi
+
+    # Not encrypted
+    echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
+    echo "   Please encrypt with: sops -e -i $secrets_file"
+    error_found=1
   done
 done
 

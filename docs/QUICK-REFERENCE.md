@@ -9,9 +9,15 @@
 ```bash
 # System Management
 nix-rebuild                      # Rebuild system
+nix-rebuild-debug                # Rebuild with verbose output (troubleshooting)
+nix-check                        # Check flake without building
 nix-rollback                     # Undo last rebuild
+nix-preflight                    # Pre-flight checks before rebuild
 exec zsh                         # Restart shell
-nix-health                       # Check system health
+health-check                     # Check system health (comprehensive)
+health-check --verbose           # Detailed health report
+scaffold-machine                 # Create new machine configuration (interactive)
+new-machine                      # Same as scaffold-machine
 
 # Configuration
 nixconf                          # Edit nix config

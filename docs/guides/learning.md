@@ -308,7 +308,7 @@ nix-rebuild  # Auto-detects hostname
 {
   home.sessionVariables = {
     MACHINE_MODE = "work";
-    AWS_PROFILE = "work-domain";
+    AWS_PROFILE = "example-corp";
   };
 
   home.shellAliases = {
@@ -365,7 +365,7 @@ nix-rebuild
 ```bash
 hostname          # mbp-jimmy or mbp-work
 echo $MACHINE_MODE  # home or work
-echo $AWS_PROFILE   # personal or work-domain
+echo $AWS_PROFILE   # personal or example-corp
 g config user.email  # Check git email
 ```
 

@@ -1,5 +1,13 @@
-{ config, pkgs, lib, hostname, ... }:
+{ config, pkgs, lib, hostname, myLib, username, ... }:
 
+let
+  # Configuration flag for Oh-My-Zsh
+  enableOhMyZsh = true;  # Set to false to disable Oh-My-Zsh plugins
+
+  # Derive paths dynamically
+  nixDarwinDir = "${config.home.homeDirectory}/nix-darwin";
+  homeDir = config.home.homeDirectory;
+in
 {
   # ENHANCED Zsh configuration - Complete declarative shell setup
   # Includes: Auto-activation, aliases, functions, and update system
@@ -20,11 +28,12 @@
       share = true;
     };
 
-    # Oh My Zsh integration
+    # Oh My Zsh integration - Controlled by enableOhMyZsh flag
+    # Theme is empty to allow Starship prompt to take over
     oh-my-zsh = {
-      enable = true;
-      theme = "af-magic";  # Your current theme
-      plugins = [
+      enable = enableOhMyZsh;
+      theme = "";  # Empty theme = use Starship prompt
+      plugins = lib.optionals enableOhMyZsh [
         # Version Control
         "git"
 
@@ -44,7 +53,8 @@
 
         # Productivity & Navigation
         "fzf"
-        "z"  # Directory jumping (note: you also have zoxide via Nix)
+        # NOTE: Directory jumping is provided by zoxide (configured in base.nix)
+        # Removed oh-my-zsh "z" plugin to avoid conflict with zoxide (2025-11-06)
         "dirhistory"  # Navigate dirs with Alt+Left/Right
         "sudo"  # Press ESC twice to add sudo
 
@@ -68,7 +78,7 @@
     };
 
     # COMPLETE Shell aliases - merged from all sources
-    shellAliases = {
+    shellAliases = myLib.aws.mkAwsAliasesFromJson // {
       # ============================================
       # SYSTEM & CONFIGURATION
       # ============================================
@@ -83,18 +93,48 @@
       finder = "open .";      # Alias for f (full name)
 
       # Configuration shortcuts
-      nixconf = "code ~/nix-darwin";
-      zshconf = "code --wait ~/nix-darwin/home/jimmy/shell/zsh.nix";
-      gitconf = "code --wait ~/nix-darwin/home/jimmy/programs/git.nix";
-      vscodeconf = "code --wait ~/nix-darwin/home/jimmy/programs/vscode.nix";
-      condaconf = "code --wait ~/.condarc";
-      awsconf = "code --wait ~/.aws/config";
-      jupyterconf = "code --wait ~/.jupyter/jupyter_notebook_config.py";
-      zshrc = "code --wait ~/.zshrc";
+      nixconf = "code ${nixDarwinDir}";
+      zshconf = "code ${nixDarwinDir}/home/${username}/shell/zsh.nix";
+      gitconf = "code ${nixDarwinDir}/home/${username}/programs/git.nix";
+      vscodeconf = "code ${nixDarwinDir}/home/${username}/programs/vscode.nix";
+      condaconf = "code ${homeDir}/.condarc";
+      awsconf = "code ${homeDir}/.aws/config";
+      jupyterconf = "code ${homeDir}/.jupyter/jupyter_notebook_config.py";
+      zshrc = "code ${homeDir}/.zshrc";
 
       # Nix-Darwin system management
-      nix-rebuild = "sudo darwin-rebuild switch --flake ~/nix-darwin";
+      # nix-rebuild runs with pre-flight checks by default
+      nix-rebuild = "${nixDarwinDir}/scripts/pre-flight-checks.sh && sudo darwin-rebuild switch --flake ${nixDarwinDir}";
+
+      # Skip pre-flight checks for emergency rebuilds (use with caution)
+      nix-rebuild-skip-checks = "sudo darwin-rebuild switch --flake ${nixDarwinDir}";
+
+      # Debug mode with verbose output for troubleshooting
+      # Shows detailed build logs, stack traces, and Home Manager activation details
+      # Usage: nix-rebuild-debug (for full rebuild with debug info)
+      nix-rebuild-debug = "sudo darwin-rebuild switch --flake ${nixDarwinDir} --show-trace --verbose --print-build-logs";
+
+      # Check configuration without building
+      nix-check = "nix flake check ${nixDarwinDir}";
+
+      # Run pre-flight checks manually (without rebuilding)
+      nix-preflight = "${nixDarwinDir}/scripts/pre-flight-checks.sh";
+
+      # System health check - Validate nix-darwin system state
+      # Usage: health-check (normal) | health-check --verbose (detailed)
+      health-check = "${nixDarwinDir}/scripts/health-check.sh";
+      system-health = "${nixDarwinDir}/scripts/health-check.sh";
+
       nix-rollback = "sudo darwin-rebuild --rollback";
+
+      # Force home-manager regeneration (workaround for cache bug)
+      # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
+      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure";
+      home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate";
+
+      # Scaffold new machine configuration from template
+      scaffold-machine = "${nixDarwinDir}/scripts/scaffold-new-machine.sh";
+      new-machine = "${nixDarwinDir}/scripts/scaffold-new-machine.sh";
 
       # ============================================
       # APP LAUNCHERS
@@ -281,7 +321,8 @@
       # ============================================
       # FILE OPERATIONS
       # ============================================
-      extract = "tar -xvf";
+      # NOTE: extract is provided by oh-my-zsh extract plugin (line 57)
+      # Don't define alias here as it conflicts with the plugin function
 
       # ============================================
       # NETWORK UTILITIES
@@ -373,16 +414,10 @@
       fi
 
       # ============================================
-      # AWS PROFILE AUTO-RESTORE
+      # AWS HELPER FUNCTIONS
       # ============================================
-      # Auto-restore last used AWS profile for convenience
-      if [ -f ~/.aws/.last_profile ]; then
-        export AWS_PROFILE="$(cat ~/.aws/.last_profile)"
-        if [ -n "$AWS_PROFILE" ]; then
-          echo "🔄 Restored AWS Profile: $AWS_PROFILE"
-          echo "💡 Run 'awswho' for details or 'awsuse' to switch"
-        fi
-      fi
+      # Work machine: AWS functions loaded from work.nix
+      # Personal machine: Uses simple AWS config from aws.nix
 
       # ============================================
       # LOAD CUSTOM OH-MY-ZSH PLUGINS
@@ -496,27 +531,8 @@
         mkdir -p "$1" && cd "$1"
       }
 
-      # Extract any archive
-      function extract() {
-        if [ -f $1 ]; then
-          case $1 in
-            *.tar.bz2)   tar xjf $1     ;;
-            *.tar.gz)    tar xzf $1     ;;
-            *.bz2)       bunzip2 $1     ;;
-            *.rar)       unrar e $1     ;;
-            *.gz)        gunzip $1      ;;
-            *.tar)       tar xf $1      ;;
-            *.tbz2)      tar xjf $1     ;;
-            *.tgz)       tar xzf $1     ;;
-            *.zip)       unzip $1       ;;
-            *.Z)         uncompress $1  ;;
-            *.7z)        7z x $1        ;;
-            *)     echo "'$1' cannot be extracted via extract()" ;;
-          esac
-        else
-          echo "'$1' is not a valid file"
-        fi
-      }
+      # NOTE: extract function is provided by oh-my-zsh extract plugin (line 57)
+      # The plugin provides the same functionality, so custom function is not needed
 
       # Quick backup
       function backup() {
@@ -590,6 +606,194 @@
         if command -v kubectl &> /dev/null; then
           echo "Kubectl: $(kubectl version --client --short 2>&1 | head -1)"
         fi
+      }
+
+      # ============================================
+      # WARNING & CONFIRMATION HELPERS
+      # ============================================
+      # Reusable warning and confirmation functions for risky operations
+      # Generated by lib/warnings.nix
+
+      # Display warning message
+      # Usage: warn "MESSAGE" [LEVEL]
+      function warn() {
+        local message="$1"
+        local level="''${2:-WARNING}"
+
+        case "$level" in
+          INFO)
+            echo "ℹ️  INFO: $message"
+            ;;
+          WARNING)
+            echo "⚠️  WARNING: $message"
+            ;;
+          CRITICAL)
+            echo "🚨 CRITICAL: $message"
+            ;;
+          *)
+            echo "⚠️  $message"
+            ;;
+        esac
+      }
+
+      # Confirm action with user
+      # Usage: confirm "Question?" && command
+      function confirm() {
+        local question="$1"
+        read -q "REPLY?$question (y/N) "
+        echo ""
+        [[ "$REPLY" =~ ^[Yy]$ ]]
+      }
+
+      # Wrap risky command with confirmation
+      # Usage: risky "WARNING" "This is dangerous" command args...
+      function risky() {
+        local level="$1"
+        local message="$2"
+        shift 2
+
+        warn "$message" "$level"
+        if confirm "Proceed?"; then
+          "$@"
+        else
+          echo "❌ Operation cancelled"
+          return 1
+        fi
+      }
+
+      # Critical operation requiring explicit confirmation
+      # Usage: critical "DELETE" "This will delete everything" command args...
+      function critical() {
+        local confirm_text="$1"
+        local message="$2"
+        shift 2
+
+        echo ""
+        echo "🚨 CRITICAL OPERATION"
+        echo "⚠️  $message"
+        echo ""
+        read -r "confirmation?Type '$confirm_text' to confirm: "
+
+        if [[ "$confirmation" == "$confirm_text" ]]; then
+          "$@"
+        else
+          echo "❌ Operation cancelled (incorrect confirmation)"
+          return 1
+        fi
+      }
+
+      # ============================================
+      # SAFE NIX REBUILD WRAPPER
+      # ============================================
+      # Enhanced nix-rebuild with explicit confirmation
+      # The standard nix-rebuild alias runs pre-flight checks automatically
+      # Use this function when you want an additional confirmation step
+
+      function nix-rebuild-confirm() {
+        warn "System Rebuild" "WARNING"
+        echo "  • This will rebuild your entire system configuration"
+        echo "  • Changes will be applied immediately"
+        echo "  • Previous generation will be available for rollback (nix-rollback)"
+        echo ""
+
+        if confirm "Proceed with rebuild?"; then
+          echo ""
+          echo "🔄 Running pre-flight checks..."
+          if ${nixDarwinDir}/scripts/pre-flight-checks.sh; then
+            echo ""
+            echo "🏗️  Building darwin configuration..."
+            sudo darwin-rebuild switch --flake ${nixDarwinDir}
+          else
+            echo ""
+            echo "❌ Pre-flight checks failed"
+            echo "💡 Fix the issues above and try again"
+            return 1
+          fi
+        else
+          echo "❌ Rebuild cancelled"
+          return 1
+        fi
+      }
+
+      # ============================================
+      # USER DATA BACKUP & RESTORE
+      # ============================================
+
+      # Backup user data (runs backup.sh)
+      function backup-user-data() {
+        if [ ! -f ${nixDarwinDir}/user-data/backup.sh ]; then
+          echo "❌ Error: backup script not found"
+          echo "Expected: ${nixDarwinDir}/user-data/backup.sh"
+          return 1
+        fi
+        echo "📦 Running user data backup..."
+        ${nixDarwinDir}/user-data/backup.sh
+      }
+
+      # Restore user data from backup (runs restore.sh)
+      function restore-user-data() {
+        if [ ! -f ${nixDarwinDir}/user-data/restore.sh ]; then
+          echo "❌ Error: restore script not found"
+          echo "Expected: ${nixDarwinDir}/user-data/restore.sh"
+          return 1
+        fi
+        echo "📦 Restoring user data from backup..."
+        ${nixDarwinDir}/user-data/restore.sh
+      }
+
+      # Sync user data: Backup + Commit + Push
+      function sync-user-data() {
+        echo "🔄 Syncing user data..."
+        echo ""
+
+        # Run backup
+        if ! backup-user-data; then
+          echo "❌ Backup failed"
+          return 1
+        fi
+
+        echo ""
+        echo "📝 Committing changes..."
+
+        # Check if in git repo
+        if [ ! -d ${nixDarwinDir}/.git ]; then
+          echo "❌ Error: Not in a git repository"
+          return 1
+        fi
+
+        # Save current directory
+        local prev_dir=$(pwd)
+
+        # Change to nix-darwin directory
+        cd ${nixDarwinDir}
+
+        # Check if there are changes in user-data
+        if ! git diff --quiet user-data/ || ! git diff --cached --quiet user-data/; then
+          # Stage all user-data changes
+          git add user-data/
+
+          # Create commit with timestamp
+          local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+          git commit -m "Sync user-data: $timestamp"
+
+          echo "✅ Changes committed"
+          echo ""
+          echo "📤 Pushing to remote..."
+
+          # Push to remote
+          if git push; then
+            echo "✅ Sync complete!"
+          else
+            echo "❌ Push failed"
+            cd "$prev_dir"
+            return 1
+          fi
+        else
+          echo "✅ No changes to sync"
+        fi
+
+        # Return to previous directory
+        cd "$prev_dir"
       }
 
       # ============================================
@@ -672,9 +876,6 @@ TODO
 ## Complexity
 - Time: O(?)
 - Space: O(?)
-
-## Notes
-TODO
 EOF
         echo "✅ Algorithm problem setup created: $1"
         echo "   - solution.py"
@@ -854,7 +1055,7 @@ EOF
         local errors=0
 
         echo "  📦 Updating flake inputs..."
-        cd ~/nix-darwin || return 1
+        cd ${nixDarwinDir} || return 1
 
         if nix flake update; then
           echo "  ✅ Flake inputs updated"
@@ -864,7 +1065,7 @@ EOF
         fi
 
         echo "  📦 Rebuilding darwin configuration..."
-        if darwin-rebuild switch --flake .; then
+        if darwin-rebuild switch --flake ${nixDarwinDir}; then
           echo "  ✅ Darwin rebuild completed"
         else
           echo "  ❌ Darwin rebuild failed" >&2
@@ -942,12 +1143,12 @@ EOF
       function sync-user-data() {
         echo "📦 Syncing user data to nix-darwin repository..."
         local errors=0
-        local nix_darwin="$HOME/nix-darwin"
+        local nix_darwin="${nixDarwinDir}"
         local user_data="$nix_darwin/user-data/user-content"
 
         # Check if nix-darwin exists
         if [ ! -d "$nix_darwin" ]; then
-          echo "❌ Error: ~/nix-darwin directory not found"
+          echo "❌ Error: ${nixDarwinDir} directory not found"
           return 1
         fi
 
@@ -998,7 +1199,7 @@ EOF
 
         if [ $errors -eq 0 ]; then
           echo "✅ User data sync completed successfully"
-          echo "  💡 Don't forget to commit changes: cd ~/nix-darwin && git add user-data && git commit"
+          echo "  💡 Don't forget to commit changes: cd ${nixDarwinDir} && git add user-data && git commit"
         else
           echo "⚠️  User data sync completed with $errors error(s)"
           return 1
@@ -1847,10 +2048,40 @@ EOF
               echo "  --dry-run    Preview operations without executing"
               echo "  --yes, -y    Skip ALL confirmation prompts (use with caution!)"
               echo "  --help, -h   Show this help message"
+              echo ""
+              echo "⚠️  WARNING: This is a destructive operation"
+              echo "    Review with --dry-run first!"
               return 0
+              ;;
+            *)
+              echo "❌ Unknown option: $arg"
+              echo "Run 'cleanup-aggressive --help' for usage"
+              return 1
               ;;
           esac
         done
+
+        # Show critical warning unless --yes flag is used
+        if [[ "$yes_flag" != "true" ]]; then
+          echo ""
+          echo "🚨 AGGRESSIVE CLEANUP"
+          echo "⚠️  DESTRUCTIVE OPERATION - Will permanently delete:"
+          echo "  • Nix store garbage and old generations"
+          echo "  • All tool caches (Ollama models, LLM caches)"
+          echo "  • Development artifacts (node_modules, .venv, builds)"
+          echo "  • Time Machine snapshots and iOS backups"
+          echo "  • Old downloads (30+ days)"
+          echo "  • All Docker volumes"
+          echo ""
+          echo "💡 TIP: Run with --dry-run first to preview changes"
+          echo ""
+          read -r "confirmation?Type 'DELETE' to confirm: "
+
+          if [[ "$confirmation" != "DELETE" ]]; then
+            echo "❌ Operation cancelled (incorrect confirmation)"
+            return 1
+          fi
+        fi
 
         echo ""
         echo -e "\033[1m\033[31m🔥 AGGRESSIVE CLEANUP - Maximum System Cleanup\033[0m"
@@ -1995,79 +2226,12 @@ EOF
       # ============================================
       # CORE UTILITY FUNCTIONS
       # ============================================
-
-      # Create directory and cd into it
-      function mkcd() {
-        if [ -z "$1" ]; then
-          echo "Usage: mkcd <directory>"
-          return 1
-        fi
-        mkdir -p "$1" && cd "$1"
-      }
-
-      # Kill process on specific port
-      function kill-port() {
-        if [ -z "$1" ]; then
-          echo "Usage: kill-port <port-number>"
-          echo "Example: kill-port 8000"
-          return 1
-        fi
-        local port=$1
-        local pid=$(lsof -ti:$port)
-        if [ -z "$pid" ]; then
-          echo "No process found on port $port"
-          return 1
-        fi
-        echo "Killing process $pid on port $port..."
-        kill -9 $pid
-        echo "✅ Process killed"
-      }
-
-      # Clone repo and cd into it
-      function gcl() {
-        if [ -z "$1" ]; then
-          echo "Usage: gcl <repo-url> [directory-name]"
-          echo "Examples:"
-          echo "  gcl https://github.com/user/repo.git"
-          echo "  gcl https://github.com/user/repo.git my-custom-dir"
-          return 1
-        fi
-
-        local repo_url="$1"
-        local dir_name="''${2:-$(basename "$repo_url" .git)}"
-
-        git clone "$repo_url" ''${2:+"$2"} && cd "$dir_name"
-      }
-
-      # Display system information
-      function sysinfo() {
-        echo "================================================"
-        echo "🖥️  System Information"
-        echo "================================================"
-        echo "Machine Mode: $MACHINE_MODE"
-        echo "Hostname: $(hostname)"
-        echo "OS: $(sw_vers -productName) $(sw_vers -productVersion)"
-        echo "Architecture: $(uname -m)"
-        echo ""
-        echo "🐍 Python Environment:"
-        echo "System Python: $(python --version 2>&1)"
-        echo "UV: $(uv --version 2>&1 || echo 'not installed')"
-        echo "Micromamba: $(micromamba --version 2>&1 | head -n1 || echo 'not installed')"
-        if [ -n "$VIRTUAL_ENV" ]; then
-          echo "Active venv: $VIRTUAL_ENV"
-        fi
-        echo ""
-        echo "☁️  AWS:"
-        echo "Profile: ''${AWS_PROFILE:-<not set>}"
-        echo ""
-        echo "📦 Package Managers:"
-        echo "Nix: $(nix --version 2>&1)"
-        echo "Homebrew: $(brew --version 2>&1 | head -n1 || echo 'not installed')"
-        echo ""
-        echo "💾 Disk Space:"
-        df -h / | tail -n1 | awk '{print "Available: "$4" / "$2" (Used: "$5")"}'
-        echo "================================================"
-      }
+      # NOTE: Duplicate function definitions removed (lines 1981-2052)
+      # These functions are already defined earlier in the file:
+      #   - mkcd() at line 495
+      #   - kill-port() at line 518
+      #   - gcl() at line 528
+      #   - sysinfo() at line 550
 
       # Display Python environment setup
       function pyenv-info() {
@@ -2857,16 +3021,23 @@ EOF
           echo ""
           echo "See: ~/nix-darwin/secrets/SETUP.md"
           return 1
-        fi
+        }
 
         if ! command -v sops &> /dev/null; then
           echo "❌ Error: sops not found"
-          echo "Install with: nix-env -iA nixpkgs.sops"
+          echo "Install with: brew install sops"
           return 1
-        fi
+        }
 
-        echo "🔐 Opening encrypted secrets with sops..."
-        echo "File: $secrets_file"
+        # Show informational warning
+        warn "Editing Encrypted Secrets" "INFO"
+        echo "  • File will be decrypted temporarily"
+        echo "  • Changes will be re-encrypted on save"
+        echo "  • Make sure SOPS keys are configured correctly"
+        echo ""
+
+        echo "🔐 Opening secrets file: $secrets_file"
+        echo ""
         SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops "$secrets_file"
       }
 
@@ -3147,4 +3318,12 @@ TEMPLATE
       # zprof
     '';
   };
+
+  # Starship prompt configuration - Override any conflicting settings
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  # Note: starship.toml is provided by base.nix mixin
 }

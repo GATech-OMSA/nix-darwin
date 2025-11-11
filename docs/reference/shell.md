@@ -761,7 +761,7 @@ See: [user-data/README.md](../../user-data/README.md)
 **AWS SSO:**
 
 ```bash
-awslogin           # AWS SSO login for work-domain
+awslogin           # AWS SSO login for example-corp
 awslogout          # Clear SSO cache
 awsrefresh         # Refresh credentials
 awscheck           # Check session status
@@ -1583,7 +1583,7 @@ Contains:
 
 **Related Documentation:**
 
-- [Modern CLI Tools](modern-cli.md) - eza, bat, ripgrep, fd, etc.
-- [Python Reference](python.md) - Python auto-activation
-- [Configuration Guide](../guides/configuration.md) - How to customize
-- [Home Manager Reference](home-manager.md) - Understanding Nix configuration
+- [Modern CLI Tools](../guides/learning.md) - eza, bat, ripgrep, fd, etc.
+- [Python Reference](languages.md#python) - Python auto-activation
+- [Configuration Guide](../guides/usage.md) - How to customize
+- [Home Manager Reference](system.md#home-manager) - Understanding Nix configuration

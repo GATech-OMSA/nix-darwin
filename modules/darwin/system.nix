@@ -1,5 +1,39 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, hostname, myLib, ... }:
 
+let
+  # Dock apps configuration (left to right order)
+  # Apps are listed in the order they appear in the Dock
+
+  workDockApps = [
+    "/Applications/Safari.app"
+    "/System/Applications/Mail.app"
+    "/System/Applications/Calendar.app"
+    "/Applications/Microsoft Outlook.app"
+    "/Applications/Microsoft Teams.app"
+    "/System/Applications/Notes.app"
+    "/Applications/iTerm.app"
+    # "/System/Applications/System Settings.app"
+  ];
+
+  personalDockApps = [
+    "/Applications/Safari.app"
+    "/System/Applications/Messages.app"
+    "/System/Applications/Mail.app"
+    "/System/Applications/FaceTime.app"
+    "/System/Applications/Phone.app"
+    "/System/Applications/Notes.app"
+    "/System/Applications/Music.app"
+    "/System/Applications/System Settings.app"
+    "/Applications/iTerm.app"
+    "/Applications/Visual Studio Code.app"
+  ];
+
+  # Select apps based on machine type
+  persistentApps = myLib.selectByMachine hostname {
+    work = workDockApps;
+    personal = personalDockApps;
+  };
+in
 {
   # macOS System Defaults
   system.defaults = {
@@ -8,22 +42,11 @@
       autohide = false;
       show-recents = false;
       orientation = "bottom";
-      tilesize = 64;
+      tilesize = 68;
       minimize-to-application = true;
       show-process-indicators = true;
       launchanim = false;  # Faster app launching
-      persistent-apps = [
-        "/Applications/Safari.app"
-        "/System/Applications/Messages.app"
-        "/System/Applications/Mail.app"
-        "/System/Applications/FaceTime.app"
-        "/System/Applications/Phone.app"
-        "/System/Applications/Notes.app"
-        "/System/Applications/Music.app"
-        "/System/Applications/System Settings.app"
-        "/Applications/iTerm.app"
-        "/Applications/Visual Studio Code.app"
-      ];
+      persistent-apps = persistentApps;
       # persistent-others: Add folders/files to right side of Dock
       # Example: ["/Users/jimmy/Downloads" "/Users/jimmy/Documents"]
       persistent-others = [];

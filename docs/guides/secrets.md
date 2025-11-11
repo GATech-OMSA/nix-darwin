@@ -439,13 +439,23 @@ secrets-check
 
 ### Git Protection
 
-**Automated safeguards prevent committing/pushing unencrypted secrets:**
+**Automated safeguards prevent committing/pushing unencrypted secrets and insecure credential files:**
 
 **Pre-commit hook:**
-- Checks all secrets files in staging area
-- Validates SOPS encryption markers
-- Blocks commit if unencrypted secrets detected
-- Provides fix instructions
+- **Blocks commits** (not just warnings) for security violations
+- Validates SOPS encryption markers on secrets files
+- Checks file permissions on all credential files (must be 600)
+- Handles symlinks correctly (checks target file permissions)
+- Provides fix instructions with exact commands
+- Collects ALL issues before failing (not just first issue)
+
+**What gets checked:**
+- `~/.aws/credentials` - AWS credentials
+- `~/.db/*` - Database connection files
+- `~/.tokens/*` - API tokens
+- `~/.credentials/*` - Other credentials
+- `user-data/secrets/*` - User-specific secrets
+- `hosts/*/secrets.yaml` - SOPS encrypted secrets
 
 **Pre-push hook:**
 - Final safeguard before remote push
@@ -461,17 +471,60 @@ secrets-check
 ./scripts/check-secrets-encrypted.sh
 ```
 
-**Bypass (NOT RECOMMENDED):**
+**Example error messages:**
+
+File permission violation:
+```
+❌ BLOCKED: Insecure file permissions detected
+
+File: ~/.aws/credentials
+Current: 644 (readable by group and others)
+Required: 600 (owner read/write only)
+
+Fix with:
+  chmod 600 ~/.aws/credentials
+
+Or skip this check (NOT RECOMMENDED):
+  git commit --no-verify
+```
+
+Unencrypted secrets:
+```
+❌ BLOCKED: Unencrypted secrets files detected
+
+File: hosts/mbp-work/secrets.yaml
+Status: Missing SOPS metadata or MAC signature
+
+Fix with:
+  sops -e -i hosts/mbp-work/secrets.yaml
+```
+
+**Bypassing hooks (emergencies only):**
+
+**When to use `--no-verify`:**
+- ✅ Emergency production fix
+- ✅ Reverting broken change
+- ✅ Hook incorrectly blocking valid change (report issue!)
+
+**When NOT to use:**
+- ❌ "I'll fix permissions later"
+- ❌ "The warning is annoying"
+- ❌ "It's just a dev environment"
+
+**How to bypass:**
 ```bash
 # Skip hooks if absolutely necessary
-git commit --no-verify
+git commit --no-verify -m "emergency fix"
 git push --no-verify
 ```
 
+**After bypass:** Fix the underlying issue immediately!
+
 **Hook locations:**
-- `.git/hooks/pre-commit` - Commit protection
+- `.git/hooks/pre-commit` - Commit protection (BLOCKING)
 - `.git/hooks/pre-push` - Push protection
 - `scripts/check-secrets-encrypted.sh` - Validation script
+- `scripts/test-git-hooks.sh` - Test suite
 
 **Note:** Git hooks are local to your repository. If you clone fresh, hooks will be missing and need to be recreated.
 
