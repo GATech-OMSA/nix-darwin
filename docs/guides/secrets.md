@@ -9,6 +9,7 @@
 ## Table of Contents
 
 1. [Overview](#overview)
+   - [Format Choice: Binary vs YAML](#format-choice-binary-vs-yaml)
 2. [Quick Start](#quick-start)
 3. [Adding Secrets](#adding-secrets)
 4. [Updating Secrets](#updating-secrets)
@@ -41,6 +42,59 @@ This system uses **sops-nix** with **age encryption** for secrets management.
 ```
 1. Generate age key → 2. Configure sops → 3. Encrypt secrets →
 4. Commit to git → 5. nix-rebuild decrypts → 6. Apps use secrets
+```
+
+### Format Choice: Binary vs YAML
+
+**This system uses SOPS binary format** (not YAML format) for encrypted secrets.
+
+**What's the difference?**
+
+- **YAML format**: Encrypted values embedded in YAML structure
+  ```yaml
+  my_secret: ENC[AES256_GCM,data:abc123...,type:str]
+  ```
+  - ✅ Human-readable structure
+  - ❌ Looks like YAML (can be committed unencrypted by mistake)
+  - ❌ Git diffs show encrypted values
+
+- **Binary format**: Entire file encrypted as binary data
+  ```bash
+  $ cat secrets.yaml
+  # Binary data (appears as gibberish in terminal)
+  ```
+  - ✅ Obviously encrypted (won't mistake for plaintext)
+  - ✅ Git diffs clearly show "binary file changed"
+  - ✅ Impossible to partially decrypt or leak structure
+  - ❌ Not human-readable (requires `sops -d` to view)
+
+**Why binary?**
+
+1. **Safety**: Can't accidentally commit plaintext (file is clearly encrypted)
+2. **Git protection**: Git hooks validate binary format, blocking unencrypted commits
+3. **No leakage**: Structure and key names hidden (defense in depth)
+4. **Clear intent**: `git diff` shows binary changes, not encrypted values
+
+**Verify encryption:**
+
+```bash
+# Check file is binary (encrypted)
+file hosts/mbp-jimmy/secrets.yaml
+# Output: hosts/mbp-jimmy/secrets.yaml: data
+
+# Not this (would be unencrypted):
+# Output: hosts/mbp-jimmy/secrets.yaml: ASCII text
+
+# View decrypted content
+sops -d hosts/mbp-jimmy/secrets.yaml
+```
+
+**Editing workflow:**
+
+```bash
+# SOPS handles encryption/decryption automatically
+edit-secrets  # Opens in editor as YAML
+# Save → auto-converts to binary format
 ```
 
 ---

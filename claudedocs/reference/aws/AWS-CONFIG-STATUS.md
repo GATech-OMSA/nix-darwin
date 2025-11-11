@@ -560,8 +560,8 @@ None currently planned for personal machine.
 
 ### General Documentation
 
-- **[Infrastructure Reference](../docs/reference/infrastructure.md)** - Complete AWS documentation
-- **[Secrets Guide](../docs/guides/secrets.md)** - SOPS secrets management
+- **[Infrastructure Reference](../../../docs/reference/infrastructure.md)** - Complete AWS documentation
+- **[Secrets Guide](../../../docs/guides/secrets.md)** - SOPS secrets management
 
 ---
 

@@ -125,7 +125,22 @@ in
       health-check = "${nixDarwinDir}/scripts/health-check.sh";
       system-health = "${nixDarwinDir}/scripts/health-check.sh";
 
+      # Compare configurations between generations
+      # Usage: config-diff (current vs previous) | config-diff --generations N M
+      config-diff = "${nixDarwinDir}/scripts/config-diff.sh";
+      config-diff-packages = "${nixDarwinDir}/scripts/config-diff.sh --packages-only";
+      config-diff-verbose = "${nixDarwinDir}/scripts/config-diff.sh --verbose";
+
       nix-rollback = "sudo darwin-rebuild --rollback";
+
+      # Test suite aliases
+      test-all = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh";
+      test-build = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category build";
+      test-security = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category security";
+      test-lib = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category lib";
+      test-integration = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --category integration";
+      test-quick = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --dry-run";
+      test-verbose = "cd ${nixDarwinDir} && ./tests/run-all-tests.sh --verbose";
 
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md

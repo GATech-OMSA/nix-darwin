@@ -222,7 +222,7 @@ Within the user layer, there's a critical separation between:
    - Corporate compliance configurations
    - Different between work and personal machines
 
-**See**: [User vs Machine Config Separation](../../claudedocs/USER-VS-MACHINE-CONFIG-SEPARATION.md) for detailed guide
+**See**: [User vs Machine Config Separation](../../claudedocs/completed/phase-2/USER-VS-MACHINE-CONFIG-SEPARATION.md) for detailed guide
 
 ### Interaction
 

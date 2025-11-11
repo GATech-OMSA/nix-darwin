@@ -287,6 +287,6 @@ Changes staged:
 
 ## Related Documentation
 
-- [hosts/README.md](../hosts/README.md) - Machine detection system guide
-- [lib/README.md](../lib/README.md) - Helper function reference
-- [MASTER-EXECUTION-PLAN.md](planning/MASTER-EXECUTION-PLAN.md) - Overall roadmap
+- [hosts/README.md](../../../hosts/README.md) - Machine detection system guide
+- [lib/README.md](../../../lib/README.md) - Helper function reference
+- [Planning documents](../../planning/) - Overall roadmap

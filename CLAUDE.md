@@ -105,7 +105,7 @@ When user asks about:
 - **Architecture** → [Architecture Overview](docs/architecture/overview.md)
 
 **Planning & Development (Maintainers):**
-- **Improvement roadmap** → [Master Execution Plan](claudedocs/planning/MASTER-EXECUTION-PLAN.md)
+- **Improvement roadmap** → [Phase 5 Execution Plan](claudedocs/planning/PHASE-5-EXECUTION-PLAN.md)
 - **Current progress** → [Progress Tracker](claudedocs/planning/PROGRESS.md)
 - **Task backlog** → [Backlog](claudedocs/planning/BACKLOG.md)
 
@@ -659,6 +659,17 @@ Custom plugins require manual installation:
 - BACKLOG.md: New ideas and intake (as needed)
 - CLAUDE.md: Only if significant (see Section 13)
 
+**PM Agent Usage Pattern:**
+
+When using PM agent for backlog grooming or phase planning:
+
+1. Read PROGRESS.md to identify last planned phase
+2. If next phase undefined → Create detailed breakdown (task numbers, hours, deliverables)
+3. If next phase already defined → Skip to phase after that
+4. Never re-groom already-defined phases
+
+Example: Phase 5 defined (11 tasks) + 1 backlog item → PM agent creates Phase 6 breakdown (NOT re-analyze Phase 5)
+
 ---
 
 ## Troubleshooting
@@ -736,7 +747,7 @@ Located in `claudedocs/` directory (for maintainers and contributors):
 - **[Root Cause Analysis](claudedocs/archive/ROOT-CAUSE-ANALYSIS.md)** - Home Manager activation issue resolution
 
 **Planning** (active):
-- **[Master Execution Plan](claudedocs/planning/MASTER-EXECUTION-PLAN.md)** - 5-phase refinement strategy
+- **[Phase 5 Execution Plan](claudedocs/planning/PHASE-5-EXECUTION-PLAN.md)** - Current phase refinement strategy
 - **[Progress Tracker](claudedocs/planning/PROGRESS.md)** - Task completion tracking
 - **[Backlog](claudedocs/planning/BACKLOG.md)** - Product backlog view
 

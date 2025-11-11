@@ -81,6 +81,7 @@
 
     ${myLib.aws.mkAwsAccountHelper}
     ${myLib.aws.mkAwsInfoCommands}
+    ${myLib.aws.mkAwsSearchCommands}
     ${myLib.aws.mkAwsProfileAutoRestore}
 
     # ==================================================

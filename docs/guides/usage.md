@@ -621,6 +621,39 @@ cleanup-terraform         # Terraform directories
 
 **See full documentation:** [Shell Reference - Cleanup Functions](../reference/shell.md#cleanup-functions)
 
+### Documentation Maintenance
+
+**Validate Documentation Links:**
+
+```bash
+# Check all internal documentation links
+cd ~/nix-darwin
+./scripts/check-doc-links.sh
+
+# Check with external link validation (slower)
+CHECK_EXTERNAL=true ./scripts/check-doc-links.sh
+
+# Verbose output for debugging
+VERBOSE=true ./scripts/check-doc-links.sh
+```
+
+**When to run link checks:**
+- After adding new documentation files
+- After reorganizing documentation structure
+- Before major releases or documentation updates
+- Periodically (monthly) to catch broken external links
+
+**What the script checks:**
+- ✅ Internal markdown links (relative paths)
+- ✅ Links to other documentation files
+- ✅ Anchor links within files
+- ⚠️ External URLs (only with `CHECK_EXTERNAL=true`)
+
+**Common issues:**
+- Files moved to different directories (update relative paths)
+- Files renamed (update all references)
+- Archived documents (update links to point to new locations)
+
 ---
 
 ## Best Practices

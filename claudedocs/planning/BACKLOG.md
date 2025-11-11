@@ -8,6 +8,21 @@ Lightweight intake queue for new improvement ideas. Items are periodically revie
 
 ## Intake Queue (Unprioritized)
 
+- [ ] **Convert Shell Scripts to Python**: Convert appropriate shell scripts to Python for better performance and maintainability
+  - **Type**: Technical Debt / Enhancement
+  - **Context**: Link checker conversion (bash → Python) showed 14x performance improvement (0.456s → 0.033s) and 3x code reduction (213 → 63 lines). Other shell scripts may benefit from similar conversion.
+  - **Components**:
+    1. Audit existing scripts in `scripts/` directory
+    2. Identify candidates: complex logic, text processing, performance-critical
+    3. Keep bash for: simple wrappers, system integration, one-liners
+    4. Convert prioritized scripts maintaining functionality
+  - **Candidates**: TBD after audit
+  - **Impact**: Medium - Improved performance, maintainability, and cross-platform compatibility
+  - **Effort**: Medium (2-4h per script) - depends on complexity and number of scripts
+  - **Dependencies**: None
+  - **Added**: 2025-11-07
+  - **Triggered By**: Successful `check-doc-links.sh` → `check-doc-links.py` conversion
+
 - [ ] **True User-Agnostic Configuration with Setup Wizard**: Enable anyone to clone repo and setup without editing hardcoded usernames
   - **Type**: New Feature / Enhancement
   - **Context**: Phase 2 achieved machine-type agnostic (personal/work detection) but still requires manual edits to username/directories. Current setup has hardcoded "jimmy" in `home/jimmy/`, `flake.nix`, and host configs. True agnosticism means zero manual edits - clone, run wizard, done.

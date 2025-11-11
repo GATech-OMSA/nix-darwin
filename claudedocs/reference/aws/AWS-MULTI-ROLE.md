@@ -407,7 +407,7 @@ awsuse ti dev developer
 
 ## See Also
 
-- [Infrastructure Reference](../docs/reference/infrastructure.md) - Full AWS documentation
-- [Quick Reference](../docs/QUICK-REFERENCE.md) - Command cheat sheet
+- [Infrastructure Reference](../../../docs/reference/infrastructure.md) - Full AWS documentation
+- [Quick Reference](../../../docs/QUICK-REFERENCE.md) - Command cheat sheet
 - [AWS Quick Ref](./AWS-QUICK-REF.md) - Quick command reference
 - `.aws/accounts.json.example` - Example configuration

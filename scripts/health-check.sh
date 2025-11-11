@@ -369,27 +369,61 @@ check_secrets() {
     check_warn "No secrets files found"
   fi
 
-  # Check credential file permissions
-  local insecure_count=0
-  local credential_files=(
-    "$HOME/.aws/credentials"
-    "$HOME/.ssh/id_ed25519"
-    "$HOME/.ssh/id_ed25519_work"
-  )
+  # Run comprehensive permission audit
+  if [[ -x "$REPO_ROOT/scripts/audit-permissions.sh" ]]; then
+    echo ""
+    echo -e "  ${CYAN}Running comprehensive permission audit...${NC}"
 
-  for file in "${credential_files[@]}"; do
-    if [[ -f "$file" ]]; then
-      perms=$(stat -f "%A" "$file" 2>/dev/null || echo "000")
-      if [[ "$perms" != "600" ]]; then
-        ((insecure_count++))
+    # Capture audit output and results
+    audit_output=$("$REPO_ROOT/scripts/audit-permissions.sh" 2>&1)
+    audit_exit_code=$?
+
+    # Parse audit results (strip ANSI color codes for parsing)
+    audit_clean=$(echo "$audit_output" | sed 's/\x1b\[[0-9;]*m//g')
+
+    if echo "$audit_clean" | grep -q "Security Score:"; then
+      # Extract statistics from cleaned output
+      secure_count=$(echo "$audit_clean" | grep "Secure (600):" | grep -oE '[0-9]+' | head -n1 || echo "0")
+      insecure_count=$(echo "$audit_clean" | grep "Insecure:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+      total_files=$(echo "$audit_clean" | grep "Files Checked:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+
+      if [[ $audit_exit_code -eq 0 ]]; then
+        check_pass "Credential file permissions secure" "$secure_count/$total_files files with 600 permissions"
+      else
+        check_warn "$insecure_count credential file(s) with insecure permissions" "Run: $REPO_ROOT/scripts/audit-permissions.sh --fix"
       fi
-    fi
-  done
 
-  if [[ $insecure_count -eq 0 ]]; then
-    check_pass "Credential file permissions secure"
+      if [[ $VERBOSE -eq 1 ]]; then
+        echo ""
+        echo "$audit_output"
+        echo ""
+      fi
+    else
+      check_warn "Permission audit failed to complete" "Check: $REPO_ROOT/scripts/audit-permissions.sh"
+    fi
   else
-    check_warn "$insecure_count credential file(s) with insecure permissions" "Run: chmod 600 <file>"
+    # Fallback to basic permission checks
+    local insecure_count=0
+    local credential_files=(
+      "$HOME/.aws/credentials"
+      "$HOME/.ssh/id_ed25519"
+      "$HOME/.ssh/id_ed25519_work"
+    )
+
+    for file in "${credential_files[@]}"; do
+      if [[ -f "$file" ]]; then
+        perms=$(stat -f "%A" "$file" 2>/dev/null || echo "000")
+        if [[ "$perms" != "600" ]]; then
+          ((insecure_count++))
+        fi
+      fi
+    done
+
+    if [[ $insecure_count -eq 0 ]]; then
+      check_pass "Credential file permissions secure"
+    else
+      check_warn "$insecure_count credential file(s) with insecure permissions" "Run: chmod 600 <file>"
+    fi
   fi
 }
 
@@ -475,6 +509,52 @@ check_repository_state() {
   fi
 }
 
+check_backup_verification() {
+  print_category "BACKUP VERIFICATION"
+
+  # Check if verification script exists
+  if [[ ! -x "$REPO_ROOT/scripts/verify-backups.sh" ]]; then
+    check_warn "Backup verification script not found or not executable"
+    return
+  fi
+
+  # Run backup verification in quiet mode (capture exit code only)
+  echo -e "  ${CYAN}Running backup verification...${NC}"
+  echo ""
+
+  # Run verification and capture full output
+  verify_output=$("$REPO_ROOT/scripts/verify-backups.sh" 2>&1)
+  verify_exit_code=$?
+
+  # Parse verification results (strip ANSI codes for parsing)
+  verify_clean=$(echo "$verify_output" | sed 's/\x1b\[[0-9;]*m//g')
+
+  # Extract statistics
+  if echo "$verify_clean" | grep -q "Verification Score:"; then
+    passed=$(echo "$verify_clean" | grep "✓ Passed:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+    failed=$(echo "$verify_clean" | grep "✗ Failed:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+    warnings=$(echo "$verify_clean" | grep "⚠ Warnings:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+    total=$(echo "$verify_clean" | grep "Total Checks:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+
+    if [[ $verify_exit_code -eq 0 ]]; then
+      check_pass "Backup verification passed" "$passed/$total checks passed"
+    elif [[ $failed -gt 0 ]]; then
+      check_fail "$failed backup verification check(s) failed" "Run: $REPO_ROOT/scripts/verify-backups.sh --verbose"
+    else
+      check_warn "$warnings backup verification warning(s)" "Review with: $REPO_ROOT/scripts/verify-backups.sh --verbose"
+    fi
+
+    # Show verbose output if requested
+    if [[ $VERBOSE -eq 1 ]]; then
+      echo ""
+      echo "$verify_output"
+      echo ""
+    fi
+  else
+    check_warn "Backup verification failed to complete" "Check: $REPO_ROOT/scripts/verify-backups.sh"
+  fi
+}
+
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
@@ -491,6 +571,7 @@ main() {
   check_secrets
   check_packages
   check_repository_state
+  check_backup_verification
 
   # Calculate health score
   print_header "📊 HEALTH REPORT"

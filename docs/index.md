@@ -10,8 +10,9 @@
 
 1. **[START-HERE.md](START-HERE.md)** - 📍 **Main entry point** - Read this first!
 2. **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - ⚡ **One-page cheat sheet** - Print and keep visible
+3. **[QUICK-START-CHECKLIST.md](QUICK-START-CHECKLIST.md)** - ✅ **Day 1 checklist** - 30-45 minute setup
 
-These two documents are your primary resources for daily use.
+These documents are your primary resources for getting started and daily use.
 
 ---
 
@@ -21,9 +22,12 @@ Complete guides for common workflows:
 
 - **[Installation Guide](guides/installation.md)** - Complete setup (consolidates installation, quickstart, first steps, migration, new machine setup)
 - **[Usage Guide](guides/usage.md)** - Daily usage, adding packages/aliases, customization, updates (consolidates daily usage, configuration, updates, recipes)
+- **[Shell Customization](guides/shell-customization.md)** - Customize Zsh, aliases, functions, prompt (Starship), helper functions
 - **[System Health Check](guides/system-health.md)** - Comprehensive validation of system state with scoring and diagnostics
 - **[Security Configuration](guides/security.md)** - Security best practices, SOPS encryption, file permissions, git hooks, incident response
+- **[Testing Guide](guides/testing.md)** - Test framework, test categories, running tests, writing tests, CI/CD integration
 - **[Multi-User Setup](guides/multi-user-setup.md)** - Using this config with different usernames, sharing with team/family
+- **[Multi-Machine Setup](guides/multi-machine-setup.md)** - Managing multiple machines with one config, mixin system, syncing changes
 - **[Backup & Recovery](guides/backup-and-recovery.md)** - Backup strategy, disaster recovery, pre-rebuild safety, rollback
 - **[Secrets Management](guides/secrets.md)** - Managing encrypted secrets with sops-nix, adding/updating/rotating secrets
 - **[Learning Modern CLI](guides/learning.md)** - Learn modern CLI tools (z, bat, rg, fd, fzf), multi-machine setup
@@ -46,6 +50,7 @@ Comprehensive documentation for all tools and systems:
 
 ### Infrastructure
 - **[Infrastructure Reference](reference/infrastructure.md)** - AWS (CLI, SSO), Docker, Kubernetes, Terraform
+- **[AWS Accounts Schema](reference/aws-accounts-schema.md)** - Complete `accounts.json` schema documentation
 
 ### Tools
 - **[Tools Reference](reference/tools.md)** - VS Code, AI/ML (Ollama), Modern CLI tools (bat, eza, rg, fd), macOS settings
@@ -58,6 +63,7 @@ Understanding how the system works:
 
 - **[Architecture Overview](architecture/overview.md)** - System architecture, mixin system, how it all fits together
 - **[Architecture Reference](architecture/reference.md)** - Complete file structure guide + configuration best practices
+- **[Architecture Decision Records](architecture/decisions/)** - Key architectural decisions with context and rationale
 
 ---
 
@@ -75,16 +81,20 @@ All-in-one comprehensive reference:
 
 **Learn the system:**
 - New user → [START-HERE.md](START-HERE.md)
+- Day 1 setup → [QUICK-START-CHECKLIST.md](QUICK-START-CHECKLIST.md)
 - Quick commands → [QUICK-REFERENCE.md](QUICK-REFERENCE.md)
 - Understand architecture → [Architecture Overview](architecture/overview.md)
 
 **Configure things:**
 - Add packages → [Usage Guide - Adding Packages](guides/usage.md#adding-packages)
 - Add aliases → [Usage Guide - Adding Aliases](guides/usage.md#adding-aliases)
+- Customize shell → [Shell Customization](guides/shell-customization.md)
 - Manage secrets → [Secrets Guide](guides/secrets.md)
+- Set up multiple machines → [Multi-Machine Setup](guides/multi-machine-setup.md)
 
 **Solve problems:**
 - Something broke → [Troubleshooting](guides/troubleshooting.md)
+- Run tests → [Testing Guide](guides/testing.md)
 - Have questions → [FAQ](appendix/faq.md)
 - Need rollback → [Backup & Recovery](guides/backup-and-recovery.md)
 
@@ -93,6 +103,7 @@ All-in-one comprehensive reference:
 - Python setup → [Languages Reference - Python](reference/languages.md#python)
 - Git aliases → [Shell Reference - Git](reference/shell.md#git)
 - AWS commands → [Infrastructure Reference - AWS](reference/infrastructure.md#aws)
+- AWS accounts schema → [AWS Accounts Schema](reference/aws-accounts-schema.md)
 
 ---
 
@@ -100,11 +111,12 @@ All-in-one comprehensive reference:
 
 This documentation is organized as:
 
-**Entry Points (2 files):**
+**Entry Points (3 files):**
 - START-HERE.md - Comprehensive introduction
 - QUICK-REFERENCE.md - Quick command reference
+- QUICK-START-CHECKLIST.md - Day 1 setup checklist
 
-**Guides (7 files):**
+**Guides (10 files):**
 - Practical, task-oriented documentation
 - Complete workflows and procedures
 
@@ -120,7 +132,7 @@ This documentation is organized as:
 - FAQ, Glossary, Resources, Changelog
 - All-in-one reference
 
-**Total: 17 well-organized files** (down from 42 original files)
+**Total: 21 well-organized files** (down from 42 original files)
 
 ---
 

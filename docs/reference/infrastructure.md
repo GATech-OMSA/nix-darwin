@@ -111,8 +111,8 @@ awscheck
 ```
 
 **Complete Documentation:**
-- **[AWS Multi-Role Guide](../../claudedocs/AWS-MULTI-ROLE.md)** - Full schema, examples, and best practices
-- **[AWS Quick Reference](../../claudedocs/AWS-QUICK-REF.md)** - Command cheat sheet for daily use
+- **[AWS Multi-Role Guide](../../claudedocs/reference/aws/AWS-MULTI-ROLE.md)** - Full schema, examples, and best practices
+- **[AWS Quick Reference](../../claudedocs/reference/aws/AWS-QUICK-REF.md)** - Command cheat sheet for daily use
 
 ---
 

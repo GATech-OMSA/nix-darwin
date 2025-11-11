@@ -556,4 +556,300 @@ rec {
       fi
     fi
   '';
+
+  # ==================================================
+  # AWS PROFILE SEARCH AND FILTERING
+  # ==================================================
+  # Search and filter AWS profiles from accounts.json
+  #
+  # Generated functions:
+  #   awsfind <query>            - Fuzzy search profiles by project/env/role
+  #   awsfilter <type> <value>   - Filter profiles by type (project/env/role)
+  #
+  mkAwsSearchCommands = ''
+    function awsfind() {
+      local query="$1"
+
+      if [[ -z "$query" ]]; then
+        echo "Usage: awsfind <search-term>"
+        echo ""
+        echo "Search profiles by project name, environment, or role"
+        echo ""
+        echo "Examples:"
+        echo "  awsfind ti          # Find all Tririga profiles"
+        echo "  awsfind prod        # Find all production profiles"
+        echo "  awsfind developer   # Find all developer role profiles"
+        return 1
+      fi
+
+      if [ ! -f ~/.aws/accounts.json ]; then
+        echo "❌ No accounts.json found at ~/.aws/accounts.json"
+        return 1
+      fi
+
+      echo "🔍 Searching for: $query"
+      echo ""
+
+      # Search across projects, environments, and roles (case-insensitive)
+      local found=0
+      jq -r --arg q "$(echo $query | tr '[:upper:]' '[:lower:]')" '
+        to_entries[] |
+        . as $proj |
+        (
+          # Check if project name or alias matches
+          if (($proj.key | ascii_downcase | contains($q)) or
+              ($proj.value.alias | ascii_downcase | contains($q))) then
+            {
+              type: "project",
+              project: $proj.key,
+              alias: $proj.value.alias,
+              matches: (
+                $proj.value.accounts | to_entries[] |
+                {
+                  env: .key,
+                  id: (.value.id // .value | tostring),
+                  roles: (
+                    if .value.additional_roles then
+                      ["support"] + .value.additional_roles
+                    else
+                      ["support"]
+                    end
+                  )
+                }
+              )
+            }
+          # Check if environment matches
+          elif ($proj.value.accounts | to_entries[] | .key | ascii_downcase | contains($q)) then
+            {
+              type: "env",
+              project: $proj.key,
+              alias: $proj.value.alias,
+              matches: [
+                $proj.value.accounts | to_entries[] |
+                select(.key | ascii_downcase | contains($q)) |
+                {
+                  env: .key,
+                  id: (.value.id // .value | tostring),
+                  roles: (
+                    if .value.additional_roles then
+                      ["support"] + .value.additional_roles
+                    else
+                      ["support"]
+                    end
+                  )
+                }
+              ]
+            }
+          # Check if any role matches
+          elif (
+            $proj.value.accounts | to_entries[] |
+            (.value.additional_roles // []) | .[] | ascii_downcase | contains($q)
+          ) then
+            {
+              type: "role",
+              project: $proj.key,
+              alias: $proj.value.alias,
+              matches: [
+                $proj.value.accounts | to_entries[] |
+                select(
+                  (.value.additional_roles // []) | .[] | ascii_downcase | contains($q)
+                ) |
+                {
+                  env: .key,
+                  id: (.value.id // .value | tostring),
+                  roles: (
+                    (.value.additional_roles // []) | map(select(ascii_downcase | contains($q)))
+                  )
+                }
+              ]
+            }
+          else
+            empty
+          end
+        ) |
+        if . then
+          "📍 \(.project) (\(.alias))" +
+          "\n" +
+          (
+            if (.matches | type == "array") then
+              .matches[] |
+              "   • \(.env) (Account: \(.id))\n" +
+              (.roles[] | "     → \(.project)-\(.env)" + (if . != "support" then "-\(. )" else "" end) + " (\(.) role)")
+            else
+              .matches |
+              "   • \(.env) (Account: \(.id))\n" +
+              (.roles[] | "     → \(.project)-\(.env)" + (if . != "support" then "-\(. )" else "" end) + " (\(.) role)")
+            end
+          ) +
+          "\n"
+        else
+          empty
+        end
+      ' ~/.aws/accounts.json 2>/dev/null | while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+          echo "$line"
+          found=1
+        fi
+      done
+
+      if [[ $found -eq 0 ]]; then
+        echo "❌ No profiles found matching: $query"
+        echo ""
+        echo "💡 Try: awslist (to see all profiles)"
+        return 1
+      fi
+
+      echo ""
+      echo "💡 Switch: awsuse <alias> <env> [role]"
+    }
+
+    function awsfilter() {
+      local type="$1"
+      local value="$2"
+
+      if [[ -z "$type" || -z "$value" ]]; then
+        echo "Usage: awsfilter <type> <value>"
+        echo ""
+        echo "Filter profiles by:"
+        echo "  project <name>    - Filter by project name or alias"
+        echo "  env <name>        - Filter by environment (dev/sbx/qa/prod)"
+        echo "  role <name>       - Filter by role (support/developer/etc)"
+        echo ""
+        echo "Examples:"
+        echo "  awsfilter project ti      # All Tririga profiles"
+        echo "  awsfilter env prod        # All production profiles"
+        echo "  awsfilter role developer  # All developer role profiles"
+        return 1
+      fi
+
+      if [ ! -f ~/.aws/accounts.json ]; then
+        echo "❌ No accounts.json found at ~/.aws/accounts.json"
+        return 1
+      fi
+
+      echo "🔍 Filtering by $type: $value"
+      echo ""
+
+      local found=0
+      local filter_query
+
+      case "$type" in
+        project|proj|p)
+          filter_query='.key == $val or .value.alias == $val'
+          ;;
+        env|environment|e)
+          filter_query='.value.accounts | has($val)'
+          ;;
+        role|r)
+          filter_query='
+            .value.accounts | to_entries[] |
+            (if .value.additional_roles then
+              ["support"] + .value.additional_roles
+            else
+              ["support"]
+            end) | contains([$val])
+          '
+          ;;
+        *)
+          echo "❌ Invalid filter type: $type"
+          echo "   Valid types: project, env, role"
+          return 1
+          ;;
+      esac
+
+      jq -r --arg val "$value" --arg type "$type" '
+        to_entries[] |
+        select(
+          if $type == "project" or $type == "proj" or $type == "p" then
+            (.key == $val or .value.alias == $val)
+          elif $type == "env" or $type == "environment" or $type == "e" then
+            .value.accounts | has($val)
+          elif $type == "role" or $type == "r" then
+            [
+              .value.accounts | to_entries[] |
+              (
+                if .value.additional_roles then
+                  ["support"] + .value.additional_roles
+                else
+                  ["support"]
+                end
+              ) | contains([$val])
+            ] | any
+          else
+            false
+          end
+        ) |
+        . as $proj |
+        "📍 \(.key) (\(.value.alias))" +
+        (if .value.description then " - \(.value.description)" else "" end) +
+        "\n" +
+        (
+          if $type == "env" or $type == "environment" or $type == "e" then
+            # Show only matching environment
+            .value.accounts | to_entries[] |
+            select(.key == $val) |
+            "   • \(.key) (Account: \(.value.id // .value | tostring))\n" +
+            (
+              (
+                if .value.additional_roles then
+                  ["support"] + .value.additional_roles
+                else
+                  ["support"]
+                end
+              )[] |
+              "     → \($proj.key)-\($val)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)"
+            )
+          elif $type == "role" or $type == "r" then
+            # Show only environments with matching role
+            [
+              .value.accounts | to_entries[] |
+              select(
+                (
+                  if .value.additional_roles then
+                    ["support"] + .value.additional_roles
+                  else
+                    ["support"]
+                  end
+                ) | contains([$val])
+              ) |
+              "   • \(.key) (Account: \(.value.id // .value | tostring))\n" +
+              "     → \($proj.key)-\(.key)" + (if $val != "support" then "-\($val)" else "" end) + " (\($val) role)"
+            ] | join("\n")
+          else
+            # Show all environments for project
+            [
+              .value.accounts | to_entries[] |
+              "   • \(.key) (Account: \(.value.id // .value | tostring))\n" +
+              (
+                (
+                  if .value.additional_roles then
+                    ["support"] + .value.additional_roles
+                  else
+                    ["support"]
+                  end
+                )[] |
+                "     → \($proj.key)-\(.key)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)"
+              )
+            ] | join("\n")
+          end
+        ) +
+        "\n"
+      ' ~/.aws/accounts.json 2>/dev/null | while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+          echo "$line"
+          found=1
+        fi
+      done
+
+      if [[ $found -eq 0 ]]; then
+        echo "❌ No profiles found with $type: $value"
+        echo ""
+        echo "💡 Try: awslist (to see all profiles)"
+        return 1
+      fi
+
+      echo ""
+      echo "💡 Switch: awsuse <alias> <env> [role]"
+    }
+  '';
 }
