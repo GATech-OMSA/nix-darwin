@@ -33,7 +33,7 @@
 
 ---
 
-### 2. **Enhanced `home/jimmy/programs/aws.nix`**
+### 2. **Enhanced `home/_profiles/_template/programs/aws.nix`**
 
 #### **Updated `generateSsoProfiles` Function:**
 - ✅ Parses both string and object account values
@@ -346,7 +346,7 @@ awslogin ti dev developer
 ## Files Changed
 
 - ✅ `lib/aws-helpers.nix` - Core functions with role support
-- ✅ `home/jimmy/programs/aws.nix` - Profile generation
+- ✅ `home/_profiles/_template/programs/aws.nix` - Profile generation
 - ✅ `claudedocs/AWS-MULTI-ROLE.md` - New documentation
 - ✅ `.aws/accounts.json.example` - Example configuration
 - ⏳ `docs/reference/infrastructure.md` - Needs update (remove generic aliases docs)

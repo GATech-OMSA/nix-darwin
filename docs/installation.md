@@ -250,7 +250,7 @@ python --version
 ```bash
 nixconf  # Opens VS Code with repository
 
-# Edit: home/jimmy/programs/git.nix
+# Edit: home/_profiles/_template/programs/git.nix
 # user = {
 #   name = "Your Name";
 #   email = "your@email.com";  # Profile-specific email set automatically
@@ -507,7 +507,7 @@ echo $ACTIVE_PROFILE
    - `config/machine-config.nix` (machineId, profileName)
 
 2. **Hostname-based detection replaced**
-   - Old: Hostname determined behavior (mbp-jimmy → personal)
+   - Old: Hostname determined behavior (macbook-pro-m1 → personal)
    - New: Profile selection in machine-config.nix
 
 3. **Impure builds required**

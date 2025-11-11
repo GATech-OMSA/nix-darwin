@@ -419,10 +419,10 @@ exec zsh
 cd ~/nix-darwin
 
 # View changes
-g diff home/jimmy/shell/zsh.nix
+g diff home/_profiles/_template/shell/zsh.nix
 
 # Restore to last commit
-g restore home/jimmy/shell/zsh.nix
+g restore home/_profiles/_template/shell/zsh.nix
 
 # Rebuild
 nix-rebuild

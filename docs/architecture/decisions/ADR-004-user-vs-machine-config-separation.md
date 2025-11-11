@@ -13,7 +13,7 @@ Nix-darwin configuration spans two distinct layers:
    - System-wide packages (Homebrew, system tools)
    - Applies to the machine, not specific users
 
-2. **User layer** (`home/jimmy/`)
+2. **User layer** (`home/_profiles/_template/`)
    - User-specific dotfiles, shell config
    - Development tools, personal packages
    - Home Manager configurations
@@ -63,12 +63,12 @@ modules/
 
 ### Layer 2: User Configuration
 
-**Location**: `home/jimmy/`
+**Location**: `home/_profiles/_template/`
 **Purpose**: User-specific settings
 **Scope**: Applies to jimmy user across all machines
 
 ```
-home/jimmy/
+home/_profiles/_template/
 ├── shell/
 │   └── zsh.nix            # Shell config, aliases
 ├── programs/
@@ -103,7 +103,7 @@ home/_mixins/
 
 **Mixin selection logic**:
 ```nix
-# home/jimmy/default.nix
+# home/_profiles/_template/default.nix
 imports = [
   ./_mixins/base.nix
   ./_mixins/dev.nix
@@ -134,7 +134,7 @@ imports = [
 ### Migration Impact
 
 **Moved from system to user**:
-- Shell aliases (`modules/darwin/` → `home/jimmy/shell/`)
+- Shell aliases (`modules/darwin/` → `home/_profiles/_template/shell/`)
 - Git configuration
 - Development tool configs
 
@@ -209,7 +209,7 @@ Manual config changes per machine, no automation.
 ### Adding User Configuration
 
 ```nix
-# home/jimmy/shell/zsh.nix
+# home/_profiles/_template/shell/zsh.nix
 {
   programs.zsh.shellAliases = {
     ll = "ls -lah";
@@ -240,7 +240,7 @@ Does it affect macOS system settings?
 │         Examples: dock, finder, keyboard settings
 │
 └─ NO → Is it the same on ALL machines?
-         ├─ YES → home/jimmy/
+         ├─ YES → home/_profiles/_template/
          │         Examples: shell aliases, git config
          │
          └─ NO → Is it machine-specific?
@@ -263,7 +263,7 @@ environment.systemPackages = with pkgs; [ jq ];
 
 **User package** (jimmy only):
 ```nix
-# home/jimmy/default.nix
+# home/_profiles/_template/default.nix
 home.packages = with pkgs; [ ripgrep ];
 ```
 
@@ -317,8 +317,8 @@ Design supports multiple users:
 
 # flake.nix
 homeConfigurations = {
-  "jimmy@mbp-jimmy" = home-manager.lib.homeManagerConfiguration { ... };
-  "alice@mbp-jimmy" = home-manager.lib.homeManagerConfiguration { ... };
+  "jimmy@macbook-pro-m1" = home-manager.lib.homeManagerConfiguration { ... };
+  "alice@macbook-pro-m1" = home-manager.lib.homeManagerConfiguration { ... };
 };
 ```
 

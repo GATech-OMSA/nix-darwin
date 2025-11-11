@@ -233,7 +233,7 @@ tests/
 test_selectByMachine_personal() {
   result=$(nix eval --expr '
     let lib = import ./lib;
-    in lib.selectByMachine "mbp-jimmy" {
+    in lib.selectByMachine "macbook-pro-m1" {
       personal = "personal-value";
       work = "work-value";
     }

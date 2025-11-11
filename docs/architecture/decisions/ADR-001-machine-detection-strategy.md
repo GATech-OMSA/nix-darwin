@@ -39,7 +39,7 @@ Implementation:
 # flake.nix
 {
   darwinConfigurations = {
-    "mbp-jimmy" = nix-darwin.lib.darwinSystem {
+    "macbook-pro-m1" = nix-darwin.lib.darwinSystem {
       # personal configuration
     };
     "mbp-work" = nix-darwin.lib.darwinSystem {
@@ -59,12 +59,12 @@ Each host configuration:
 ```nix
 # lib/machine.nix
 selectByMachine = hostname: values:
-  if hostname == "mbp-jimmy" then values.personal
+  if hostname == "macbook-pro-m1" then values.personal
   else if hostname == "mbp-work" then values.work
   else throw "Unknown hostname: ${hostname}";
 
 isWork = hostname: hostname == "mbp-work";
-isPersonal = hostname: hostname == "mbp-jimmy";
+isPersonal = hostname: hostname == "macbook-pro-m1";
 ```
 
 ## Consequences

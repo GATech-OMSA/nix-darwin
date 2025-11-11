@@ -239,7 +239,7 @@ ports                   # All listening ports
 **Why `g` prefix?**
 
 - ✅ Access to 60+ git aliases
-- ✅ Single source of truth in `home/jimmy/programs/git.nix`
+- ✅ Single source of truth in `home/_profiles/_template/programs/git.nix`
 - ✅ Consistent pattern: `g <command>`
 - ✅ No conflicts with shell commands
 
@@ -592,7 +592,7 @@ zoxide query --list --score     # Include frequency scores
 Zoxide is **pre-configured and enabled** in your nix-darwin setup:
 
 ```nix
-# home/jimmy/shell/zsh.nix
+# home/_profiles/_template/shell/zsh.nix
 programs.zoxide = {
   enable = true;
   enableZshIntegration = true;
@@ -1001,7 +1001,7 @@ yq '.version' config.yaml
 yq -i '.version = "2.0"' config.yaml  # In-place edit
 
 # Practice
-yq '.home.sessionVariables' ~/nix-darwin/home/jimmy/default.nix
+yq '.home.sessionVariables' ~/nix-darwin/home/_profiles/_template/default.nix
 ```
 
 **delta (better git diffs):**

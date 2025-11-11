@@ -481,7 +481,7 @@ echo $ACTIVE_PROFILE
 code config/machine-config.nix
 
 # Or edit git config
-code home/jimmy/programs/git.nix
+code home/_profiles/_template/programs/git.nix
 ```
 
 ---

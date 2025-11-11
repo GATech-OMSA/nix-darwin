@@ -1,6 +1,6 @@
 # AWS Configuration Status Report
 
-**Machine**: mbp-jimmy (Personal)
+**Machine**: macbook-pro-m1 (Personal)
 **Date**: November 6, 2025
 **Status**: ⚠️ Configuration has warnings but no critical failures
 
@@ -61,7 +61,7 @@ chmod 700 ~/.aws
 **Profiles**:
 - `personal` - Default personal AWS profile
 
-**Recommendation**: Configuration is properly managed by Nix. Edit via `home/jimmy/programs/aws.nix` or host secrets.
+**Recommendation**: Configuration is properly managed by Nix. Edit via `home/_profiles/_template/programs/aws.nix` or host secrets.
 
 ---
 
@@ -136,7 +136,7 @@ EOF
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Hostname detection | ✅ PASS | mbp-jimmy (Personal) |
+| Hostname detection | ✅ PASS | macbook-pro-m1 (Personal) |
 | MACHINE_MODE | ✅ PASS | Set correctly to "home" |
 | Personal profile | ✅ PASS | Configured in AWS config |
 
@@ -268,7 +268,7 @@ If this were a work machine, the following would be different:
 
 | Feature | Personal | Work |
 |---------|----------|------|
-| **Hostname pattern** | mbp-jimmy | mbp-work |
+| **Hostname pattern** | macbook-pro-m1 | mbp-work |
 | **MACHINE_MODE** | home | work |
 | **Git email** | jimmy-jain@users.noreply.github.com | first.last@work-domain.com |
 | **AWS functions** | Not loaded | awsuse, awslogin, awswho, etc. |
@@ -619,7 +619,7 @@ scripts/validate-aws-config.sh
 
 ## Summary
 
-The AWS configuration on this personal machine (**mbp-jimmy**) is in good health with **no critical failures**. The setup properly:
+The AWS configuration on this personal machine (**macbook-pro-m1**) is in good health with **no critical failures**. The setup properly:
 
 ✅ Uses SOPS-encrypted credentials with secure permissions
 ✅ Manages configuration through Nix (immutable)
