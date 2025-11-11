@@ -69,7 +69,7 @@ secrets-status
 
 - `config/user-config.nix` - Your username, email, fullName (gitignored)
 - `config/machine-config.nix` - Machine ID, profile selection (gitignored)
-- `hosts/$(hostname)/secrets.yaml` - Encrypted secrets (binary format)
+- `nix-config/hosts/$(machineId)/secrets.yaml` - Encrypted secrets (SOPS format)
 - `~/.config/sops/age/keys.txt` - Age private key (backup critical!)
 
 ---
@@ -78,11 +78,14 @@ secrets-status
 
 ```
 docs/
-├── README.md                 # This file
-├── INSTALLATION.md          # Setup guide
-├── TROUBLESHOOTING.md       # Debugging guide
-├── BACKUP-AND-RECOVERY.md   # Disaster recovery
-└── SECRETS.md               # SOPS encryption
+├── README.md                # This file
+├── installation.md          # Setup guide
+├── troubleshooting.md       # Debugging guide
+├── backup-and-recovery.md   # Disaster recovery
+├── secrets.md               # SOPS encryption
+├── architecture/            # ADRs and architecture docs
+├── learning/                # Learning resources
+└── work/aws/                # AWS-specific documentation
 ```
 
 ---

@@ -33,9 +33,9 @@ nix-rebuild && exec zsh
 
 **Edit source files instead:**
 ```
-User wants to change shell config  → Edit: home/jimmy/shell/zsh.nix
-User wants to change Git config    → Edit: home/jimmy/programs/git.nix
-User wants to change system pkg    → Edit: modules/shared/packages.nix
+User wants to change shell config  → Edit: nix-config/home/_profiles/_template/shell/zsh.nix
+User wants to change Git config    → Edit: nix-config/home/_profiles/_template/programs/git.nix
+User wants to change system pkg    → Edit: nix-config/modules/shared/packages.nix
 ```
 
 **Rebuild requirement:** `nix-rebuild && exec zsh`
@@ -97,11 +97,11 @@ nix-rollback  # Undo last generation
 
 | File Type | Use This as Template | Why |
 |-----------|---------------------|-----|
-| Library functions | `lib/warnings.nix` | Perfect headers, design philosophy, examples |
-| Complex configs | `home/jimmy/shell/zsh.nix` | Sections, modern enhancements, comments |
-| Host configs | `hosts/_template/default.nix` | Patterns for multi-machine, secrets |
-| Profiles | `home/_profiles/work/` | Complex logic, modular organization, inline examples |
-| Modules | `modules/darwin/system.nix` | Headers, section dividers, conditionals |
+| Library functions | `nix-config/lib/warnings.nix` | Perfect headers, design philosophy, examples |
+| Complex configs | `nix-config/home/_profiles/_template/shell/zsh.nix` | Sections, modern enhancements, comments |
+| Host configs | `nix-config/hosts/_template/default.nix` | Patterns for multi-machine, secrets |
+| Profiles | `nix-config/home/_profiles/work/` | Complex logic, modular organization, inline examples |
+| Modules | `nix-config/modules/darwin/system.nix` | Headers, section dividers, conditionals |
 
 **Key patterns to follow:**
 - All `.nix` files start with: `# Name\n#\n# Brief description`
@@ -148,7 +148,7 @@ scripts/switch-profile.sh minimal
 
 **Profile structure:**
 ```
-home/_profiles/
+nix-config/home/_profiles/
 ├── _template/      (shared programs and shell configs)
 ├── personal/       (personal machine behavior)
 ├── work/          (work machine behavior)
@@ -233,10 +233,10 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 **Location:** `docs/` - For end users and repository visitors
 
-- 📖 **[Installation Guide](docs/INSTALLATION.md)** - Complete v2.0.0 setup (three-script workflow)
-- 📖 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Profile system issues and fixes
+- 📖 **[Installation Guide](docs/installation.md)** - Complete v2.0.0 setup (three-script workflow)
+- 📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Profile system issues and fixes
 - 📖 **[Backup & Recovery Guide](docs/backup-and-recovery.md)** - Disaster recovery and age key backups
-- 📖 **[Secrets Management Guide](docs/SECRETS.md)** - SOPS age encryption and profile secrets
+- 📖 **[Secrets Management Guide](docs/secrets.md)** - SOPS age encryption and profile secrets
 
 ## AI Assistant Documentation (claudedocs/)
 
@@ -262,10 +262,13 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 ```
 docs/                          # Public user documentation
-├── INSTALLATION.md           # v2.0.0 setup guide ✅
-├── TROUBLESHOOTING.md        # Debugging guide ✅
-├── BACKUP-AND-RECOVERY.md    # Disaster recovery ✅
-└── SECRETS.md                # SOPS encryption ✅
+├── installation.md           # v2.0.0 setup guide ✅
+├── troubleshooting.md        # Debugging guide ✅
+├── backup-and-recovery.md    # Disaster recovery ✅
+├── secrets.md                # SOPS encryption ✅
+├── architecture/             # ADRs and architecture docs
+├── learning/                 # Learning resources
+└── work/aws/                 # AWS-specific documentation
 
 claudedocs/                    # AI assistant instructions and development
 ├── guides/                    # AI development workflows
@@ -303,13 +306,6 @@ claudedocs/                    # AI assistant instructions and development
 
 **Under Review**: `.temp/docs/archive/` (remaining 22 docs from root reorganization)
 
-**Restoration Status**:
-- ✅ Phase 1 Complete (4 essential user guides restored to `docs/`)
-- ⏳ Phase 2 Pending (ADRs, architecture - 5 hours estimated)
-- ⏳ Phase 3 Pending (Advanced topics - 3-4 hours estimated)
-
-**Restoration Plan**: See profile-migration/merge-prep/DOC-RESTORATION-PLAN.md (gitignored, local reference)
-
 ---
 
 ---
@@ -324,12 +320,12 @@ claudedocs/                    # AI assistant instructions and development
 | Health check | `health-check` | Troubleshooting |
 | Update all | `update-all` | Weekly maintenance |
 | Edit config | `nixconf` | Daily development |
-| Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See home/jimmy/programs/git.nix |
+| Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See nix-config/home/_profiles/_template/programs/git.nix |
 
 **First-time setup:**
 ```bash
-sudo nix run nix-darwin -- switch --flake .#mbp-jimmy   # Personal
-sudo nix run nix-darwin -- switch --flake .#mbp-work    # Work
+sudo nix run nix-darwin -- switch --flake .#macbook-pro-m1   # Personal
+sudo nix run nix-darwin -- switch --flake .#mbp-work         # Work
 ```
 
 ---
@@ -351,12 +347,13 @@ nix-darwin/
 │   │   ├── _template/    # Template for new machines
 │   │   └── macbook-pro-m1/  # Machine configs (secrets.yaml, etc.)
 │   ├── home/             # Home Manager configurations
-│   │   ├── jimmy/        # User-specific configs (profile-agnostic)
-│   │   └── _profiles/    # Profile system (personal/work/minimal)
-│   │       ├── _template/  # Shared programs and shell configs
-│   │       ├── personal/   # Personal profile behavior
-│   │       ├── work/       # Work profile behavior
-│   │       └── minimal/    # Bare-bones troubleshooting
+│   │   ├── _profiles/    # Profile system (personal/work/minimal)
+│   │   │   ├── _template/  # Shared programs and shell configs
+│   │   │   ├── personal/   # Personal profile behavior
+│   │   │   ├── work/       # Work profile behavior
+│   │   │   └── minimal/    # Bare-bones troubleshooting
+│   │   ├── _mixins/      # Reusable configuration mixins
+│   │   └── _template/    # Base template configurations
 │   ├── modules/          # System packages + settings (darwin/shared)
 │   ├── lib/              # 30+ helper functions
 │   ├── overlays/         # Package customizations
@@ -403,7 +400,7 @@ edit-secrets              # Edit encrypted secrets
 chmod 600 ~/.db/prod      # Fix permissions if needed
 ```
 
-See `hosts/mbp-jimmy/secrets-personal.nix` for secret definitions.
+Secrets are defined in `nix-config/hosts/$(machineId)/secrets.yaml` (SOPS encrypted).
 
 ---
 
@@ -413,15 +410,15 @@ See `hosts/mbp-jimmy/secrets-personal.nix` for secret definitions.
 
 | Goal | Edit This File |
 |------|----------------|
-| Add system package | `modules/shared/packages.nix` |
-| Add GUI app | `modules/darwin/homebrew.nix` |
-| Add shell alias (universal) | `home/jimmy/shell/zsh.nix` |
-| Add shell alias (profile-specific) | `home/_profiles/personal/aliases.nix` or `work/aliases.nix` |
-| Add Git alias | `home/jimmy/programs/git.nix` |
-| Add VS Code extension | `home/jimmy/programs/vscode.nix` |
-| Change Python setup | `home/jimmy/development/python.nix` |
-| Personal profile settings | `home/_profiles/personal/default.nix` |
-| Work profile settings | `home/_profiles/work/default.nix` |
+| Add system package | `nix-config/modules/shared/packages.nix` |
+| Add GUI app | `nix-config/modules/darwin/homebrew.nix` |
+| Add shell alias (universal) | `nix-config/home/_profiles/_template/shell/zsh.nix` |
+| Add shell alias (profile-specific) | `nix-config/home/_profiles/personal/aliases.nix` or `work/aliases.nix` |
+| Add Git alias | `nix-config/home/_profiles/_template/programs/git.nix` |
+| Add VS Code extension | `nix-config/home/_profiles/_template/programs/vscode.nix` |
+| Change Python setup | `nix-config/home/_profiles/_template/programs/node.nix` (no dedicated python.nix) |
+| Personal profile settings | `nix-config/home/_profiles/personal/default.nix` |
+| Work profile settings | `nix-config/home/_profiles/work/default.nix` |
 | Switch profile | Edit `config/machine-config.nix` → `profileName = "..."` |
 
 ---
@@ -435,7 +432,7 @@ See `hosts/mbp-jimmy/secrets-personal.nix` for secret definitions.
 | Command not found | `exec zsh` (restart shell after rebuild) |
 | Changes not applied | `nix-rebuild && exec zsh` |
 | Build fails | `darwin-rebuild switch --flake . --show-trace` then `nix-rollback` |
-| Editing `.zshrc` doesn't work | Don't – edit `home/jimmy/shell/zsh.nix` instead |
+| Editing `.zshrc` doesn't work | Don't – edit `nix-config/home/_profiles/_template/shell/zsh.nix` instead |
 
 ---
 

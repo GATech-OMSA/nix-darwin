@@ -49,23 +49,34 @@ This is a **complete system configuration** for macOS that:
 
 ```
 nix-darwin/
-├── flake.nix                  # Entry point
-├── hosts/                     # Machine-specific configs
-│   ├── mbp-jimmy/            # Personal MacBook
-│   └── mbp-work/             # Work MacBook
-├── modules/
-│   ├── darwin/               # macOS system settings
-│   └── shared/               # Packages for all machines
-├── home/
-│   ├── jimmy/                # Your user configs
-│   │   ├── shell/           # Zsh configuration
-│   │   ├── programs/        # Git, VS Code, etc.
-│   │   └── development/     # Python, Node.js
-│   └── _mixins/             # Reusable configs (base, dev, personal, work)
-├── lib/                      # 30+ helper functions (machine type, generators, etc.)
-├── overlays/                 # Package overrides
-├── pkgs/                     # Custom packages
-└── secrets/                  # Encrypted secrets (sops-nix)
+├── flake.nix                 # Entry point
+├── config/                   # Machine and user configuration (gitignored)
+│   ├── machine-config.nix    # machineId + machineType
+│   └── user-config.nix       # username + email
+├── nix-config/               # All Nix configuration files
+│   ├── hosts/                # Machine-specific configs + secrets
+│   │   ├── _template/        # Template for new machines
+│   │   └── macbook-pro-m1/   # Machine configs (secrets.yaml, etc.)
+│   ├── home/                 # Home Manager configurations
+│   │   ├── _profiles/        # Profile system (personal/work/minimal)
+│   │   │   ├── _template/    # Shared programs and shell configs
+│   │   │   ├── personal/     # Personal profile behavior
+│   │   │   ├── work/         # Work profile behavior
+│   │   │   └── minimal/      # Bare-bones troubleshooting
+│   │   ├── _mixins/          # Reusable configuration mixins
+│   │   └── _template/        # Base template configurations
+│   ├── modules/              # System packages + settings (darwin/shared)
+│   ├── lib/                  # 30+ helper functions
+│   ├── overlays/             # Package customizations
+│   └── pkgs/                 # Custom packages
+├── scripts/                  # Utility scripts
+│   ├── setup/                # Initial setup scripts
+│   ├── secrets/              # Secret management scripts
+│   ├── maintenance/          # System maintenance
+│   └── workspace/            # Backup and restore
+    ├── docs/                 # User-facing documentation
+├── workspace/                # Per-machine workspace (gitignored)
+└── secrets/                  # Local secrets storage (gitignored)
 ```
 
 **Infrastructure:**
@@ -109,30 +120,24 @@ mv /path/to/nix-darwin-new ~/nix-darwin
 cd ~/nix-darwin
 ```
 
-### Step 3: Set Hostname
+### Step 3: Run Configuration Script
 
-**CRITICAL**: Hostname must match your configuration name!
-
-```bash
-# For personal Mac:
-sudo scutil --set HostName mbp-jimmy
-
-# For work Mac:
-sudo scutil --set HostName mbp-work
-
-# Verify:
-hostname -s  # Should show mbp-jimmy or mbp-work
-```
-
-### Step 4: Customize for Your System
+The `configure.sh` script will guide you through setup and let you choose your machine ID:
 
 ```bash
-# Edit if your username is different
-nano hosts/mbp-jimmy/default.nix
-# Change "jimmy" to your actual username if needed
+# Run interactive configuration
+./scripts/setup/configure.sh
+
+# You'll be asked for:
+# - Username, email, full name
+# - Machine ID (can be anything: macbook-pro-m1, my-mac, dev-machine, etc.)
+# - Profile type (personal/work/minimal)
+# - Homebrew preference
+
+# Machine ID is used for: flake targets, host directories, and secrets location
 ```
 
-### Step 5: Set Up Secrets (Optional but Recommended)
+### Step 4: Set Up Secrets (Optional but Recommended)
 
 ```bash
 # Generate age key for secrets
@@ -161,43 +166,48 @@ sops -e -i secrets/secrets.yaml
 
 See `secrets/README.md` for detailed instructions.
 
-### Step 6: Initial Build
+### Step 5: Initial Build
+
+The flake target uses your machine ID from config/machine-config.nix:
 
 ```bash
 cd ~/nix-darwin
 
 # First-time installation (takes 15-30 minutes)
-sudo nix run nix-darwin -- switch --flake .#mbp-jimmy
+# Replace <machine-id> with your chosen ID from configure.sh
+sudo nix run nix-darwin -- switch --flake .#<machine-id>
 
-# Or for work Mac:
-sudo nix run nix-darwin -- switch --flake .#mbp-work
+# Examples:
+# sudo nix run nix-darwin -- switch --flake .#macbook-pro-m1
+# sudo nix run nix-darwin -- switch --flake .#mbp-work
+# sudo nix run nix-darwin -- switch --flake .#my-awesome-mac
 ```
 
-### Step 7: Install Oh-My-Zsh & Custom Plugins
+### Step 6: Install Oh-My-Zsh & Custom Plugins
 
 ```bash
 # Install Oh-My-Zsh (Nix can't install this directly)
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-# Install custom zsh plugins (required for full shell experience)
-./scripts/install-zsh-plugins.sh
+# Custom zsh plugins are managed by nix-darwin
+# No manual installation needed
 
 # Restart terminal
 exec zsh
 ```
 
-### Step 8: Set Up Python Environment
+### Step 7: Set Up Python Environment
 
 ```bash
 # Micromamba is already installed, create your environment
 # Option 1: Using the mkenv convenience function (recommended)
-mkenv dev 3.12
+m-mkenv dev 3.13
 
 # Option 2: Using micromamba directly
 micromamba create -n dev python=3.12 -y
 
 # Activate your environment
-act dev  # or: micromamba activate dev
+m-act dev  # or: micromamba activate dev
 python --version  # Should show 3.12.x
 ```
 
@@ -243,6 +253,73 @@ secrets-status   # Shows git hooks installation status
 
 ## Daily Usage
 
+### Essential Shortcuts
+
+**System & Configuration:**
+```bash
+nixconf              # Open nix-darwin in VS Code
+nix-rebuild          # Rebuild system (with pre-flight checks)
+nix-rollback         # Rollback to previous generation
+nix-health           # System health check
+reload               # Reload shell config
+restart              # Restart shell (exec zsh)
+c                    # Clear terminal
+vs / vscode          # Open VS Code in current directory
+```
+
+**Secrets Management:**
+```bash
+secrets-status       # Check secrets setup & encryption status
+secrets-edit         # Edit encrypted secrets (SOPS)
+secrets-view         # View decrypted secrets
+secrets-rescan       # Rescan for new secrets
+secrets-backup       # Backup secrets
+secrets-audit        # Audit secret locations
+```
+
+**Git Shortcuts:**
+```bash
+g                    # git
+g s / gs             # git status -s
+g aa                 # git add -A
+g cm                 # git commit
+g ps                 # git push
+g pl                 # git pull
+gsw                  # git switch
+gswc                 # git switch -c (create branch)
+```
+
+**Navigation:**
+```bash
+dev                  # cd ~/Dev
+downloads / down     # cd ~/Downloads
+desktop / desk       # cd ~/Desktop
+fdev                 # Open ~/Dev in Finder
+fdown                # Open ~/Downloads in Finder
+..                   # cd ..
+...                  # cd ../..
+```
+
+**Modern CLI Tools:**
+```bash
+ls / ll / la         # eza with icons
+cat                  # bat (syntax highlighting)
+grep                 # ripgrep
+find                 # fd (fast find)
+```
+
+**Python/Micromamba:**
+```bash
+py                   # python
+m-act                # micromamba activate
+m-create             # micromamba create
+m-list               # micromamba env list
+jl                   # jupyter lab
+jn                   # jupyter notebook
+```
+
+See complete alias list: `workspace/macbook-pro-m1/my-aliases-complete.md`
+
 ### Updating Your System
 
 ```bash
@@ -266,22 +343,23 @@ update-brew
 
 ```bash
 # 1. Edit configuration files
-nano ~/nix-darwin/home/jimmy/shell/zsh.nix
+nixconf              # Opens VS Code to nix-darwin directory
 
 # 2. Rebuild
-darwin-rebuild switch --flake ~/nix-darwin
+nix-rebuild          # Short alias for rebuild + restart
 
 # 3. Changes take effect immediately!
+# Alternative: darwin-rebuild switch --flake ~/nix-darwin
 ```
 
 ### Rolling Back
 
 ```bash
+# Quick rollback
+nix-rollback         # Rollback to previous generation + restart
+
 # List generations
 darwin-rebuild --list-generations
-
-# Rollback to previous
-darwin-rebuild rollback
 
 # Or specific generation
 darwin-rebuild --switch-generation 42
@@ -291,7 +369,7 @@ darwin-rebuild --switch-generation 42
 
 ```bash
 # 1. Edit packages file
-nano ~/nix-darwin/modules/shared/packages.nix
+nano ~/nix-darwin/nix-config/modules/shared/packages.nix
 
 # 2. Add package to environment.systemPackages
 # Example: rustc
@@ -321,7 +399,7 @@ darwin-rebuild switch --flake ~/nix-darwin
 
 ### Add More Aliases
 
-Edit `home/jimmy/shell/zsh.nix`:
+Edit `nix-config/home/_profiles/_template/shell/zsh.nix`:
 
 ```nix
 shellAliases = {
@@ -332,7 +410,7 @@ shellAliases = {
 
 ### Change VS Code Theme
 
-Edit `home/jimmy/programs/vscode.nix`:
+Edit `nix-config/home/_profiles/_template/programs/vscode.nix`:
 
 ```nix
 userSettings = {
@@ -342,7 +420,7 @@ userSettings = {
 
 ### Add GUI Apps
 
-Edit `modules/darwin/homebrew.nix`:
+Edit `nix-config/modules/darwin/homebrew.nix`:
 
 ```nix
 casks = [
@@ -360,8 +438,8 @@ casks = [
 1. Create host config:
 
 ```bash
-mkdir -p hosts/new-machine
-nano hosts/new-machine/default.nix
+mkdir -p nix-config/hosts/new-machine
+nano nix-config/hosts/new-machine/default.nix
 ```
 
 2. Add to `flake.nix`:
@@ -384,12 +462,15 @@ darwin-rebuild switch --flake .#new-machine
 
 ### Personal vs Work
 
-The configuration automatically adjusts based on hostname:
+The configuration automatically adjusts based on **profile type** set in `config/machine-config.nix`:
 
-- `mbp-jimmy`: Uses `personal` mixin
-- `mbp-work`: Uses `work` mixin
+- `profileName = "personal"`: Personal machine behavior
+- `profileName = "work"`: Work machine behavior
+- `profileName = "minimal"`: Minimal/troubleshooting setup
 
-Work Mac differences:
+**Note**: Profile is determined by `config/machine-config.nix`, NOT by hostname or machine ID!
+
+Work profile differences:
 
 - ✅ Git email: work email vs GitHub no-reply
 - ✅ AWS SSO functions instead of IAM
@@ -406,11 +487,18 @@ Work Mac differences:
 exec zsh  # Reload shell
 ```
 
-### Hostname doesn't match
+### Wrong profile active
 
 ```bash
-hostname -s  # Check current
-sudo scutil --set HostName mbp-jimmy  # Fix it
+# Check current profile
+echo $ACTIVE_PROFILE
+
+# Change profile: edit config/machine-config.nix
+nano config/machine-config.nix
+# Change: profileName = "personal";  # or "work" or "minimal"
+
+# Then rebuild
+nix-rebuild && exec zsh
 ```
 
 ### Build fails
@@ -493,13 +581,13 @@ darwin-rebuild switch --flake ~/nix-darwin
 
 Your old configs have been migrated:
 
-| ConfigHub                 | New Location                       |
-| ------------------------- | ---------------------------------- |
-| `.gitconfig`              | `home/jimmy/programs/git.nix`      |
-| `.zshrc`                  | `home/jimmy/shell/zsh.nix`         |
-| `code-user-settings.json` | `home/jimmy/programs/vscode.nix`   |
-| `~/.zsh_secrets`          | `secrets/secrets.yaml` (encrypted) |
-| `Brewfile`                | `modules/darwin/homebrew.nix`      |
+| ConfigHub                 | New Location                                                |
+| ------------------------- | ----------------------------------------------------------- |
+| `.gitconfig`              | `nix-config/home/_profiles/_template/programs/git.nix`      |
+| `.zshrc`                  | `nix-config/home/_profiles/_template/shell/zsh.nix`         |
+| `code-user-settings.json` | `nix-config/home/_profiles/_template/programs/vscode.nix`   |
+| `~/.zsh_secrets`          | `nix-config/hosts/*/secrets.yaml` (encrypted)               |
+| `Brewfile`                | `nix-config/modules/darwin/homebrew.nix`                    |
 
 **ConfigHub is no longer needed** - everything is in Nix!
 
@@ -534,13 +622,11 @@ After setup, you have:
 
 ### Comprehensive Reference
 
-For detailed documentation on specific topics, see **[docs/archive/](docs/archive/)**:
+For detailed documentation, see **[docs/](docs/)**:
 
-- **Guides (12 files)** - Installation, usage, security, testing, multi-machine setup, troubleshooting
-- **Reference (6 files)** - System, shell, languages, infrastructure, tools, AWS schema
-- **Architecture (9 files)** - Overview, reference, ADRs
-- **Appendix** - FAQ (100+ questions), glossary, resources, changelog
-
-**Structure:** 2 primary guides + 28 comprehensive references
+- **Essential Guides** - Installation, secrets, troubleshooting, backup & recovery
+- **Architecture** - ADRs and architecture decisions
+- **Learning** - Nix and nix-darwin learning resources
+- **Work** - AWS multi-account configuration (work profile)
 
 ---

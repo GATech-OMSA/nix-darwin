@@ -113,6 +113,7 @@ in
       awscred = "code ${homeDir}/.aws/credentials";
       jupyterconf = "code ${homeDir}/.jupyter/jupyter_notebook_config.py";
       zshrc = "code ${homeDir}/.zshrc";
+      zshsec = "code ${homeDir}/.zsh_secrets";
 
       # Nix-Darwin system management
       # nix-rebuild runs with pre-flight checks by default
@@ -162,12 +163,12 @@ in
       nix-new-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
 
       # Secret management (Secret Management v2.0)
-      # Tier 3: domain-action pattern for namespace grouping
-      secret-rescan = "${nixDarwinDir}/scripts/secrets/rescan-secrets.sh";
-      secret-edit = "${nixDarwinDir}/scripts/secrets/edit-secrets.sh";
-      secret-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
-      secret-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
-      secret-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
+      # Tier 3: domain-action pattern for namespace grouping (secrets-*)
+      secrets-rescan = "${nixDarwinDir}/scripts/secrets/rescan-secrets.sh";
+      secrets-edit = "${nixDarwinDir}/scripts/secrets/edit-secrets.sh";
+      secrets-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
+      secrets-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
+      secrets-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
 
       # Maintenance & validation
       nix-verify-backups = "${nixDarwinDir}/scripts/maintenance/verify-backups.sh";
@@ -821,65 +822,6 @@ in
 
         # Return to previous directory
         cd "$prev_dir"
-      }
-
-      # Migrate from old user-data-* or machine-backups to workspace structure
-      function migrate-to-workspace() {
-        local old_user_data="${nixDarwinDir}/user-data-${username}"
-        local old_machine_backups="${nixDarwinDir}/machine-backups/${machineId}"
-        local new_path="${machineBackupsDir}"
-
-        echo "🔄 Migration Helper: user-data-* or machine-backups/ → workspace/"
-        echo ""
-
-        # Check if machineId is set
-        if [ -z "${machineId}" ]; then
-          echo "❌ Error: machineId not set"
-          return 1
-        fi
-
-        # Check which old path exists
-        local old_path=""
-        if [ -d "$old_machine_backups" ]; then
-          old_path="$old_machine_backups"
-          echo "Found: machine-backups structure"
-        elif [ -d "$old_user_data" ]; then
-          old_path="$old_user_data"
-          echo "Found: user-data structure"
-        else
-          echo "✅ No migration needed - old paths don't exist"
-          return 0
-        fi
-
-        echo "Source: $old_path"
-        echo "Target: $new_path"
-        echo ""
-
-        # Check if new path already exists
-        if [ -d "$new_path" ]; then
-          echo "⚠️  Warning: Target already exists: $new_path"
-          echo "Please manually resolve before migrating"
-          return 1
-        fi
-
-        # Create workspace directory if needed
-        mkdir -p "${nixDarwinDir}/workspace"
-
-        # Move the directory
-        echo "Moving: $old_path → $new_path"
-        mv "$old_path" "$new_path"
-
-        if [ $? -eq 0 ]; then
-          echo "✅ Migration complete!"
-          echo ""
-          echo "Next steps:"
-          echo "  1. Verify files: ls -la $new_path"
-          echo "  2. Test backup: backup-workspace"
-          echo "  3. Commit changes: g aa && g cm 'Migrate to workspace structure'"
-        else
-          echo "❌ Migration failed"
-          return 1
-        fi
       }
 
       # ============================================
