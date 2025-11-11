@@ -251,12 +251,25 @@ check_system_load() {
   local load_per_cpu
   load_per_cpu=$(echo "$load_avg / $cpu_count" | bc -l | awk '{printf "%.2f", $0}')
 
-  # Warn if load is high (>80% per CPU)
-  if (( $(echo "$load_per_cpu > 0.8" | bc -l) )); then
-    print_warning "High system load detected: ${load_avg} (${cpu_count} CPUs)"
+  # Smart threshold based on CPU count
+  # High-core systems (8+): Allow higher utilization (95%)
+  # Low-core systems (4-7): Moderate threshold (85%)
+  # Very low-core (<4): Strict threshold (75%)
+  local threshold
+  if [ "$cpu_count" -ge 8 ]; then
+    threshold=0.95
+  elif [ "$cpu_count" -ge 4 ]; then
+    threshold=0.85
+  else
+    threshold=0.75
+  fi
+
+  # Warn if load exceeds threshold
+  if (( $(echo "$load_per_cpu > $threshold" | bc -l) )); then
+    print_warning "High system load detected: ${load_avg} (${cpu_count} CPUs, ${load_per_cpu} per CPU)"
     print_info "Consider waiting for load to decrease"
   else
-    print_pass "System load: ${load_avg} (${cpu_count} CPUs)"
+    print_pass "System load: ${load_avg} (${cpu_count} CPUs, ${load_per_cpu} per CPU)"
   fi
 
   return 0

@@ -110,20 +110,23 @@ in
       vscodeconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/programs/vscode.nix";
       condaconf = "code ${homeDir}/.condarc";
       awsconf = "code ${homeDir}/.aws/config";
+      awscred = "code ${homeDir}/.aws/credentials";
       jupyterconf = "code ${homeDir}/.jupyter/jupyter_notebook_config.py";
       zshrc = "code ${homeDir}/.zshrc";
 
       # Nix-Darwin system management
       # nix-rebuild runs with pre-flight checks by default
-      nix-rebuild = "${nixDarwinDir}/scripts/pre-flight-checks.sh && sudo darwin-rebuild switch --flake ${nixDarwinDir}";
+      # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
+      nix-rebuild = "${nixDarwinDir}/scripts/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure";
 
       # Skip pre-flight checks for emergency rebuilds (use with caution)
-      nix-rebuild-skip-checks = "sudo darwin-rebuild switch --flake ${nixDarwinDir}";
+      # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
+      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure";
 
       # Debug mode with verbose output for troubleshooting
       # Shows detailed build logs, stack traces, and Home Manager activation details
       # Usage: nix-rebuild-debug (for full rebuild with debug info)
-      nix-rebuild-debug = "sudo darwin-rebuild switch --flake ${nixDarwinDir} --show-trace --verbose --print-build-logs";
+      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure --show-trace --verbose --print-build-logs";
 
       # Check configuration without building
       nix-check = "nix flake check ${nixDarwinDir}";
@@ -161,6 +164,12 @@ in
       # Scaffold new machine configuration from template
       scaffold-machine = "${nixDarwinDir}/scripts/scaffold-new-machine.sh";
       new-machine = "${nixDarwinDir}/scripts/scaffold-new-machine.sh";
+
+      # Secret management (Secret Management v2.0)
+      rescan-secrets = "${nixDarwinDir}/scripts/rescan-secrets.sh";
+      edit-secrets = "${nixDarwinDir}/scripts/edit-secrets.sh";
+      view-secrets = "${nixDarwinDir}/scripts/view-secrets.sh";
+      backup-secrets = "${nixDarwinDir}/scripts/backup-secrets.sh";
 
       # ============================================
       # WORKFLOW HELPERS
@@ -1276,9 +1285,9 @@ EOF
       # ============================================
 
       # Activate micromamba environment
-      function act() {
+      function m-act() {
         if [ -z "$1" ]; then
-          echo "Usage: act <environment-name>"
+          echo "Usage: m-act <environment-name>"
           echo ""
           echo "Available environments:"
           micromamba env list
@@ -1288,29 +1297,29 @@ EOF
       }
 
       # Deactivate micromamba environment
-      function deact() {
+      function m-deact() {
         micromamba deactivate
       }
 
       # Create micromamba environment
-      # Usage: mkenv <name> [python-version] [packages...]
+      # Usage: m-mkenv <name> [python-version] [packages...]
       # Examples:
-      #   mkenv myenv                    # Python 3.12 (default)
-      #   mkenv myenv 3.13               # Python 3.13
-      #   mkenv myenv 3.12 pandas numpy  # With packages
-      function mkenv() {
+      #   m-mkenv myenv                    # Python 3.13 (default)
+      #   m-mkenv myenv 3.12               # Python 3.12
+      #   m-mkenv myenv 3.13 pandas numpy  # With packages
+      function m-mkenv() {
         if [ -z "$1" ]; then
-          echo "Usage: mkenv <name> [python-version] [packages...]"
+          echo "Usage: m-mkenv <name> [python-version] [packages...]"
           echo ""
           echo "Examples:"
-          echo "  mkenv myenv                    # Python 3.12 (default)"
-          echo "  mkenv myenv 3.13               # Python 3.13"
-          echo "  mkenv myenv 3.12 pandas numpy  # With packages"
+          echo "  m-mkenv myenv                    # Python 3.13 (default)"
+          echo "  m-mkenv myenv 3.12               # Python 3.12"
+          echo "  m-mkenv myenv 3.13 pandas numpy  # With packages"
           return 1
         fi
 
         local name="$1"
-        local python_version="3.12"
+        local python_version="3.13"
         local packages=""
 
         # Check if second argument is a Python version (starts with 3.)
@@ -1333,9 +1342,9 @@ EOF
       }
 
       # Remove micromamba environment
-      function rmenv() {
+      function m-rmenv() {
         if [ -z "$1" ]; then
-          echo "Usage: rmenv <environment-name>"
+          echo "Usage: m-rmenv <environment-name>"
           echo ""
           echo "Available environments:"
           micromamba env list
@@ -3085,7 +3094,7 @@ EOF
           return 1
         fi
 
-        local secrets_file="$HOME/nix-darwin/hosts/$machine_id/secrets.yaml"
+        local secrets_file="$HOME/nix-darwin/nix-config/hosts/$machine_id/secrets.yaml"
 
         if [ ! -f "$secrets_file" ]; then
           echo "❌ Error: secrets file not found"
@@ -3282,7 +3291,7 @@ TEMPLATE
         if [ -f "$machine_config" ]; then
           local machine_id=$(grep 'machineId =' "$machine_config" | sed 's/.*"\(.*\)".*/\1/')
           if [ -n "$machine_id" ]; then
-            secrets_file="$HOME/nix-darwin/hosts/$machine_id/secrets.yaml"
+            secrets_file="$HOME/nix-darwin/nix-config/hosts/$machine_id/secrets.yaml"
           fi
         fi
 

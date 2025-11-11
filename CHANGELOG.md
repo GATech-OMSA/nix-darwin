@@ -7,6 +7,327 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2025-11-10
+
+### 🔐 Secret Management v2.0 - Enhanced Scanning & Lifecycle Tools
+
+Major enhancement to secret management system with comprehensive scanning, smart deduplication, and complete lifecycle tooling.
+
+### ✨ Added
+
+- **Enhanced Secret Scanning System** - Comprehensive detection and smart merge
+  - 8 scanning categories: AWS, SSH, GPG, Databases, Tokens, TLS, Environment, Custom paths
+  - Smart deduplication (prevents duplicate entries by name+path matching)
+  - Fixed .env* wildcard bug (now correctly matches .env.local, .env.production, etc.)
+  - Dry-run mode with change preview before applying
+  - Detailed reporting (new secrets, duplicates skipped, categories scanned)
+
+- **Secret Lifecycle Scripts** - Complete management toolchain
+  - `scripts/rescan-secrets.sh` - Scan and update secrets.yaml with new findings
+  - `scripts/edit-secrets.sh` - SOPS editor with validation and backup
+  - `scripts/view-secrets.sh` - Decrypted secret viewer (read-only)
+  - `scripts/backup-secrets.sh` - Automated encrypted backups with rotation
+  - All scripts include help text (`--help` flag)
+
+- **Shell Aliases for Convenience** - Quick access commands
+  - `rescan-secrets` - Run secret scanner
+  - `edit-secrets` - Edit encrypted secrets
+  - `view-secrets` - View decrypted secrets
+  - `backup-secrets` - Backup secrets to encrypted archive
+
+- **Documentation Improvements**
+  - Created `docs/secrets.md` - Comprehensive secret management guide
+  - Restored workflow guides: CLEAN-SETUP-STEPS.md, DEVELOPMENT-WORKFLOW.md, project-workflow.md
+  - Created `docs/work/aws/` directory with 4 AWS reference guides:
+    - AWS-CONFIG-STATUS.md (current configuration state)
+    - AWS-IMPLEMENTATION-SUMMARY.md (feature implementation details)
+    - AWS-MULTI-ROLE.md (multi-account SSO guide)
+    - AWS-QUICK-REF.md (daily command reference)
+
+### 🔧 Changed
+
+- **Script Organization** - Flattened secret scripts to root scripts/ directory
+  - Moved from `scripts/secrets/` to `scripts/` for easier discovery
+  - Updated CLAUDE.md with new script locations
+  - Consistent naming pattern: `{action}-secrets.sh`
+
+- **configure.sh Integration** - Enhanced setup wizard
+  - Integrated rescan-secrets.sh functionality
+  - Improved secret detection during initial setup
+  - Better validation and error handling
+  - Clearer user guidance during configuration
+
+### 🐛 Fixed
+
+- **Wildcard Pattern Bug** - .env* pattern now works correctly
+  - Previously matched only literal `.env*` filename
+  - Now correctly matches `.env.local`, `.env.production`, `.env.test`, etc.
+  - Uses proper glob expansion in scan logic
+
+- **Duplicate Secret Prevention** - Smart deduplication logic
+  - Checks both secret name and file path before adding
+  - Prevents accidental duplicate entries during rescans
+  - Reports skipped duplicates for transparency
+
+- **Gitignore for Secret Backups** - Added patterns to ignore backup files
+  - `secrets.yaml.backup-*` - Direct backups
+  - `**/secrets.yaml.backup-*` - Nested backup files
+  - Prevents accidental commits of backup files
+
+### 📚 Documentation
+
+- Updated CLAUDE.md with secret management workflow
+- Created comprehensive docs/secrets.md guide
+- Restored and organized workflow guides in claudedocs/
+- Created AWS-specific reference documentation in docs/work/aws/
+
+### 📊 Statistics
+
+- **Commits**: 6 commits on feature/secret-management-v2 branch
+- **Files Changed**: 17 files
+- **Lines Added**: +3,787
+- **Lines Removed**: -49
+- **Development Time**: ~6.25 hours (9 tasks completed)
+- **Testing**: Validated on personal machine ✅
+
+---
+
+## [2.0.0] - 2025-11-10
+
+### 🎯 Major Release: Profile-Based Architecture & Username-Agnostic Configuration
+
+This release represents a complete architectural overhaul introducing profile-based behavior separation and username-agnostic configuration. The system is now portable across machines and users while maintaining full functionality.
+
+### ✨ Added
+
+- **Profile System Architecture** - Self-contained profile-based behavior
+  - Created `nix-config/home/_profiles/` structure (personal, work, minimal, _template)
+  - Profile selection via `config/machine-config.nix` `profileName` field
+  - Personal profile: Full personal tooling, aliases, and development setup
+  - Work profile: AWS SSO multi-account, work-specific tools, corporate settings
+  - Minimal profile: Bare-bones troubleshooting configuration
+  - Template profile: Shared base programs and shell configs
+
+- **Username-Agnostic Configuration** - Portable configuration system
+  - Created `config/user-config.nix` (username, fullName, email) - gitignored
+  - Created `config/machine-config.nix` (machineId, machineType, profileName) - gitignored
+  - Flake.nix reads configs via `builtins.getEnv "FLAKE_ROOT"` + `--impure` flag
+  - All personal data moved to gitignored config files
+  - Repository now shareable without privacy concerns
+
+- **Three-Script Setup Workflow** - Improved installation experience
+  - `bootstrap.sh`: Install prerequisites (Nix, nix-darwin, SOPS, age)
+  - `configure.sh`: Interactive configuration wizard
+    - Generates `config/user-config.nix` and `config/machine-config.nix`
+    - Creates host directory with secrets templates
+    - Scans for existing secrets (AWS credentials, SSH keys, env files)
+    - Reviews generated configuration before proceeding
+    - Homebrew detection and prompting
+  - `activate.sh`: Build and activate system
+    - Validates config files exist
+    - Handles secret encryption (plaintext → SOPS encrypted)
+    - Checks for placeholder values before encryption
+    - Runs `darwin-rebuild switch --flake . --impure`
+    - Post-activation guidance
+
+- **AWS Work Profile Enhancements** - SSO multi-account support
+  - Created `nix-config/home/_profiles/work/accounts.json.template`
+    - Template for AWS SSO account-to-profile mapping
+    - Supports multiple AWS accounts with role-based access
+    - Generates `~/.aws/accounts.json` for awscli-login
+  - Created `nix-config/home/_profiles/work/README-accounts.md`
+    - Comprehensive setup guide for encrypted/unencrypted approaches
+    - awscli-login SSO integration documentation
+  - Added `edit-aws-map` function in `work/aliases.nix`
+    - Opens SOPS editor for `aws_accounts` field in secrets.yaml
+    - Manages account mapping without manual SOPS commands
+    - Includes inline documentation and usage guidance
+  - Added `aws_accounts` SOPS secret definition in `secrets-work.nix`
+    - Deploys to `~/.aws/accounts.json` with correct permissions
+
+- **Secret Management Templates** - Profile-specific secret structures
+  - Created `nix-config/hosts/_template/secrets-personal.nix`
+    - Personal SSH keys, git signing keys, env files, tokens
+    - Commented template showing structure and examples
+  - Created `nix-config/hosts/_template/secrets-work.nix`
+    - AWS credentials, corporate SSH keys, database passwords
+    - AWS account mapping (`aws_accounts` field)
+    - VPN configurations, work-specific secrets
+  - Age encryption with automatic key setup in `configure.sh`
+
+- **Configuration Improvements** (from IMPROVEMENTS-INCLUDED.md)
+  - #1: Removed alias duplication (learning/ollama aliases consolidated)
+  - #2: Per-profile starship configuration support (implementation deferred to backlog)
+  - #3: Fixed missing `algo` alias in personal profile
+  - #4: Machine detection migration (partial - cleanup deferred to backlog)
+
+### 🔧 Changed
+
+- **Configuration File Structure** (BREAKING)
+  - `config/` directory now gitignored (was tracked)
+  - User configuration moved from hardcoded values to `config/user-config.nix`
+  - Machine configuration moved from `hosts/*/default.nix` to `config/machine-config.nix`
+  - Flake.nix requires `FLAKE_ROOT` environment variable for config discovery
+  - All `darwin-rebuild` commands now require `--impure` flag
+
+- **Home Configuration Organization**
+  - Moved shared configs to `nix-config/home/_profiles/_template/`
+  - Profile-specific overrides in `personal/`, `work/`, `minimal/` directories
+  - Base programs (programs/), shell (shell/), development (development/) in template
+  - Profile dirs contain only overrides and additions (aliases.nix, packages.nix, etc.)
+
+- **Setup Script Split** (from monolithic setup.sh)
+  - `bootstrap.sh`: Prerequisites only (Nix, nix-darwin, SOPS, age)
+  - `configure.sh`: Configuration generation and validation (was setup.sh core)
+  - `activate.sh`: System build and activation (was end of setup.sh)
+  - Better separation of concerns and error handling
+
+- **Machine Detection Refactoring**
+  - Primary: `config/machine-config.nix` `machineType` field
+  - Deprecated: hostname-based detection (still exists, marked for removal)
+  - New pattern: `myLib.selectByMachine machineType { personal = X; work = Y; }`
+  - Old pattern: `if hostname == "mbp-jimmy"` (deprecated, in backlog for cleanup)
+
+### 🗑️ Removed
+
+- **Personal Identifiers from Repository**
+  - Removed hardcoded "jimmy", "jain", "jimmie", "example-corp" from tracked files
+  - Removed personal directory paths (mbp-jimmy, mbp-work, home/jimmy) from git
+  - All personal data now in gitignored `config/` directory
+
+- **Hardcoded Fallbacks in flake.nix**
+  - Removed default username, email, machineType fallbacks
+  - Forces explicit configuration via config files
+  - Prevents accidental builds with incorrect configuration
+
+### 📚 Documentation
+
+- **Updated CLAUDE.md** - Comprehensive AI assistant instructions
+  - Rule #6: Profile system behavior and switching documentation
+  - Critical instructions updated for new architecture
+  - Architecture snapshot reflects profile-based structure
+  - Files-to-edit reference updated for profile system
+
+- **Project Planning Documentation**
+  - `claudedocs/planning/projects/git-privacy/` - 95% complete (16/17 tasks)
+  - `claudedocs/planning/projects/profile-migration/` - 75% complete
+  - `claudedocs/planning/ACTIVE.md` - Updated project status tracking
+  - `claudedocs/planning/BACKLOG.md` - 6 new items for remaining work
+
+- **Documentation Status Note**
+  - Documentation moved to `.temp/docs/` during reorganization
+  - Restoration and updates deferred to future backlog item
+  - CLAUDE.md remains authoritative source during transition
+
+### ⚠️ Breaking Changes
+
+1. **Configuration Files Required** - System will not build without:
+   - `config/user-config.nix` (username, fullName, email)
+   - `config/machine-config.nix` (machineId, machineType, profileName)
+   - Run `./scripts/configure.sh` to generate these files
+
+2. **Impure Build Flag Required** - All builds now require `--impure`:
+   ```bash
+   darwin-rebuild switch --flake . --impure
+   ```
+   Use the provided aliases instead:
+   ```bash
+   nix-rebuild      # Wrapper for darwin-rebuild with --impure
+   ```
+
+3. **FLAKE_ROOT Environment Variable** - Required for config discovery:
+   ```bash
+   export FLAKE_ROOT="$PWD"
+   sudo FLAKE_ROOT="$FLAKE_ROOT" darwin-rebuild switch --flake . --impure
+   ```
+   Helper scripts (`configure.sh`, `activate.sh`) handle this automatically.
+
+4. **Profile Selection** - Machine behavior determined by `config/machine-config.nix`:
+   ```nix
+   {
+     machineId = "macbook-pro-m1";
+     machineType = "personal";  # or "work" or "minimal"
+     profileName = "personal";  # Must match machineType for now
+     # ...
+   }
+   ```
+
+### 🐛 Known Issues & Workarounds
+
+1. **machineType vs profileName Inconsistency**
+   - Current: `config/machine-config.nix` uses `machineType`, `flake.nix` reads `profileName`
+   - Workaround: Set both fields to same value ("personal" or "work")
+   - Fix: Backlog item to standardize on `profileName` everywhere
+
+2. **Deprecated Machine Detection Functions**
+   - Old functions (getMachineType, isPersonal, isWork) still exist
+   - Will be removed in future release after migration complete
+   - New code should use `machineType` from config directly
+
+3. **Starship Configs Not Differentiated**
+   - Personal and work profiles currently use same starship prompt
+   - Enhancement deferred to backlog (user decision needed)
+
+### 🚀 Migration Guide
+
+**For Existing Users:**
+
+1. **Backup Current Configuration**:
+   ```bash
+   git add -A
+   git commit -m "backup: Save state before v2.0.0 migration"
+   ```
+
+2. **Merge or Pull v2.0.0**:
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+3. **Run Configuration Wizard**:
+   ```bash
+   ./scripts/configure.sh
+   ```
+   - Enter your username, full name, email
+   - Select machine type (personal/work/minimal)
+   - Review and edit secrets templates
+   - Answer Homebrew prompt
+
+4. **Activate New Configuration**:
+   ```bash
+   ./scripts/activate.sh
+   ```
+
+5. **Verify System**:
+   ```bash
+   health-check           # Run system health check
+   echo $ACTIVE_PROFILE   # Should show your profile
+   which git starship fzf # Verify packages
+   alias | grep git       # Test aliases
+   ```
+
+**For New Users:**
+
+1. Clone repository
+2. Run `./scripts/bootstrap.sh` (installs prerequisites)
+3. Run `./scripts/configure.sh` (generates configs)
+4. Run `./scripts/activate.sh` (builds system)
+
+### 📊 Statistics
+
+- **Commits**: 25 commits on feature/git-privacy-complete branch
+- **Files Changed**: 67+ files
+- **Lines Changed**: 21,387+ lines
+- **Development Time**: ~10 hours (182 min core work + testing + documentation)
+- **Testing**: Complete on both personal and work machines
+- **Stability**: Production ready, fully tested
+
+### 🎉 Acknowledgments
+
+This release completes the vision of a truly portable, privacy-respecting nix-darwin configuration that can be shared publicly while maintaining personal secrets. The profile-based architecture enables seamless switching between personal and work contexts without configuration conflicts.
+
+---
+
 ## [Unreleased] - 2025-11-06
 
 ### Added

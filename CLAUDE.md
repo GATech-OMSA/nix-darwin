@@ -227,16 +227,87 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 # 📚 DOCUMENTATION
 
-**Status:** Under review during root reorganization (moved to .temp/docs/)
+**Status:** v2.0.0 documentation complete with essential user guides
 
-**Active Documentation:**
-- 📖 CLAUDE.md (this file) - Primary configuration instructions
-- 📋 [Project Workflow](claudedocs/guides/DEVELOPMENT-WORKFLOW.md) - Development workflow
-- 📋 [AWS Multi-Role Guide](claudedocs/reference/aws/AWS-MULTI-ROLE.md) - AWS configuration
-- 📋 [AWS Quick Reference](claudedocs/reference/aws/AWS-QUICK-REF.md) - AWS daily commands
+## User Documentation (Public)
 
-**Post-Reorganization:**
-After root reorganization is complete, documentation will be reviewed and updated to reflect the new structure. Essential docs will be restored from .temp/docs/ with updated paths and information.
+**Location:** `docs/` - For end users and repository visitors
+
+- 📖 **[Installation Guide](docs/INSTALLATION.md)** - Complete v2.0.0 setup (three-script workflow)
+- 📖 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Profile system issues and fixes
+- 📖 **[Backup & Recovery Guide](docs/backup-and-recovery.md)** - Disaster recovery and age key backups
+- 📖 **[Secrets Management Guide](docs/SECRETS.md)** - SOPS age encryption and profile secrets
+
+## AI Assistant Documentation (claudedocs/)
+
+**Location:** `claudedocs/` - For Claude Code and AI development workflows
+
+### Development Guides
+- 📋 [Development Workflow](claudedocs/guides/DEVELOPMENT-WORKFLOW.md) - Project workflow and task management
+- 📋 [Project Workflow](claudedocs/guides/project-workflow.md) - Project-based task management
+
+### Reference Documentation
+- 📋 [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md) - AWS SSO multi-account configuration
+- 📋 [AWS Quick Reference](docs/work/aws/AWS-QUICK-REF.md) - AWS daily commands and shortcuts
+- 📋 [AWS Config Status](docs/work/aws/AWS-CONFIG-STATUS.md) - Current AWS configuration state
+- 📋 [AWS Implementation Summary](docs/work/aws/AWS-IMPLEMENTATION-SUMMARY.md) - AWS feature implementation details
+
+### Planning & Project Tracking (Gitignored)
+- 📋 [ACTIVE.md](claudedocs/planning/ACTIVE.md) - Current projects and status
+- 📋 [BACKLOG.md](claudedocs/planning/BACKLOG.md) - New work items and grooming queue
+- 📋 [COMPLETED.md](claudedocs/planning/COMPLETED.md) - Completed projects index
+
+## Documentation Structure
+
+```
+docs/                          # Public user documentation
+├── INSTALLATION.md           # v2.0.0 setup guide ✅
+├── TROUBLESHOOTING.md        # Debugging guide ✅
+├── BACKUP-AND-RECOVERY.md    # Disaster recovery ✅
+└── SECRETS.md                # SOPS encryption ✅
+
+claudedocs/                    # AI assistant instructions and development
+├── guides/                    # AI development workflows
+│   ├── DEVELOPMENT-WORKFLOW.md
+│   └── DOCUMENTATION-CHANGELOG-GUIDE.md
+├── reference/                 # Technical reference for AI
+│   └── aws/                   # AWS-specific documentation
+│       ├── AWS-MULTI-ROLE.md
+│       ├── AWS-QUICK-REF.md
+│       ├── AWS-CONFIG-STATUS.md
+│       └── AWS-IMPLEMENTATION-SUMMARY.md
+└── planning/                  # Project management (gitignored)
+    ├── ACTIVE.md              # Current work tracking
+    ├── BACKLOG.md             # New work intake
+    ├── COMPLETED.md           # Completed projects index
+    ├── projects/              # Active project directories
+    └── archive/               # Archived completed projects
+```
+
+## Directory Purpose
+
+**`docs/`** - Public documentation:
+- End-user guides (installation, troubleshooting, backups, secrets)
+- Committed to repository
+- Visible on GitHub
+- For humans reading the repository
+
+**`claudedocs/`** - AI development documentation:
+- AI assistant instructions and workflows
+- Project management and planning (gitignored)
+- Technical reference for AI decision-making
+- For Claude Code and AI agents
+
+## Additional Documentation
+
+**Under Review**: `.temp/docs/archive/` (remaining 22 docs from root reorganization)
+
+**Restoration Status**:
+- ✅ Phase 1 Complete (4 essential user guides restored to `docs/`)
+- ⏳ Phase 2 Pending (ADRs, architecture - 5 hours estimated)
+- ⏳ Phase 3 Pending (Advanced topics - 3-4 hours estimated)
+
+**Restoration Plan**: See profile-migration/merge-prep/DOC-RESTORATION-PLAN.md (gitignored, local reference)
 
 ---
 
@@ -270,24 +341,38 @@ sudo nix run nix-darwin -- switch --flake .#mbp-work    # Work
 
 ```
 nix-darwin/
-├── flake.nix              # Reads machine-config.nix, loads profiles dynamically
+├── flake.nix              # Entry point, reads config/machine-config.nix
 ├── config/                # Machine and user configuration (gitignored)
-│   ├── machine-config.nix # machineId + profileName (machine-specific)
+│   ├── machine-config.nix # machineId + machineType (machine-specific)
 │   └── user-config.nix    # username + email (user-specific)
-├── hosts/                 # Machine-specific configs
-├── modules/               # System packages + settings
-├── home/
-│   ├── jimmy/            # User-specific configs (profile-agnostic)
-│   └── _profiles/        # Profile system (personal/work/minimal)
-│       ├── _template/    # Shared programs and shell configs
-│       ├── personal/     # Personal profile behavior
-│       ├── work/         # Work profile behavior
-│       └── minimal/      # Bare-bones troubleshooting
-├── lib/                   # 30+ helper functions
-├── overlays/              # Package customizations
-├── pkgs/                  # Custom packages
-├── claudedocs/            # Project planning and guides
-└── scripts/               # Helper scripts (switch-profile.sh, etc.)
+├── nix-config/            # All Nix configuration files
+│   ├── hosts/            # Machine-specific configs + secrets
+│   │   ├── _template/    # Template for new machines
+│   │   └── macbook-pro-m1/  # Machine configs (secrets.yaml, etc.)
+│   ├── home/             # Home Manager configurations
+│   │   ├── jimmy/        # User-specific configs (profile-agnostic)
+│   │   └── _profiles/    # Profile system (personal/work/minimal)
+│   │       ├── _template/  # Shared programs and shell configs
+│   │       ├── personal/   # Personal profile behavior
+│   │       ├── work/       # Work profile behavior
+│   │       └── minimal/    # Bare-bones troubleshooting
+│   ├── modules/          # System packages + settings (darwin/shared)
+│   ├── lib/              # 30+ helper functions
+│   ├── overlays/         # Package customizations
+│   └── pkgs/             # Custom packages
+├── scripts/               # Utility scripts
+│   ├── app-catalog/      # Homebrew app management
+│   ├── setup/            # Initial setup scripts (configure.sh, activate.sh)
+│   ├── profiles/         # Profile switching
+│   ├── maintenance/      # System maintenance
+│   ├── validation/       # Config validation
+│   ├── testing/          # Test utilities
+│   └── (secret scripts)  # rescan-secrets.sh, edit-secrets.sh, etc.
+├── docs/                  # User-facing documentation
+├── claudedocs/            # Project planning and guides (gitignored)
+├── tests/                 # Test suite
+├── workspace/             # Per-machine workspace (gitignored)
+└── secrets/               # Local secrets storage (gitignored)
 ```
 
 **Note:** Full architecture documentation will be created after root reorganization is complete.
@@ -398,8 +483,8 @@ COMPLETED.md (chronological index)
 - Cross-project dependencies: `project-name #XXX` in Blockers field
 
 **Reference documentation:**
-- [AWS Multi-Role Guide](claudedocs/reference/aws/AWS-MULTI-ROLE.md)
-- [AWS Quick Reference](claudedocs/reference/aws/AWS-QUICK-REF.md)
+- [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md)
+- [AWS Quick Reference](docs/work/aws/AWS-QUICK-REF.md)
 
 ---
 

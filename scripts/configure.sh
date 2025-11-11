@@ -1039,13 +1039,19 @@ scan_existing_secrets() {
 
   local found_secrets=()
   local secret_count=0
+  local scan_depth="${SECRET_SCAN_DEPTH:-4}"  # Default: 4 levels deep
+
+  info "Scan depth: $scan_depth directory levels"
+  echo ""
+
+  # ==== Known Secret Directories ====
 
   # Scan ~/.db/ directory (database credentials)
   if [ -d "$HOME/.db" ]; then
     while IFS= read -r -d '' file; do
       found_secrets+=("Database credential: $file")
       ((secret_count++)) || true
-    done < <(find "$HOME/.db" -type f -print0 2>/dev/null)
+    done < <(find "$HOME/.db" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
   fi
 
   # Scan ~/.tokens/ directory (API tokens)
@@ -1053,7 +1059,7 @@ scan_existing_secrets() {
     while IFS= read -r -d '' file; do
       found_secrets+=("API token: $file")
       ((secret_count++)) || true
-    done < <(find "$HOME/.tokens" -type f -print0 2>/dev/null)
+    done < <(find "$HOME/.tokens" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
   fi
 
   # Scan ~/.credentials/ directory
@@ -1061,7 +1067,7 @@ scan_existing_secrets() {
     while IFS= read -r -d '' file; do
       found_secrets+=("Credential: $file")
       ((secret_count++)) || true
-    done < <(find "$HOME/.credentials" -type f -print0 2>/dev/null)
+    done < <(find "$HOME/.credentials" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
   fi
 
   # Check AWS credentials
@@ -1080,6 +1086,16 @@ scan_existing_secrets() {
     done < <(find "$HOME/.ssh" -name "id_*" -type f -print0 2>/dev/null)
   fi
 
+  # Scan ~/.gnupg/ directory (GPG keys)
+  if [ -d "$HOME/.gnupg" ]; then
+    while IFS= read -r -d '' file; do
+      if [[ "$file" =~ (secring\.gpg|private-keys-v1\.d) ]]; then
+        found_secrets+=("GPG private key: $file")
+        ((secret_count++)) || true
+      fi
+    done < <(find "$HOME/.gnupg" -maxdepth 2 -type f -print0 2>/dev/null)
+  fi
+
   # Check Docker config
   if [ -f "$HOME/.docker/config.json" ]; then
     found_secrets+=("Docker config: ~/.docker/config.json")
@@ -1091,31 +1107,16 @@ scan_existing_secrets() {
     while IFS= read -r -d '' file; do
       found_secrets+=("VPN credential: $file")
       ((secret_count++)) || true
-    done < <(find "$HOME/.vpn" -type f -print0 2>/dev/null)
+    done < <(find "$HOME/.vpn" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
   fi
 
-  # Scan shell configuration files for exported secrets
-  local shell_configs=("$HOME/.zshrc" "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.config/fish/config.fish")
-  for config_file in "${shell_configs[@]}"; do
-    if [ -f "$config_file" ]; then
-      # Search for export statements with secret-like patterns
-      if grep -qE 'export.*(API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY).*=' "$config_file" 2>/dev/null; then
-        found_secrets+=("Shell config with secrets: $config_file")
-        ((secret_count++)) || true
-      fi
-    fi
-  done
+  # ==== CLI Config Files ====
 
-  # Scan for all environment files (excluding backups)
-  while IFS= read -r -d '' env_file; do
-    found_secrets+=("Environment file: $env_file")
+  # Kubernetes config
+  if [ -f "$HOME/.kube/config" ]; then
+    found_secrets+=("Kubernetes config: ~/.kube/config")
     ((secret_count++)) || true
-  done < <(find "$HOME" -maxdepth 1 -type f \( -name ".env*" -o -name ".envrc" \) \
-    ! -name "*.swp" \
-    ! -name "*.bak" \
-    ! -name "*.backup" \
-    ! -name "*~" \
-    -print0 2>/dev/null)
+  fi
 
   # Scan application-specific config files
   local app_configs=(
@@ -1136,6 +1137,116 @@ scan_existing_secrets() {
     fi
   done
 
+  # ==== Environment Files (Deep Scan) ====
+
+  # Scan for .env* files (all variations, up to scan_depth)
+  while IFS= read -r -d '' env_file; do
+    found_secrets+=("Environment file: $env_file")
+    ((secret_count++)) || true
+  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
+    \( -name ".env" -o -name ".env.*" -o -name ".envrc" \) \
+    ! -path "*/node_modules/*" \
+    ! -path "*/.git/*" \
+    ! -path "*/dist/*" \
+    ! -path "*/build/*" \
+    ! -name "*.swp" \
+    ! -name "*.bak" \
+    ! -name "*.backup" \
+    ! -name "*~" \
+    -print0 2>/dev/null)
+
+  # ==== Wildcard Pattern Scanning ====
+
+  # Files with *secret* in name
+  while IFS= read -r -d '' file; do
+    found_secrets+=("Secret file: $file")
+    ((secret_count++)) || true
+  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
+    -iname "*secret*" \
+    ! -path "*/node_modules/*" \
+    ! -path "*/.git/*" \
+    ! -path "*/dist/*" \
+    ! -path "*/build/*" \
+    ! -name "*.md" \
+    ! -name "*.txt" \
+    -print0 2>/dev/null | head -z -n 20)  # Limit to first 20 matches
+
+  # Files with *credential* in name
+  while IFS= read -r -d '' file; do
+    found_secrets+=("Credential file: $file")
+    ((secret_count++)) || true
+  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
+    -iname "*credential*" \
+    ! -path "*/node_modules/*" \
+    ! -path "*/.git/*" \
+    ! -path "*/dist/*" \
+    ! -path "*/build/*" \
+    ! -name "*.md" \
+    ! -name "*.txt" \
+    -print0 2>/dev/null | head -z -n 20)
+
+  # Certificate files (.pem, .p12, .pfx)
+  while IFS= read -r -d '' file; do
+    found_secrets+=("Certificate: $file")
+    ((secret_count++)) || true
+  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
+    \( -name "*.pem" -o -name "*.p12" -o -name "*.pfx" -o -name "*.key" \) \
+    ! -path "*/node_modules/*" \
+    ! -path "*/.git/*" \
+    -print0 2>/dev/null | head -z -n 20)
+
+  # ==== Shell Config Scanning ====
+
+  # Scan shell configuration files for exported secrets
+  local shell_configs=("$HOME/.zshrc" "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.config/fish/config.fish")
+  for config_file in "${shell_configs[@]}"; do
+    if [ -f "$config_file" ]; then
+      # Search for export statements with secret-like patterns
+      if grep -qE 'export.*(API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY).*=' "$config_file" 2>/dev/null; then
+        found_secrets+=("Shell config with secrets: $config_file")
+        ((secret_count++)) || true
+      fi
+    fi
+  done
+
+  # Scan generated alias files (from previous Nix configs or manual setups)
+  while IFS= read -r -d '' alias_file; do
+    # Check if file contains secrets (connection strings, API keys, tokens)
+    if grep -qE '(API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY|mysql.*-p|psql.*postgresql://|curl.*token)' "$alias_file" 2>/dev/null; then
+      found_secrets+=("Alias file with potential secrets: $alias_file")
+      ((secret_count++)) || true
+    fi
+  done < <(find "$HOME/.config" -maxdepth 3 -type f \
+    \( -name "*alias*" -o -name "*aliases*" \) \
+    ! -path "*/.git/*" \
+    -print0 2>/dev/null)
+
+  # Scan shell history files (can leak secrets from pasted commands)
+  local history_files=("$HOME/.zsh_history" "$HOME/.bash_history" "$HOME/.history")
+  for history_file in "${history_files[@]}"; do
+    if [ -f "$history_file" ]; then
+      # Check for secrets in command history (sample check to avoid full scan)
+      if grep -qE '(export.*SECRET|API_KEY.*=|TOKEN.*=|PASSWORD.*=|-p.*[A-Za-z0-9]{8,})' "$history_file" 2>/dev/null | head -n 1; then
+        found_secrets+=("Shell history with potential secrets: $history_file")
+        ((secret_count++)) || true
+      fi
+    fi
+  done
+
+  # ==== Age Key Detection ====
+
+  # Check for SOPS_AGE_KEY_FILE environment variable
+  if [ -n "$SOPS_AGE_KEY_FILE" ] && [ -f "$SOPS_AGE_KEY_FILE" ]; then
+    found_secrets+=("SOPS age key: $SOPS_AGE_KEY_FILE")
+    ((secret_count++)) || true
+  fi
+
+  # Check default age key location
+  if [ -f "$HOME/.config/sops/age/keys.txt" ]; then
+    found_secrets+=("SOPS age key: ~/.config/sops/age/keys.txt")
+    ((secret_count++)) || true
+  fi
+
   # Display results
   if [ $secret_count -eq 0 ]; then
     info "No existing secrets detected in common locations"
@@ -1148,7 +1259,9 @@ scan_existing_secrets() {
     done
     echo ""
     warning "These secrets should be encrypted in nix-config/hosts/$MACHINE_ID/secrets.yaml"
-    info "See docs/guides/secrets.md for SOPS setup instructions"
+    info "See docs/secrets.md for SOPS setup instructions"
+    echo ""
+    info "To change scan depth: export SECRET_SCAN_DEPTH=3  # Default: 4"
   fi
 
   echo ""
@@ -1232,10 +1345,33 @@ create_secrets_file() {
 
   # Backup existing file if it exists
   if [ -f "$SECRETS_FILE" ]; then
-    local BACKUP_FILE="${SECRETS_FILE}.backup-$(date +%Y%m%d-%H%M%S)"
-    mv "$SECRETS_FILE" "$BACKUP_FILE"
+    # Store backups in workspace directory
+    local WORKSPACE_BACKUP_DIR="$REPO_ROOT/workspace/$MACHINE_ID/backups"
+    mkdir -p "$WORKSPACE_BACKUP_DIR"
+
+    local BACKUP_FILENAME="secrets.yaml.backup-$(date +%Y%m%d-%H%M%S)"
+    local BACKUP_FILE="$WORKSPACE_BACKUP_DIR/$BACKUP_FILENAME"
+    cp "$SECRETS_FILE" "$BACKUP_FILE"
     success "Existing secrets.yaml backed up to: $BACKUP_FILE"
     echo ""
+
+    # Rotate old backups - keep only the 2 most recent
+    local backup_pattern="$WORKSPACE_BACKUP_DIR/secrets.yaml.backup-*"
+    local backup_count=$(ls -1 $backup_pattern 2>/dev/null | wc -l | tr -d ' ')
+
+    if [ "$backup_count" -gt 2 ]; then
+      info "Rotating old backups (keeping 2 most recent)..."
+      # Get all backups sorted by time (newest first), keep first 2, delete rest
+      local kept=0
+      for backup_file in $(ls -1t $backup_pattern 2>/dev/null); do
+        kept=$((kept + 1))
+        if [ $kept -gt 2 ]; then
+          rm "$backup_file"
+          info "Removed old backup: $(basename "$backup_file")"
+        fi
+      done
+      echo ""
+    fi
   fi
 
   info "Creating plaintext secrets.yaml template..."
@@ -1354,6 +1490,30 @@ EOF
   if [ -f "$HOME/.aws/credentials" ]; then
     echo "# aws_credentials: |" >> "$SECRETS_FILE"
     cat "$HOME/.aws/credentials" | sed 's/^/#   /' >> "$SECRETS_FILE"
+    echo "" >> "$SECRETS_FILE"
+  fi
+
+  # AWS accounts (for work profile - SSO multi-account mapping)
+  if [ -f "$HOME/.aws/accounts.json" ]; then
+    echo "# AWS account mapping (work profile only)" >> "$SECRETS_FILE"
+    echo "# aws_accounts: |" >> "$SECRETS_FILE"
+    cat "$HOME/.aws/accounts.json" | sed 's/^/#   /' >> "$SECRETS_FILE"
+    echo "" >> "$SECRETS_FILE"
+  elif [ "$MACHINE_TYPE" = "work" ]; then
+    echo "# AWS account mapping (work profile - add your account IDs)" >> "$SECRETS_FILE"
+    echo "# Template: nix-config/home/_profiles/work/accounts.json.template" >> "$SECRETS_FILE"
+    echo "# aws_accounts: |" >> "$SECRETS_FILE"
+    echo "#   {" >> "$SECRETS_FILE"
+    echo "#     \"work-domain\": {" >> "$SECRETS_FILE"
+    echo "#       \"description\": \"Work AWS Organization\"," >> "$SECRETS_FILE"
+    echo "#       \"default_role\": \"support\"," >> "$SECRETS_FILE"
+    echo "#       \"accounts\": {" >> "$SECRETS_FILE"
+    echo "#         \"dev\": \"123456789012\"," >> "$SECRETS_FILE"
+    echo "#         \"qa\": \"234567890123\"," >> "$SECRETS_FILE"
+    echo "#         \"prod\": \"345678901234\"" >> "$SECRETS_FILE"
+    echo "#       }" >> "$SECRETS_FILE"
+    echo "#     }" >> "$SECRETS_FILE"
+    echo "#   }" >> "$SECRETS_FILE"
     echo "" >> "$SECRETS_FILE"
   fi
 
