@@ -98,53 +98,6 @@
       system = machineConfig.system or "aarch64-darwin";
       expectedHostname = machineConfig.expectedHostname or machineId;
 
-      # ============================================
-      # SYSTEM BUILDER HELPER (LEGACY)
-      # ============================================
-      # Legacy builder for backward compatibility during transition.
-      # New systems should use profile-based configuration below.
-
-      mkDarwinSystem = { hostname, system ? "aarch64-darwin", username, mixins ? [] }:
-        let
-          # DEPRECATED: Use profile-based configuration instead
-          # This is kept for backward compatibility only
-          machineType = profileName;  # Use profileName from machine config
-        in
-        nix-darwin.lib.darwinSystem {
-          inherit system;
-          specialArgs = {
-            inherit inputs username hostname myLib machineType;
-          };
-          modules = [
-            # Apply overlays to nixpkgs
-            { nixpkgs.overlays = overlays; }
-
-            # Host-specific configuration (uses machineId)
-            ./nix-config/hosts/${machineId}
-
-            # System modules
-            ./nix-config/modules/darwin
-            ./nix-config/modules/shared
-
-            # Home Manager integration
-            home-manager.darwinModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                users.${username} = import ./nix-config/home/_template;
-                extraSpecialArgs = {
-                  inherit inputs mixins hostname myLib machineType username;
-                };
-                verbose = false;
-                backupFileExtension = "hm-backup";
-              };
-            }
-
-            # Secrets management
-            sops-nix.darwinModules.sops
-          ];
-        };
     in
     {
       # ============================================
@@ -204,23 +157,12 @@
       };
 
       # ============================================
-      # BACKWARD COMPATIBILITY ALIASES
-      # ============================================
-      # Allow building with hostname for smooth transition
-      # Usage: darwin-rebuild switch --flake .#mbp-jimmy
-
-      darwinConfigurations."mbp-jimmy" = self.darwinConfigurations."${machineId}";
-      darwinConfigurations."mbp-work" = self.darwinConfigurations."${machineId}";
-
-      # ============================================
       # LIBRARY EXPORTS
       # ============================================
       # Expose custom functions and helpers for external use.
       # Access with: nix eval .#lib.<function>
 
-      lib = myLib // {
-        inherit mkDarwinSystem;
-      };
+      lib = myLib;
 
       # ============================================
       # VALIDATION & INTROSPECTION EXPORTS
