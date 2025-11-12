@@ -441,8 +441,8 @@ rec {
         "\n" +
         (
           .value.accounts | to_entries[] |
-          "  • \(.key | ljust(6)) (\(.value.id // .value | tostring))" +
-          (if .value.additional_roles then " → \(.value.additional_roles | join(", "))" else "" end)
+          "  • \(.key)      (" + (if (.value | type) == "object" then .value.id else .value end | tostring) + ")" +
+          (if (.value | type) == "object" and .value.additional_roles then " → \(.value.additional_roles | join(", "))" else "" end)
         )
       ' ~/.aws/accounts.json 2>/dev/null || echo "Error parsing accounts.json"
 

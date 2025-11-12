@@ -27,7 +27,7 @@ rec {
     home.packages = packages;
     home.sessionVariables = sessionVariables;
     programs.zsh.shellAliases = shellAliases;
-    programs.zsh.initExtra = initExtra;
+    programs.zsh.initContent = initExtra;
   };
 
   # ==================================================
@@ -53,7 +53,7 @@ rec {
       home.packages = packages;
       home.sessionVariables = sessionVariables;
       programs.zsh.shellAliases = shellAliases;
-      programs.zsh.initExtra = initExtra;
+      programs.zsh.initContent = initExtra;
     } else {};
 
   # ==================================================
@@ -72,6 +72,6 @@ rec {
       home.packages = (acc.home.packages or []) ++ (mixin.home.packages or []);
       home.sessionVariables = (acc.home.sessionVariables or {}) // (mixin.home.sessionVariables or {});
       programs.zsh.shellAliases = (acc.programs.zsh.shellAliases or {}) // (mixin.programs.zsh.shellAliases or {});
-      programs.zsh.initExtra = (acc.programs.zsh.initExtra or "") + "\n" + (mixin.programs.zsh.initExtra or "");
+      programs.zsh.initContent = (acc.programs.zsh.initContent or "") + "\n" + (mixin.programs.zsh.initContent or "");
     }) {} mixins;
 }

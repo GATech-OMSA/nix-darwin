@@ -136,7 +136,7 @@
                 extraSpecialArgs = {
                   inherit inputs mixins hostname myLib machineType username;
                 };
-                verbose = true;
+                verbose = false;
                 backupFileExtension = "hm-backup";
               };
             }

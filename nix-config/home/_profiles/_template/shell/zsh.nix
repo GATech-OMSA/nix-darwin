@@ -119,7 +119,7 @@ in
       # nix-rebuild runs with pre-flight checks by default
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
       # Automatically restarts shell on success to load new configuration
-      nix-rebuild = "${nixDarwinDir}/scripts/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
+      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
 
       # Skip pre-flight checks for emergency rebuilds (use with caution)
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
@@ -136,18 +136,18 @@ in
       nix-check = "nix flake check ${nixDarwinDir}";
 
       # Run pre-flight checks manually (without rebuilding, no shell restart needed)
-      nix-preflight = "${nixDarwinDir}/scripts/pre-flight-checks.sh";
+      nix-preflight = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh";
 
       # System health check - Validate nix-darwin system state (no shell restart needed)
       # Usage: nix-health-check (normal) | nix-health-check --verbose (detailed)
-      nix-health-check = "${nixDarwinDir}/scripts/health-check.sh";
-      nix-health = "${nixDarwinDir}/scripts/health-check.sh";  # Shorter alternate
+      nix-health-check = "${nixDarwinDir}/scripts/maintenance/health-check.sh";
+      nix-health = "${nixDarwinDir}/scripts/maintenance/health-check.sh";  # Shorter alternate
 
       # Compare configurations between generations (no shell restart needed)
       # Usage: nix-config-diff (current vs previous) | nix-config-diff --generations N M
-      nix-config-diff = "${nixDarwinDir}/scripts/config-diff.sh";
-      nix-config-diff-packages = "${nixDarwinDir}/scripts/config-diff.sh --packages-only";
-      nix-config-diff-verbose = "${nixDarwinDir}/scripts/config-diff.sh --verbose";
+      nix-config-diff = "${nixDarwinDir}/scripts/maintenance/config-diff.sh";
+      nix-config-diff-packages = "${nixDarwinDir}/scripts/maintenance/config-diff.sh --packages-only";
+      nix-config-diff-verbose = "${nixDarwinDir}/scripts/maintenance/config-diff.sh --verbose";
 
       # Rollback to previous generation and restart shell
       nix-rollback = "sudo darwin-rebuild --rollback && exec zsh";
@@ -725,7 +725,7 @@ in
         if confirm "Proceed with rebuild?"; then
           echo ""
           echo "🔄 Running pre-flight checks..."
-          if ${nixDarwinDir}/scripts/pre-flight-checks.sh; then
+          if ${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh; then
             echo ""
             echo "🏗️  Building darwin configuration..."
             sudo darwin-rebuild switch --flake ${nixDarwinDir}
