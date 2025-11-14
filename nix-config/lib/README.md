@@ -54,7 +54,7 @@ Select value based on machine type (most useful!).
 ```nix
 gitEmail = myLib.selectByMachine hostname {
   personal = "jimmy-jain@users.noreply.github.com";
-  work = "user@example.com";
+  work = "john@company.com";
   default = "fallback@email.com";  # optional
 };
 ```
