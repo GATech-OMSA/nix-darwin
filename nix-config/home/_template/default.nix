@@ -69,7 +69,7 @@
 echo "🔍 Validating secrets and credentials..."
 
 SECRETS_PATHS=(
-  "$HOME/nix-darwin/hosts/*/secrets.yaml"
+  "$HOME/nix-darwin/nix-config/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/user-data-${username}/secrets/*.yaml"
 )
 
@@ -157,7 +157,7 @@ EOF
 echo "🔍 Final security check before push..."
 
 SECRETS_PATHS=(
-  "$HOME/nix-darwin/hosts/*/secrets.yaml"
+  "$HOME/nix-darwin/nix-config/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/user-data-${username}/secrets/*.yaml"
 )
 
