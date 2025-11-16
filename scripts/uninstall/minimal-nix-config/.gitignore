@@ -1,0 +1,22 @@
+# Gitignore for minimal nix-darwin config
+
+# Machine and user-specific configs
+config/user-config.nix
+config/machine-config.nix
+
+# Workspace data (per-machine)
+workspace/
+
+# Nix build results
+result
+result-*
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
