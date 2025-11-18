@@ -1093,7 +1093,7 @@ EOF
         fi
 
         echo "  📦 Rebuilding darwin configuration..."
-        if darwin-rebuild switch --flake ${nixDarwinDir}; then
+        if sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure; then
           echo "  ✅ Darwin rebuild completed"
         else
           echo "  ❌ Darwin rebuild failed" >&2
