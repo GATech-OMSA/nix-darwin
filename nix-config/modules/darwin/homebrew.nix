@@ -40,7 +40,9 @@
 
       # Development
       "visual-studio-code"
+      "cursor"
       "claude-code"
+      "codex"
       "iterm2"
       "dash"
 

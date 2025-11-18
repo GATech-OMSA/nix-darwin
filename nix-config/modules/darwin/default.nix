@@ -12,19 +12,12 @@
     ./security.nix
   ];
 
-  # Enable Nix management - needed to write /etc/nix/nix.conf
-  # Works alongside Determinate Nix (which handles daemon and installation)
-  nix.enable = true;
-  nix.settings = {
-    experimental-features = "nix-command flakes";
-    # Optimize builds
-    max-jobs = "auto";
-    # Keep Determinate Nix cache settings
-    trusted-substituters = [ "https://cache.flakehub.com" ];
-  };
+  # Disable nix-darwin's Nix management - Determinate Nix handles this
+  # Determinate Nix manages the daemon, /etc/nix/nix.conf, and Nix installation
+  nix.enable = false;
 
-  # Enable store optimization
-  nix.optimise.automatic = true;
+  # Note: nix.settings and nix.optimise are not available when nix.enable = false
+  # Determinate Nix provides its own configuration via /etc/nix/nix.conf
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
