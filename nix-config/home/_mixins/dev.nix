@@ -45,7 +45,7 @@
     plantuml     # UML diagrams
 
     # AI/ML Development
-    ollama       # LLM inference engine
+    # ollama       # LLM inference engine
 
     # ============================================
     # DATABASE TOOLS (Uncomment as needed)

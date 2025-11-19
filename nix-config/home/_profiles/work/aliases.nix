@@ -26,7 +26,7 @@
   # ============================================
   # WORK-SPECIFIC FUNCTIONS
   # ============================================
-  programs.zsh.initExtra = lib.mkAfter ''
+  programs.zsh.initContent = lib.mkAfter ''
     # Edit AWS account mapping (work profile only)
     # Manages aws_accounts field in secrets.yaml for SSO multi-account setup
     function edit-aws-map() {
