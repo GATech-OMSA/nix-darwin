@@ -147,6 +147,13 @@ in
       tfp = "terraform plan";
 
       # ============================================
+      # TUI TOOLS (Terminal User Interfaces)
+      # ============================================
+      lg = "lazygit";
+      ld = "lazydocker";
+      fm = "yazi";  # File manager
+
+      # ============================================
       # SYSTEM UTILITIES
       # ============================================
       now = "date +\"%Y-%m-%d %H:%M:%S\"";
