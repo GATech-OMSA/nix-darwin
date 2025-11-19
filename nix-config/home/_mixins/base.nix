@@ -54,7 +54,7 @@
   # Zsh configuration with hot-reload layer
   programs.zsh = {
     enable = true;
-    initExtraFirst = ''
+    initContent = lib.mkBefore ''
       # ================================================================
       # HOT-RELOAD LAYER (No rebuild required for changes)
       # ================================================================
