@@ -18,9 +18,34 @@
 
     # Build tools
     gnumake
+    just  # Modern command runner
 
     # Documentation
     tldr
+
+    # ============================================
+    # ACTIVE DEVELOPMENT TOOLS (Consolidated)
+    # ============================================
+    # Development Utilities
+    go  # Go language
+    php  # PHP
+
+    # Containers & Orchestration
+    docker-compose
+    kubectl
+    k9s
+    kubernetes-helm
+
+    # Cloud
+    awscli2
+
+    # Interview Prep & System Design
+    mermaid-cli  # Text-to-diagram for system design
+    graphviz     # Graph/architecture visualization
+    plantuml     # UML diagrams
+
+    # AI/ML Development
+    ollama       # LLM inference engine
 
     # ============================================
     # DATABASE TOOLS (Uncomment as needed)

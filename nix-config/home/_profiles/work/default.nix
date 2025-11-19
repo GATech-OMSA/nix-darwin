@@ -32,9 +32,5 @@
     ODBCINI = "/usr/local/etc/odbc.ini";
   };
 
-  # Starship prompt (work theme)
-  programs.starship = {
-    enable = true;
-    settings = builtins.fromTOML (builtins.readFile ./starship.toml);
-  };
+
 }

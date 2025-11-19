@@ -52,7 +52,7 @@ let
     tree
     watch
     tldr  # Simplified man pages
-    neofetch  # System info
+    fastfetch  # System info (modern replacement for neofetch)
 
     # File Utilities
     rsync
@@ -85,30 +85,6 @@ let
     sops  # Secrets management
   ];
 
-  # Development packages (all dev machines - both work and personal)
-  developmentPackages = with pkgs; [
-    # Development Utilities
-    go  # Go language
-    php  # PHP
-
-    # Containers & Orchestration
-    docker-compose
-    kubectl
-    k9s
-    kubernetes-helm
-
-    # Cloud
-    awscli2
-
-    # Interview Prep & System Design
-    mermaid-cli  # Text-to-diagram for system design
-    graphviz     # Graph/architecture visualization
-    plantuml     # UML diagrams
-
-    # AI/ML Development
-    ollama       # LLM inference engine
-  ];
-
 in
 {
   # System packages shared across all machines
@@ -118,9 +94,6 @@ in
   environment.systemPackages =
     # Essential packages for all machines
     essentialPackages
-
-    # Development packages for all dev machines
-    ++ developmentPackages
   ;
 
   # Implementation Notes:
