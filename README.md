@@ -616,17 +616,19 @@ After setup, you have:
 
 ### Quick Start
 
-1. **[QUICKSTART.md](docs/QUICKSTART.md)**
-2. **[LEARNING.md](docs/LEARNING.md)**
-3. **[Documentation Hub](docs/index.md)**
+1. **[Installation Guide](docs/installation.md)** - Complete setup instructions
+2. **[Learning Guide](docs/learning/README.md)** - Progressive Nix learning path
+3. **[Documentation Hub](docs/README.md)** - All available documentation
 
 ### Comprehensive Reference
 
 For detailed documentation, see **[docs/](docs/)**:
 
 - **Essential Guides** - Installation, secrets, troubleshooting, backup & recovery
-- **Architecture** - ADRs and architecture decisions
-- **Learning** - Nix and nix-darwin learning resources
+- **Learning** - Nix and nix-darwin learning resources (1,480 lines!)
 - **Work** - AWS multi-account configuration (work profile)
+- **Modern Tools** - CLI tools reference
+
+> **Note:** Technical documentation (ADRs, component READMEs, etc.) archived to `.deprecate/` during Nov 2025 cleanup. Contact maintainer if you need access to archived docs.
 
 ---

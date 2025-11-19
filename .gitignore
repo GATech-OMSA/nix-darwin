@@ -5,6 +5,9 @@ result-*
 # Temporary cleanup directory
 .temp/
 
+# Archived/deprecated documentation (preserved but not committed)
+.deprecate/
+
 # Claude documentation structure
 claudedocs/planning         # Local planning files (ACTIVE.md, BACKLOG.md, projects/, archive/)
 claudedocs/reference        # Reference documentation (committed in docs/work/ instead)
