@@ -7,12 +7,12 @@
 
 {
   imports = [
+    ../../_mixins/base.nix      # Base configuration (zoxide, fzf, bat, eza, direnv, starship)
     ../_template/programs       # Profile-shared program configs
     ../_template/shell          # Profile-shared shell configs
     ../../_template/development # Development configs (Python, Node, AI/ML)
     ./packages.nix              # Personal packages
     ./aliases.nix               # Personal aliases
-    ./programs                  # Personal program overrides
   ];
 
   # Personal-specific session variables

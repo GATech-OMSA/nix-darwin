@@ -13,19 +13,9 @@
     caBundle = "~/.config/certs/cacert.pem";
   };
 
-  # Work-specific packages
-  home.packages = with pkgs; [
-    # ============================================
-    # ACTIVE WORK TOOLS
-    # ============================================
-    # ODBC drivers and database clients
-    unixODBC           # ODBC driver manager
-    freetds            # ODBC for SQL Server
-    postgresql_16      # PostgreSQL client + libpq
-
-    # Database CLI tools
-    pgcli              # PostgreSQL CLI with auto-completion
-  ];
+  # Work-specific packages moved to _profiles/work/packages.nix
+  # This keeps mixins focused on behavior (functions, aliases, env vars)
+  # and profiles focused on packages (tools, CLI utilities)
 
   # Machine detection for shell
   home.sessionVariables = {

@@ -48,14 +48,25 @@
     enableZshIntegration = true;
   };
 
-  # Zsh configuration
+  # Zsh configuration with hot-reload layer
   programs.zsh = {
     enable = true;
-    initExtra = ''
-      # Source local secrets if they exist (no rebuild required)
-      # This allows you to add export API_KEY=... to ~/.config/secrets/local.env
+    initExtraFirst = ''
+      # ================================================================
+      # HOT-RELOAD LAYER (No rebuild required for changes)
+      # ================================================================
+      # Source local secrets (editable without nix-rebuild)
+      # Usage: echo "export MY_API_KEY=..." >> ~/.config/secrets/local.env
+      #        source ~/.zshrc
       if [ -f "$HOME/.config/secrets/local.env" ]; then
         source "$HOME/.config/secrets/local.env"
+      fi
+
+      # Source user customizations (editable without nix-rebuild)
+      # Usage: echo "alias mytest='echo test'" >> ~/.zshrc.local
+      #        source ~/.zshrc
+      if [ -f "$HOME/.zshrc.local" ]; then
+        source "$HOME/.zshrc.local"
       fi
     '';
   };

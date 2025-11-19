@@ -7,13 +7,9 @@
 # Commented sections are tools for personal projects and learning.
 
 {
-  # Personal-specific packages
-  home.packages = with pkgs; [
-    # ============================================
-    # ACTIVE PERSONAL TOOLS
-    # ============================================
-    neofetch
-  ];
+  # Personal-specific packages moved to _profiles/personal/packages.nix
+  # This keeps mixins focused on behavior (functions, aliases, env vars)
+  # and profiles focused on packages (tools, CLI utilities)
 
   # Machine detection for shell
   home.sessionVariables = {
