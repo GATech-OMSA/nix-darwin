@@ -137,7 +137,7 @@ deleted_style = 'fg:black bg:yellow'
 only_nonzero_diffs = true
 
 [aws]
-symbol = "\u{f0ef}  "
+symbol = "  "
 style = "bg:blue fg:crust"
 format = '[[$symbol$profile@$region ](fg:crust bg:blue)]($style)'
 disabled = false
