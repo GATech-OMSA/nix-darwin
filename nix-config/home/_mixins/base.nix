@@ -42,10 +42,13 @@
   };
 
   # Starship prompt - Custom Catppuccin Powerline with AWS
-  # Configuration is profile-specific (personal/work have different themes)
+  # Using personal profile config for all profiles (Catppuccin Mocha theme)
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
+    settings = builtins.fromTOML (
+      builtins.readFile ../_profiles/personal/starship.toml
+    );
   };
 
   # Zsh configuration with hot-reload layer

@@ -52,15 +52,15 @@ in
         "docker"
         "docker-compose"
         "terraform"
-        "kubectl"
+        # kubectl removed - only needed if using K8s daily
 
-        # Cloud & AWS
-        "aws"
+        # Cloud & AWS - moved to work profile
+        # "aws" - Only needed in work profile
 
         # Python Development
         "python"
-        "pip"
-        "virtualenv"
+        # pip removed - using UV instead
+        # virtualenv removed - using UV instead
 
         # Productivity & Navigation
         "fzf"
@@ -88,283 +88,104 @@ in
       ];
     };
 
-    # COMPLETE Shell aliases - merged from all sources
-    shellAliases = myLib.aws.mkAwsAliasesFromJson // {
+    # COMPLETE Shell aliases
+    # Note: AWS aliases moved to work profile (nix-config/home/_profiles/work/aliases.nix)
+    # Modern CLI tool replacements configured in base.nix: ls→eza, cat→bat, grep→rg, find→fd
+    shellAliases = {
       # ============================================
-      # SYSTEM & CONFIGURATION
+      # CORE SHELL OPERATIONS
       # ============================================
       c = "clear";
       reload = "source ~/.zshrc && echo '✅ .zshrc reloaded'";
       restart = "exec zsh";
 
-      # Quick open shortcuts
-      vs = "code .";          # Open VS Code in current directory
-      vscode = "code .";      # Alias for vs (full name)
-      f = "open .";           # Open Finder in current directory
-      finder = "open .";      # Alias for f (full name)
-
-      # Configuration shortcuts
-      nixconf = "code ${nixDarwinDir}";
-      zshconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/shell/zsh.nix";
-      gitconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/programs/git.nix";
-      vscodeconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/programs/vscode.nix";
-      condaconf = "code ${homeDir}/.condarc";
-      awsconf = "code ${homeDir}/.aws/config";
-      awscred = "code ${homeDir}/.aws/credentials";
-      jupyterconf = "code ${homeDir}/.jupyter/jupyter_notebook_config.py";
-      zshrc = "code ${homeDir}/.zshrc";
-      zshsec = "code ${homeDir}/.zsh_secrets";
-
-      # Nix-Darwin system management
-      # nix-rebuild runs with pre-flight checks by default
-      # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      # Automatically restarts shell on success to load new configuration
-      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
-
-      # Skip pre-flight checks for emergency rebuilds (use with caution)
-      # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      # Automatically restarts shell on success to load new configuration
-      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
-
-      # Debug mode with verbose output for troubleshooting
-      # Shows detailed build logs, stack traces, and Home Manager activation details
-      # Usage: nix-rebuild-debug (for full rebuild with debug info)
-      # Automatically restarts shell on success to load new configuration
-      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure --show-trace --verbose --print-build-logs && exec zsh";
-
-      # Check configuration without building (no shell restart needed)
-      nix-check = "nix flake check ${nixDarwinDir}";
-
-      # Run pre-flight checks manually (without rebuilding, no shell restart needed)
-      nix-preflight = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh";
-
-      # System health check - Validate nix-darwin system state (no shell restart needed)
-      # Usage: nix-health-check (normal) | nix-health-check --verbose (detailed)
-      nix-health-check = "${nixDarwinDir}/scripts/maintenance/health-check.sh";
-      nix-health = "${nixDarwinDir}/scripts/maintenance/health-check.sh";  # Shorter alternate
-
-      # Compare configurations between generations (no shell restart needed)
-      # Usage: nix-config-diff (current vs previous) | nix-config-diff --generations N M
-      nix-config-diff = "${nixDarwinDir}/scripts/maintenance/config-diff.sh";
-      nix-config-diff-packages = "${nixDarwinDir}/scripts/maintenance/config-diff.sh --packages-only";
-      nix-config-diff-verbose = "${nixDarwinDir}/scripts/maintenance/config-diff.sh --verbose";
-
-      # Rollback to previous generation and restart shell
-      nix-rollback = "sudo darwin-rebuild --rollback && exec zsh";
-
-      # Force home-manager regeneration (workaround for cache bug)
-      # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
-      # Automatically restarts shell on success
-      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
-      nix-home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && exec zsh";
-
-      # Scaffold new machine configuration from template
-      nix-scaffold-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
-      nix-new-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
-
-      # Secret management (Secret Management v2.0)
-      # Tier 3: domain-action pattern for namespace grouping (secrets-*)
-      secrets-rescan = "${nixDarwinDir}/scripts/secrets/rescan-secrets.sh";
-      secrets-edit = "${nixDarwinDir}/scripts/secrets/edit-secrets.sh";
-      secrets-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
-      secrets-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
-      secrets-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
-
-      # Maintenance & validation
-      nix-verify-backups = "${nixDarwinDir}/scripts/maintenance/verify-backups.sh";
-
       # ============================================
-      # WORKFLOW HELPERS
-      # ============================================
-      # Note: Personal app launchers (ff, cld, gpt, cursor, etc.) moved to personal.nix
-      # to prevent them from appearing on work machine where Homebrew is disabled
-      cc = "claude";  # Claude Code CLI (universal - works on both machines)
-      show = "open -R";        # Reveal in Finder
-      ql = "qlmanage -p";      # Quick Look preview
-      copy = "pbcopy";         # Pipe to clipboard
-      paste = "pbpaste";       # Paste from clipboard
-      port = "lsof -i :";      # Check what's on port
-
-      # Safety aliases
-      cp = "cp -i";
-      mv = "mv -i";
-      rm = "rm -i";
-
-      # ============================================
-      # NIX DEVELOPMENT
-      # ============================================
-      se = "sops -e -i";  # SOPS edit secrets
-
-      # ============================================
-      # NAVIGATION
+      # NAVIGATION (Use zoxide for directories!)
       # ============================================
       ".." = "cd ..";
       "..." = "cd ../..";
       "...." = "cd ../../..";
       "~" = "cd ~";
       "-" = "cd -";
-
-      # Quick directories (cd operations)
-      dev = "cd ~/Dev";
-      downloads = "cd ~/Downloads";
-      desktop = "cd ~/Desktop";
-      docs = "cd ~/Documents";
-      apps = "cd ~/Applications";
-      down = "cd ~/Downloads";
-      desk = "cd ~/Desktop";
-
-      # Finder operations (Tier 5: f + target)
-      fdev = "open ~/Dev";
-      fdown = "open ~/Downloads";
-      fdesk = "open ~/Desktop";
-      fdocs = "open ~/Documents";
-
-      # Personal projects
-      learning = "cd ~/Dev/learning";
-      aiml = "cd ~/Dev/ai-ml";
-      algo = "cd ~/Dev/algorithms";
-      courses = "cd ~/Dev/courses";
-      experiments = "cd ~/Dev/experiments";
-      oss = "cd ~/Dev/open-source";
+      
+      # File operations
+      f = "open .";  # Open Finder in current directory
 
       # ============================================
-      # MODERN CLI TOOLS (eza, bat, ripgrep, etc.)
+      # GIT (Essential shortcuts only)
       # ============================================
-      ls = "eza --icons --group-directories-first";
-      ll = "eza -al --icons --group-directories-first";
-      la = "eza -a --icons --group-directories-first";
-      lt = "eza --tree --level=2 --icons";
-
-      cat = "bat --style=plain --paging=never";
-      catp = "bat -p";
-
-      grep = "rg";
-      rgi = "rg -i";
-
-      find = "fd";
-      du = "dust";
-      df = "duf";
-      top = "btop";
-
-      # ============================================
-      # GIT - Modern shortcuts (complement g-prefix)
-      # ============================================
-      # Main git interface (all aliases in git.nix with 'g' prefix)
       g = "git";
-
-      # Modern git shortcuts
       gsw = "git switch";
       gswc = "git switch -c";
       gres = "git restore";
       grest = "git restore --staged";
 
       # ============================================
-      # PYTHON - MULTI-TIER (UV + Micromamba)
+      # DEVELOPMENT TOOLS
       # ============================================
+      # Python
       py = "python";
       ipy = "ipython";
       jl = "jupyter lab";
       jn = "jupyter notebook";
-
-      # UV commands
-      "uv-new" = "uv init";
-      "uv-venv" = "uv venv";
-      "uv-add" = "uv add";
-      "uv-sync" = "uv sync";
-      "uv-run" = "uv run";
       activate = "source .venv/bin/activate";
 
-      # Linting & Formatting
-      lint = "ruff check .";
-      format = "ruff format .";
-      "lint-fix" = "ruff check --fix .";
-
-      # Micromamba (Tier 4: abbreviated domain)
-      # Note: m-act and m-deact use functions (not aliases) to show usage help
-      m-create = "micromamba create";
-      m-list = "micromamba env list";
-      m-install = "micromamba install";
-      m-remove = "micromamba remove";
-
-      # ============================================
-      # AWS
-      # ============================================
-      awsp = "export AWS_PROFILE=";
-      awsprofile = "echo $AWS_PROFILE";
-      awswho = "aws sts get-caller-identity";
-
-      # ============================================
-      # DOCKER & KUBERNETES
-      # ============================================
       # Docker
       d = "docker";
-      dc = "docker compose";
-      dps = "docker ps";
-      dpsa = "docker ps -a";
-      dcu = "docker compose up -d";
-      dcd = "docker compose down";
-      dlogs = "docker logs -f";
-      dimg = "docker images";
-      drm = "docker rm";
-      drmi = "docker rmi";
-      dex = "docker exec -it";
-      drun = "docker run -it --rm";
-      dprune = "docker system prune -af";
+      dc = "docker-compose";
+      dcu = "docker-compose up -d";
+      dcd = "docker-compose down";
 
-      # Kubernetes
+      # Kubernetes (if you use it)
       k = "kubectl";
       kg = "kubectl get";
       kd = "kubectl describe";
-      kl = "kubectl logs";
-      k9 = "k9s";
 
-      # ============================================
-      # TERRAFORM
-      # ============================================
+      # Terraform
       tf = "terraform";
       tfi = "terraform init";
       tfp = "terraform plan";
-      tfa = "terraform apply";
-      tfv = "terraform validate";
-      tff = "terraform fmt";
 
       # ============================================
-      # FILE OPERATIONS
+      # SYSTEM UTILITIES
       # ============================================
-      # NOTE: extract is provided by oh-my-zsh extract plugin (line 57)
-      # Don't define alias here as it conflicts with the plugin function
-
-      # ============================================
-      # NETWORK UTILITIES
-      # ============================================
-      myip = "curl -s https://api.ipify.org && echo";
-      localip = "ipconfig getifaddr en0";
+      now = "date +\"%Y-%m-%d %H:%M:%S\"";
+      path = "echo -e \${PATH//:/\\n}";
+      port = "lsof -i :";
       ports = "sudo lsof -iTCP -sTCP:LISTEN -n -P";
 
       # ============================================
-      # USEFUL SHORTCUTS
+      # APP LAUNCHERS (Top 5 only - use Spotlight for others!)
       # ============================================
-      h = "history";
-      j = "jobs -l";
-      path = "echo -e \${PATH//:/\\\\n}";
-      now = "date +\"%Y-%m-%d %H:%M:%S\"";
-      week = "date +%V";
+      vs = "code .";
+      cur = "open -a Cursor";
+      cc = "open -a 'Claude Code'";
+      gpt = "open -a ChatGPT";
+      obs = "open -a Obsidian";
 
       # ============================================
-      # OLLAMA SHORTCUTS
+      # NIX-DARWIN SYSTEM MANAGEMENT
       # ============================================
-      "ollama-start" = "ollama serve";
-      models = "ollama list";
-      llama3 = "ollama run llama3";
-      codellama = "ollama run codellama";
+      nixconf = "code ${nixDarwinDir}";
+      zshconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/shell/zsh.nix";
+      gitconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/programs/git.nix";
+      vscodeconf = "code ${nixDarwinDir}/nix-config/home/_profiles/_template/programs/vscode.nix";
 
-      # ============================================
-      # CLEANUP ALIASES
-      # ============================================
-      # Note: cleanup function is defined below and defaults to cleanup-standard
-      # cleanup-all is an alias for cleanup-aggressive
+      # Nix system commands (with pre-flight checks)
+      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
+      nix-rollback = "sudo darwin-rebuild --rollback && exec zsh";
+      nix-health = "${nixDarwinDir}/scripts/maintenance/health-check.sh";
+      nix-check = "nix flake check ${nixDarwinDir}";
+
+      # Secrets management
+      secrets-edit = "sops ${nixDarwinDir}/nix-config/hosts/${machineId}/secrets.yaml";
+      secrets-view = "sops -d ${nixDarwinDir}/nix-config/hosts/${machineId}/secrets.yaml";
+      se = "sops -e -i";  # Encrypt in-place
+      
+      # Cleanup (cleanup functions defined below)
       clean = "cleanup-quick";
     };
+
 
     # Init content (combined: micromamba early, then main config)
     initContent = lib.mkMerge [
@@ -853,226 +674,6 @@ in
         fi
       }
 
-      # ============================================
-      # INTERVIEW PREP & LEARNING HELPERS
-      # ============================================
-
-      # Quick algorithm problem setup
-      function newalgo() {
-        if [ -z "$1" ]; then
-          echo "Usage: newalgo <problem-name>"
-          return 1
-        fi
-        mkdir -p ~/Dev/learning/algorithms/$1
-        cd ~/Dev/learning/algorithms/$1
-        cat > solution.py <<'EOF'
-"""
-Problem: TODO
-Link: TODO
-Difficulty: TODO
-
-Approach:
-1. TODO
-
-Time Complexity: O(?)
-Space Complexity: O(?)
-"""
-
-def solution():
-    pass
-
-if __name__ == "__main__":
-    # Test cases
-    pass
-EOF
-        cat > test_solution.py <<'EOF'
-import pytest
-from solution import solution
-
-def test_example():
-    assert solution() == None  # TODO: Add test cases
-EOF
-        cat > README.md <<'EOF'
-# Problem Name
-
-## Problem Statement
-TODO
-
-## Approach
-TODO
-
-## Complexity
-- Time: O(?)
-- Space: O(?)
-EOF
-        echo "✅ Algorithm problem setup created: $1"
-        echo "   - solution.py"
-        echo "   - test_solution.py"
-        echo "   - README.md"
-        code .
-      }
-
-      # System design practice template
-      function design() {
-        if [ -z "$1" ]; then
-          echo "Usage: design <system-name>"
-          return 1
-        fi
-        mkdir -p ~/Dev/learning/system-design/$1/diagrams
-        cd ~/Dev/learning/system-design/$1
-        cat > README.md <<'EOF'
-# System Design: TODO
-
-## Requirements
-
-### Functional Requirements
-- TODO
-
-### Non-Functional Requirements
-- TODO
-
-## Scale Estimation
-- Users: TODO
-- QPS: TODO
-- Storage: TODO
-
-## High-Level Design
-TODO
-
-## Detailed Component Design
-TODO
-
-## Data Model
-TODO
-
-## API Design
-TODO
-
-## Deep Dive
-TODO
-
-## References
-- TODO
-EOF
-        cat > architecture.md <<'EOF'
-# Architecture
-
-## Components
-1. TODO
-
-## Data Flow
-1. TODO
-
-## Technology Stack
-- TODO
-EOF
-        cat > diagrams/architecture.mmd <<'EOF'
-graph TB
-    Client[Client]
-    LB[Load Balancer]
-    API[API Server]
-    DB[(Database)]
-    Cache[(Cache)]
-
-    Client --> LB
-    LB --> API
-    API --> Cache
-    API --> DB
-EOF
-        echo "✅ System design practice created: $1"
-        echo "   - README.md (full design doc)"
-        echo "   - architecture.md"
-        echo "   - diagrams/architecture.mmd (Mermaid)"
-        echo ""
-        echo "💡 Generate diagram: mmdc -i diagrams/architecture.mmd -o diagrams/architecture.png"
-        code .
-      }
-
-      # Quick RAG project setup
-      function newrag() {
-        if [ -z "$1" ]; then
-          echo "Usage: newrag <project-name>"
-          return 1
-        fi
-        mkdir -p ~/Dev/ai-ml/$1
-        cd ~/Dev/ai-ml/$1
-        uv init
-        cat > pyproject.toml <<'EOF'
-[project]
-name = "TODO"
-version = "0.1.0"
-description = "RAG application"
-dependencies = [
-    "langchain",
-    "chromadb",
-    "sentence-transformers",
-    "openai",
-]
-
-[tool.uv]
-dev-dependencies = [
-    "pytest",
-    "ipython",
-]
-EOF
-        mkdir -p src data notebooks
-        cat > src/main.py <<'EOF'
-"""
-RAG Application Main Entry Point
-"""
-
-def main():
-    print("RAG application starting...")
-    # TODO: Implement RAG pipeline
-
-if __name__ == "__main__":
-    main()
-EOF
-        cat > README.md <<'EOF'
-# RAG Project
-
-## Setup
-\`\`\`bash
-uv sync
-source .venv/bin/activate
-\`\`\`
-
-## Architecture
-- Vector DB: ChromaDB
-- Embeddings: sentence-transformers
-- LLM: OpenAI/Ollama
-
-## Usage
-TODO
-EOF
-        uv venv
-        source .venv/bin/activate
-        echo "✅ RAG project created: $1"
-        echo "   - UV environment configured"
-        echo "   - Directory structure created"
-        echo "   - Run: uv sync"
-        code .
-      }
-
-      # Benchmark algorithm solution
-      function bench-algo() {
-        if [ ! -f solution.py ]; then
-          echo "❌ solution.py not found in current directory"
-          return 1
-        fi
-        echo "🔬 Benchmarking solution.py..."
-        hyperfine --warmup 3 "python solution.py"
-      }
-
-      # Quick note-taking
-      function note() {
-        if [ -z "$1" ]; then
-          echo "Usage: note <your note>"
-          return 1
-        fi
-        echo "$(date '+%Y-%m-%d %H:%M:%S'): $@" >> ~/Documents/daily-notes.md
-        echo "✅ Note added to ~/Documents/daily-notes.md"
-      }
 
       # ============================================
       # UPDATE FUNCTIONS (Modular)
