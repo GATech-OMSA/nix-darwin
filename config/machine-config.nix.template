@@ -28,7 +28,4 @@
     ssoStartUrl = "";        # Required if useSso = true (e.g., "https://company.awsapps.com/start")
     ssoRegion = "us-east-1"; # SSO region
   };
-
-  # Profile-specific overrides
-  profileOverrides = {};
 }
