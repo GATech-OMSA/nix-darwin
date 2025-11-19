@@ -97,6 +97,8 @@
       machineId = machineConfig.machineId or "default";
       system = machineConfig.system or "aarch64-darwin";
       expectedHostname = machineConfig.expectedHostname or machineId;
+      enableHomeManager = machineConfig.enableHomeManager or true;
+      skipGoPackages = machineConfig.skipGoPackages or false;
 
     in
     {
@@ -109,7 +111,7 @@
         inherit system;
 
         specialArgs = {
-          inherit inputs myLib profileName machineId;
+          inherit inputs myLib profileName machineId enableHomeManager skipGoPackages;
           hostname = expectedHostname;
           username = userConfig.username;
           machineType = profileName;  # Use profileName directly (personal/work/minimal)
@@ -126,14 +128,18 @@
           ./nix-config/modules/darwin
           ./nix-config/modules/shared
 
-          # Home Manager integration
+          # Secrets management
+          sops-nix.darwinModules.sops
+        ]
+        # Conditionally add Home Manager integration
+        ++ (if enableHomeManager then [
           home-manager.darwinModules.home-manager
           {
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
               extraSpecialArgs = {
-                inherit inputs myLib profileName machineId userConfig;
+                inherit inputs myLib profileName machineId userConfig skipGoPackages;
                 hostname = expectedHostname;
                 username = userConfig.username;
                 machineType = profileName;  # Use profileName directly (personal/work/minimal)
@@ -150,10 +156,19 @@
               backupFileExtension = "hm-backup";
             };
           }
-
-          # Secrets management
-          sops-nix.darwinModules.sops
-        ];
+        ] else [
+          # Warning module when home-manager is disabled
+          {
+            warnings = [
+              ''
+                Home-Manager is DISABLED (enableHomeManager = false)
+                - No user-level shell/git/program configuration
+                - Only system-wide packages and settings will be applied
+                - To re-enable: Set enableHomeManager = true in config/machine-config.nix
+              ''
+            ];
+          }
+        ]);
       };
 
       # ============================================

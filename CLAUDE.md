@@ -340,7 +340,7 @@ sudo nix run nix-darwin -- switch --flake .#mbp-work         # Work
 nix-darwin/
 ├── flake.nix              # Entry point, reads config/machine-config.nix
 ├── config/                # Machine and user configuration (gitignored)
-│   ├── machine-config.nix # machineId + machineType (machine-specific)
+│   ├── machine-config.nix # machineId, profileName, enableHomeManager, skipGoPackages
 │   └── user-config.nix    # username + email (user-specific)
 ├── nix-config/            # All Nix configuration files
 │   ├── hosts/            # Machine-specific configs + secrets
@@ -433,6 +433,8 @@ Secrets are defined in `nix-config/hosts/$(machineId)/secrets.yaml` (SOPS encryp
 | Changes not applied | `nix-rebuild && exec zsh` |
 | Build fails | `darwin-rebuild switch --flake . --show-trace` then `nix-rollback` |
 | Editing `.zshrc` doesn't work | Don't – edit `nix-config/home/_profiles/_template/shell/zsh.nix` instead |
+| Go packages fail behind proxy | Set `skipGoPackages = true` in `config/machine-config.nix` |
+| Home-manager causing issues | Set `enableHomeManager = false` in `config/machine-config.nix` (disables all user configs) |
 
 ---
 

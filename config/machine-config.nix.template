@@ -17,6 +17,10 @@
   # System architecture
   system = "aarch64-darwin";  # Or "x86_64-darwin" for Intel Macs
 
+  # Home-Manager Control Options
+  enableHomeManager = true;  # Set to false to completely disable home-manager
+  skipGoPackages = false;    # Set to true to skip Go packages (gopls, etc.) - useful behind proxy
+
   # Profile-specific overrides
   profileOverrides = {};
 }

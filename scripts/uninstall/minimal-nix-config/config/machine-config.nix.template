@@ -7,4 +7,8 @@
   machineId = "REPLACE_MACHINE_ID";
   machineType = "REPLACE_MACHINE_TYPE";  # "personal" or "work"
   description = "REPLACE_DESCRIPTION";
+
+  # Home-Manager Control Options
+  enableHomeManager = true;  # Set to false to completely disable home-manager
+  skipGoPackages = false;    # Set to true to skip Go packages (gopls, etc.) - useful behind proxy
 }
