@@ -375,6 +375,20 @@ nix-darwin/
 
 **Note:** Full architecture documentation will be created after root reorganization is complete.
 
+### Proxy Configuration (Corporate Environments)
+
+For machines behind corporate firewalls/proxies, configure package manager proxies in `config/user-config.nix`:
+
+```nix
+proxies = {
+  go.enabled = true;      # Go modules (GOPROXY, GOPRIVATE, GOSUMDB)
+  python.enabled = true;  # pip/UV (PIP_INDEX_URL, PIP_TRUSTED_HOST)
+  npm.enabled = true;     # npm/pnpm/yarn (NPM_CONFIG_REGISTRY)
+};
+```
+
+Applies to both personal and work profiles. Disabled by default. Edit URLs to match your corporate infrastructure.
+
 ---
 
 ---
@@ -420,6 +434,7 @@ Secrets are defined in `nix-config/hosts/$(machineId)/secrets.yaml` (SOPS encryp
 | Personal profile settings | `nix-config/home/_profiles/personal/default.nix` |
 | Work profile settings | `nix-config/home/_profiles/work/default.nix` |
 | Switch profile | Edit `config/machine-config.nix` → `profileName = "..."` |
+| Configure corporate proxy | `config/user-config.nix` → Uncomment `proxies` section, set `enabled = true` |
 
 ---
 
@@ -433,7 +448,8 @@ Secrets are defined in `nix-config/hosts/$(machineId)/secrets.yaml` (SOPS encryp
 | Changes not applied | `nix-rebuild && exec zsh` |
 | Build fails | `darwin-rebuild switch --flake . --show-trace` then `nix-rollback` |
 | Editing `.zshrc` doesn't work | Don't – edit `nix-config/home/_profiles/_template/shell/zsh.nix` instead |
-| Go packages fail behind proxy | Set `skipGoPackages = true` in `config/machine-config.nix` |
+| Go/Python/NPM downloads fail behind proxy | Enable proxy in `config/user-config.nix` → Uncomment `proxies`, set `enabled = true` for needed types |
+| Go packages fail behind proxy | Alternative: Set `skipGoPackages = true` in `config/machine-config.nix` |
 | Home-manager causing issues | Set `enableHomeManager = false` in `config/machine-config.nix` (disables all user configs) |
 
 ---
