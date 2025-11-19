@@ -268,6 +268,59 @@ in
       fi
 
       # ============================================
+      # AWS CONFIGURATION & ACCOUNTS
+      # ============================================
+      # Initialize accounts.json if missing (standalone, not managed by Nix/SOPS)
+      if [[ ! -f ~/.aws/accounts.json ]]; then
+        mkdir -p ~/.aws
+        cat > ~/.aws/accounts.json <<'EOF'
+{
+  "example-project": {
+    "alias": "ex",
+    "description": "Example AWS project - Edit ~/.aws/accounts.json to configure",
+    "default_role": "support",
+    "default_region": "us-east-1",
+    "accounts": {
+      "dev": {
+        "id": "123456789012",
+        "additional_roles": ["developer", "data-engineer"],
+        "region": "us-east-1"
+      },
+      "qa": "234567890123",
+      "prod": "345678901234"
+    }
+  }
+}
+EOF
+        chmod 644 ~/.aws/accounts.json
+        echo "📝 Created ~/.aws/accounts.json template - edit to configure your AWS accounts"
+      fi
+
+      # Generate AWS aliases dynamically (hot-reload from accounts.json)
+      if [[ -f ~/.aws/accounts.json ]] && command -v jq &> /dev/null; then
+        eval "$(jq -r '
+          to_entries[] |
+          .key as $project |
+          .value.alias as $alias |
+          .value.accounts | to_entries[] |
+          .key as $env |
+          (
+            "alias \($alias)\($env)=\"awsuse \($project) \($env)\"",
+            (if (.value | type == "object") and (.value.additional_roles | type == "array") then
+              .value.additional_roles[] |
+              (if . == "data-engineer" then "de"
+               elif . == "data-scientist" then "ds"
+               elif . == "developer" then "dev"
+               elif . == "poweruser" then "pw"
+               elif . == "readonly" then "ro"
+               else . end) as $short |
+              "alias \($alias)\($env)-\($short)=\"awsuse \($project) \($env) \($short)\""
+            else empty end)
+          )
+        ' ~/.aws/accounts.json 2>/dev/null)"
+      fi
+
+      # ============================================
       # AWS HELPER FUNCTIONS
       # ============================================
       # Work machine: AWS functions loaded from work.nix

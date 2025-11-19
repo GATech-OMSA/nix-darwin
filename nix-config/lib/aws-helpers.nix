@@ -50,6 +50,18 @@ rec {
         # Determine role (default to support if not specified)
         if [[ -z "$role" ]]; then
           role=$(jq -r --arg proj "$resolved_project" '.[$proj].default_role // "support"' ~/.aws/accounts.json)
+        else
+          # Resolve role abbreviation to full name
+          case "$role" in
+            de) role="data-engineer" ;;
+            ds) role="data-scientist" ;;
+            dev) role="developer" ;;
+            sup) role="support" ;;
+            ro) role="readonly" ;;
+            pw) role="poweruser" ;;
+            adm) role="admin" ;;
+            # If not abbreviated, use as-is
+          esac
         fi
 
         # Construct profile name (support role doesn't add suffix for backward compatibility)
@@ -90,6 +102,18 @@ rec {
         # Determine role
         if [[ -z "$role" ]]; then
           role=$(jq -r --arg proj "$resolved_project" '.[$proj].default_role // "support"' ~/.aws/accounts.json)
+        else
+          # Resolve role abbreviation to full name
+          case "$role" in
+            de) role="data-engineer" ;;
+            ds) role="data-scientist" ;;
+            dev) role="developer" ;;
+            sup) role="support" ;;
+            ro) role="readonly" ;;
+            pw) role="poweruser" ;;
+            adm) role="admin" ;;
+            # If not abbreviated, use as-is
+          esac
         fi
 
         # Construct profile name
