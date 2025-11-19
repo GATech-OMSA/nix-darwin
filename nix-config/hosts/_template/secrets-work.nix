@@ -99,15 +99,10 @@
         mode = "0600";
       };
 
-      # AWS Accounts Configuration (SSO multi-account setup)
-      # Contains AWS account IDs, regions, and role mappings
-      # Template: nix-config/home/_profiles/work/accounts.json.template
-      # Edit with: edit-secrets (add accounts_json field to secrets.yaml)
-      aws_accounts = {
-        path = "/Users/${username}/.aws/accounts.json";
-        owner = username;
-        mode = "0600";
-      };
+      # AWS Accounts Configuration moved to standalone file
+      # accounts.json is now managed directly at ~/.aws/accounts.json
+      # Not deployed via SOPS - user-editable configuration file
+      # Template auto-created on first shell load if missing
     };
   };
 }
