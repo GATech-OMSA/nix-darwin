@@ -5,7 +5,7 @@
 
 {
   machineId = "REPLACE_MACHINE_ID";
-  machineType = "REPLACE_MACHINE_TYPE";  # "personal" or "work"
+  profileName = "REPLACE_MACHINE_TYPE";  # Options: "personal" | "work" | "minimal"
   description = "REPLACE_DESCRIPTION";
 
   # Home-Manager Control Options

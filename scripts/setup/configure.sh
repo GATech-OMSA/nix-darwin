@@ -809,10 +809,14 @@ EOF
   if ! cat > "$REPO_ROOT/config/machine-config.nix" <<EOF
 {
   machineId = "$MACHINE_ID";
-  machineType = "$MACHINE_TYPE";
+  profileName = "$MACHINE_TYPE";  # Options: "personal" | "work" | "minimal"
   description = "$MACHINE_DESCRIPTION";
   expectedHostname = "$(hostname)";
   system = "$SYSTEM_ARCH";
+
+  # Home-Manager Control Options
+  enableHomeManager = true;  # Set to false to completely disable home-manager
+  skipGoPackages = false;    # Set to true to skip Go packages (gopls, etc.) - useful behind proxy
 }
 EOF
   then
