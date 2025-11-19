@@ -29,38 +29,9 @@ rec {
   # Usage: selectByMachineType machineType { personal = "X"; work = "Y"; }
   selectByMachineType = machineDetection.selectByMachineType;
 
-  # DEPRECATED API: Hostname-based functions (for backward compatibility)
-  # Determine machine type from hostname
-  # Returns: "personal" | "work" | "unknown"
-  # Now uses hosts/machines.nix mapping with local override support
-  machineType = machineDetection.getMachineType;
 
-  # DEPRECATED: Check if machine is personal
-  # Use isPersonalType instead
-  isPersonal = machineDetection.isPersonal;
 
-  # DEPRECATED: Check if machine is work
-  # Use isWorkType instead
-  isWork = machineDetection.isWork;
 
-  # DEPRECATED: Validate machine is recognized (throws error if unknown)
-  requireKnownMachine = machineDetection.requireKnownMachine;
-
-  # DEPRECATED: Select value based on machine type
-  # Use selectByMachineType instead
-  # Usage: selectByMachine hostname { personal = "X"; work = "Y"; default = "Z"; }
-  selectByMachine = machineDetection.selectByMachine;
-
-  # Conditional import based on predicate
-  # Usage: importIf isPersonal hostname ./personal.nix
-  importIf = pred: hostname: path:
-    if pred hostname then [ path ] else [];
-
-  # Import file only for personal machines
-  importIfPersonal = hostname: importIf isPersonal hostname;
-
-  # Import file only for work machines
-  importIfWork = hostname: importIf isWork hostname;
 
   # ============================================
   # SHELL FUNCTION GENERATORS

@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, profileName ? "personal", machineId ? "default", mixins ? [], hostname, myLib, username, ... }:
+{ config, pkgs, lib, inputs, profileName ? "personal", machineId ? "default", machineType ? "personal", mixins ? [], hostname, myLib, username, ... }:
 
 {
   # Home Manager configuration for user (username-agnostic)
@@ -15,6 +15,7 @@
       # Profile information
       ACTIVE_PROFILE = profileName;
       MACHINE_ID = machineId;
+      MACHINE_TYPE = machineType;
 
       # Universal settings
       EDITOR = "code --wait";
@@ -236,9 +237,9 @@ EOF
     ../_mixins/base.nix
     ../_mixins/dev.nix
   ]
-  # Import machine-specific mixins based on hostname
-  ++ myLib.importIfPersonal hostname ../_mixins/personal.nix
-  ++ myLib.importIfWork hostname ../_mixins/work.nix;
+  # Import machine-specific mixins based on machineType
+  ++ lib.optional (myLib.isPersonalType machineType) ../_mixins/personal.nix
+  ++ lib.optional (myLib.isWorkType machineType) ../_mixins/work.nix;
 
   # Let Home Manager manage itself
   programs.home-manager.enable = true;

@@ -47,4 +47,16 @@
     enable = true;
     enableZshIntegration = true;
   };
+
+  # Zsh configuration
+  programs.zsh = {
+    enable = true;
+    initExtra = ''
+      # Source local secrets if they exist (no rebuild required)
+      # This allows you to add export API_KEY=... to ~/.config/secrets/local.env
+      if [ -f "$HOME/.config/secrets/local.env" ]; then
+        source "$HOME/.config/secrets/local.env"
+      fi
+    '';
+  };
 }

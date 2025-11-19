@@ -175,9 +175,7 @@
       secretGlobPatterns = myLib.secrets.secretGlobPatterns;
       secretsByType = myLib.secrets.secretsByType;
 
-      # Machine type detection (for validation and testing)
-      # Usage: nix eval .#currentMachineType --json
-      currentMachineType = myLib.machineType (builtins.getEnv "HOSTNAME");
+
 
       # Profile information (for validation)
       # Usage: nix eval .#activeProfile --json
