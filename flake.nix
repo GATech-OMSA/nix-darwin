@@ -93,7 +93,7 @@
       # ============================================
       # Extract values from machine config for profile system
 
-      profileName = machineConfig.profileName or "personal";
+      profileName = machineConfig.profileName or machineConfig.machineType or "personal";
       machineId = machineConfig.machineId or "default";
       system = machineConfig.system or "aarch64-darwin";
       expectedHostname = machineConfig.expectedHostname or machineId;
@@ -121,15 +121,15 @@
           # Apply overlays to nixpkgs
           { nixpkgs.overlays = overlays; }
 
+          # Secrets management (must be loaded before host config)
+          sops-nix.darwinModules.sops
+
           # Host-specific configuration (uses machineId)
           ./nix-config/hosts/${machineId}
 
           # System modules
           ./nix-config/modules/darwin
           ./nix-config/modules/shared
-
-          # Secrets management
-          sops-nix.darwinModules.sops
         ]
         # Conditionally add Home Manager integration
         ++ (if enableHomeManager then [
