@@ -78,6 +78,7 @@ let
     # Code Quality & Development
     pre-commit   # Git hooks framework
     nodePackages.markdown-link-check  # Validate markdown links
+    just         # Command runner
 
     # Note-taking & Documentation
     nb           # CLI note-taking

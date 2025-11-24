@@ -89,6 +89,26 @@
         '';
 
       # ============================================
+      # APPS - Run Scripts via Nix
+      # ============================================
+      # Usage: nix run .#<app-name>
+
+      apps.${system} = {
+        health = {
+          type = "app";
+          program = "${self}/scripts/maintenance/health-check.sh";
+        };
+        audit = {
+          type = "app";
+          program = "${self}/scripts/validation/audit-permissions.sh";
+        };
+        test = {
+          type = "app";
+          program = "${self}/tests/run-all-tests.sh";
+        };
+      };
+
+      # ============================================
       # PROFILE-BASED CONFIGURATION
       # ============================================
       # Extract values from machine config for profile system
