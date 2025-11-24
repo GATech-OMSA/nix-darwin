@@ -6,7 +6,7 @@
   # Use backup-user-data / restore-user-data for migration
 
   programs.vscode = {
-    enable = true;
+    enable = false;
 
     # No extensions managed by Nix
     # User installs extensions via VS Code UI
