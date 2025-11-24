@@ -1,4 +1,4 @@
-{ config, pkgs, lib, myLib, hostname, ... }:
+{ config, pkgs, lib, myLib, hostname, profileName ? "personal", ... }:
 
 # System Packages
 #
@@ -104,8 +104,10 @@ let
     mermaid-cli  # Text-to-diagram for system design
     graphviz     # Graph/architecture visualization
     plantuml     # UML diagrams
+  ];
 
-    # AI/ML Development
+  # Personal-only packages (AI/ML tools not needed on work machines)
+  personalPackages = with pkgs; [
     ollama       # LLM inference engine
   ];
 
@@ -121,6 +123,9 @@ in
 
     # Development packages for all dev machines
     ++ developmentPackages
+
+    # Personal-only packages (AI/ML)
+    ++ lib.optionals (profileName == "personal") personalPackages
   ;
 
   # Implementation Notes:
