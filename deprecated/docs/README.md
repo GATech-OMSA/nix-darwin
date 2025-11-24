@@ -28,6 +28,24 @@ These files are kept for historical reference but should not be used as the prim
 - **Status:** Also added to `.gitignore` to prevent future personal notes from being committed
 - **Note:** These notes are preserved here for historical reference but won't be updated
 
+### project-workflow/project-workflow.md
+- **Deprecated:** November 2025
+- **Superseded by:** `claudedocs/guides/DEVELOPMENT-WORKFLOW.md`
+- **Reason:** DEVELOPMENT-WORKFLOW.md (653 lines) is a comprehensive superset that includes all concepts from project-workflow.md (236 lines) plus:
+  - Backlog grooming process
+  - Context switching procedures
+  - Detailed checklists for each workflow phase
+  - Anti-patterns to avoid
+  - Best practices
+- **Use instead:** See `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` for complete project-based task management workflow
+
+### clean-setup-steps/CLEAN-SETUP-STEPS.md
+- **Deprecated:** November 2025
+- **Superseded by:** `docs/installation.md`
+- **Reason:** This was a transitional work document created during the username-agnostic refactoring. The production-ready installation guide (installation.md, 859 lines) now covers the complete v2.0.0 three-script workflow (bootstrap, configure, activate)
+- **Historical Value:** Shows the thinking and design decisions during the username-agnostic machine ID refactoring
+- **Use instead:** See `docs/installation.md` for current installation instructions
+
 ---
 
 ## For Current Documentation
