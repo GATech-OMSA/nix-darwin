@@ -49,6 +49,23 @@ home.sessionVariables = {
 ### 2. Secret Variables
 Add these to the `zsh_secrets` block in your `secrets.yaml` (see above).
 
+### 3. Local / Untracked Variables
+For variables that are highly local, not managed by Nix, and you prefer not to commit (even encrypted), you can use:
+
+*   **`~/.zshrc.local`**: Sourced by `~/.zshrc`. Ideal for local aliases, PATH adjustments, or temporary variables.
+    ```bash
+    # ~/.zshrc.local
+    export LOCAL_DEV_DIR="/Users/jimmy/local_projects"
+    alias lproj="cd $LOCAL_DEV_DIR"
+    ```
+*   **`$HOME/.config/secrets/local.env`**: A dedicated file for local, untracked environment variables. You would typically source this from your `~/.zshrc` or `.zshrc.local`.
+    ```bash
+    # $HOME/.config/secrets/local.env
+    export MY_API_KEY_TEMP="sk_test_..."
+    export DEBUG_MODE="true"
+    ```
+    **Note:** Ensure this file (and any containing sensitive data) is explicitly excluded from Git via `.gitignore`. You may need to add `/home/<user>/.config/secrets/local.env` to `.gitignore`.
+
 ---
 
 ## Hot Reloading & Updates
