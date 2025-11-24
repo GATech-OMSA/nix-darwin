@@ -27,6 +27,15 @@ rec {
           return 1
         fi
 
+        # Expand role abbreviations to full names
+        case "$role" in
+          dev) role="developer" ;;
+          ds) role="data-scientist" ;;
+          de) role="data-engineer" ;;
+          da) role="data-analyst" ;;
+          admin) role="administrator" ;;
+        esac
+
         # Resolve alias to project name
         local resolved_project=$(jq -r --arg input "$project" 'to_entries[] | select(.key == $input or .value.alias == $input) | .key' ~/.aws/accounts.json)
 
@@ -86,6 +95,15 @@ rec {
 
         # Resolve alias to project name
         local resolved_project=$(jq -r --arg input "$project" 'to_entries[] | select(.key == $input or .value.alias == $input) | .key' ~/.aws/accounts.json)
+
+        # Expand role abbreviations to full names
+        case "$role" in
+          dev) role="developer" ;;
+          ds) role="data-scientist" ;;
+          de) role="data-engineer" ;;
+          da) role="data-analyst" ;;
+          admin) role="administrator" ;;
+        esac
 
         # Determine role
         if [[ -z "$role" ]]; then
