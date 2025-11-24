@@ -45,14 +45,14 @@ let
     # Network Tools
     wget
     curl
-    httpie
+    xh         # Better httpie alternative (faster, Rust-based)
 
     # System Utilities
     htop
     tree
     watch
     tldr  # Simplified man pages
-    neofetch  # System info
+    fastfetch  # System info (modern replacement for neofetch)
 
     # File Utilities
     rsync
@@ -69,9 +69,16 @@ let
     hyperfine    # Command-line benchmarking tool
     entr         # Run commands when files change
 
+    # TUI Tools (Terminal User Interfaces)
+    lazygit      # Beautiful TUI for git operations
+    lazydocker   # Beautiful TUI for Docker management
+    yazi         # Blazing fast terminal file manager
+    jless        # Interactive JSON viewer
+
     # Code Quality & Development
     pre-commit   # Git hooks framework
     nodePackages.markdown-link-check  # Validate markdown links
+    just         # Command runner
 
     # Note-taking & Documentation
     nb           # CLI note-taking
