@@ -19,8 +19,6 @@ in
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    [[ "$TERM_PROGRAM" == "vscode" ]] && . "/path/to/shell/integration/script.sh"
-
     # History configuration
     history = {
       size = 10000;

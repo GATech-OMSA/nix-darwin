@@ -4,14 +4,12 @@
   # Host-specific configuration template
   # Copy this directory and customize for your new machine
   #
-  # Secrets are automatically loaded based on machineType:
-  #   - personal: loads secrets-personal.nix
-  #   - work: loads secrets-work.nix
+  # Secrets: Only load sops-nix secrets for personal machines
+  #   - personal: loads secrets-personal.nix (uses sops-nix)
+  #   - work: uses Homebrew sops + manual secret management (corporate proxy workaround)
 
-  # Conditional secret imports based on machine type
-  imports =
-    lib.optional (machineType == "personal") ./secrets-personal.nix ++
-    lib.optional (machineType == "work") ./secrets-work.nix;
+  # Conditional secret imports (only for personal - work uses Homebrew sops)
+  imports = lib.optional (machineType == "personal") ./secrets-personal.nix;
 
   networking = {
     hostName = hostname;
