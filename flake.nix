@@ -118,6 +118,11 @@
           ./nix-config/modules/darwin
           ./nix-config/modules/shared
         ]
+        # Conditionally add sops-nix (only for personal machines)
+        # Work machines use Homebrew sops + manual secret management to avoid corporate proxy issues
+        ++ (if profileName == "personal" then [
+          sops-nix.darwinModules.sops
+        ] else [])
         # Conditionally add Home Manager integration
         ++ (if enableHomeManager then [
           home-manager.darwinModules.home-manager

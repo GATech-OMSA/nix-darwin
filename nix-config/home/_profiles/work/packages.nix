@@ -9,6 +9,19 @@
     # ============================================
     # ACTIVE WORK TOOLS
     # ============================================
+    # Secrets management (manual - no sops-nix due to corporate proxy)
+    sops               # Secrets encryption CLI (pre-built binary)
+    age                # Age encryption tool (for sops)
+
+    # Python development
+    python313          # Python 3.13
+    uv                 # Fast Python package installer
+    # micromamba       # BROKEN in nixpkgs 1.5.8 (fmt formatter issue) - using Homebrew instead
+
+    # Node.js (required for VS Code extensions like Amazon Q)
+    nodejs_20          # Node.js 20 LTS
+
+
     # ODBC drivers and database clients
     unixODBC           # ODBC driver manager
     freetds            # ODBC for SQL Server
