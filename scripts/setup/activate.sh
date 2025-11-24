@@ -308,9 +308,18 @@ build_and_activate() {
   # Export FLAKE_ROOT for gitignored config imports
   export FLAKE_ROOT="$REPO_ROOT"
 
+  # Extract machineId from machine-config.nix to use correct flake configuration
+  machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | sed 's/.*"\(.*\)".*/\1/')
+
+  if [ -z "$machine_id" ]; then
+    error "Could not extract machineId from config/machine-config.nix"
+    exit 1
+  fi
+
   # Run darwin-rebuild with flake (requires sudo for system activation)
   # --impure flag is required because we use builtins.getEnv for gitignored configs
-  if sudo FLAKE_ROOT="$FLAKE_ROOT" darwin-rebuild switch --flake "$REPO_ROOT" --impure; then
+  # Explicitly specify configuration name to avoid hostname mismatch issues
+  if sudo FLAKE_ROOT="$FLAKE_ROOT" darwin-rebuild switch --flake "$REPO_ROOT#${machine_id}" --impure; then
     echo ""
     success "Build and activation complete!"
   else
@@ -323,7 +332,7 @@ build_and_activate() {
     echo "  • Permission issues → Check: sudo permissions"
     echo ""
     echo "For detailed error output, run:"
-    echo "  sudo FLAKE_ROOT=\"\$PWD\" darwin-rebuild switch --flake . --impure --show-trace"
+    echo "  sudo FLAKE_ROOT=\"\$PWD\" darwin-rebuild switch --flake .#${machine_id} --impure --show-trace"
     exit 1
   fi
 

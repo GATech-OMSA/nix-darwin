@@ -93,7 +93,7 @@
       # ============================================
       # Extract values from machine config for profile system
 
-      profileName = machineConfig.profileName or "personal";
+      profileName = machineConfig.profileName or machineConfig.machineType or "personal";
       machineId = machineConfig.machineId or "default";
       system = machineConfig.system or "aarch64-darwin";
       expectedHostname = machineConfig.expectedHostname or machineId;
