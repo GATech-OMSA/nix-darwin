@@ -1,4 +1,4 @@
-{ config, pkgs, lib, myLib, hostname, ... }:
+{ config, pkgs, lib, myLib, hostname, profileName ? "personal", ... }:
 
 # System Packages
 #
