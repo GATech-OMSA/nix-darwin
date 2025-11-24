@@ -45,13 +45,14 @@ tidev && aws sso login       # Alternative: use alias then manual login
 ### Q: Do we have hot reload for AWS/credentials?
 **A: YES!** Multiple mechanisms:
 
-| Type | Hot Reload Command | What Gets Reloaded |
-|------|-------------------|-------------------|
-| AWS profile | `awsuse ti dev` | Sets AWS_PROFILE env var immediately |
-| AWS config | `nix-rebuild && exec zsh` | Regenerates ~/.aws/config from accounts.json |
-| Secrets | `edit-secrets` then `nix-rebuild` | Re-encrypts and deploys secrets |
-| Shell variables | `exec zsh` | Reloads ~/.zsh_secrets, AWS_PROFILE |
-| API keys | Edit ~/.zsh_secrets then `exec zsh` | Immediate reload |
+| Type | Hot Reload Command | Speed | What Gets Reloaded |
+|------|-------------------|-------|-------------------|
+| **AWS profile** | `awsuse ti dev` | ⚡ Instant | Sets AWS_PROFILE env var immediately |
+| **Secrets testing** | `reload-secrets` | ⚡ Instant | Re-sources ~/.zsh_secrets + local overrides |
+| **Local secrets** | `secrets-local edit` + `reload-secrets` | ⚡ Instant | Test credentials without rebuild |
+| **AWS config** | `nix-rebuild && exec zsh` | 🔄 30 sec | Regenerates ~/.aws/config from accounts.json |
+| **Permanent secrets** | `edit-secrets` + `nix-rebuild` | 🔄 30 sec | Re-encrypts and deploys SOPS secrets |
+| **Shell variables** | `exec zsh` | ⚡ 2 sec | Reloads ~/.zsh_secrets, AWS_PROFILE |
 
 ---
 
@@ -343,6 +344,56 @@ echo $OPENAI_API_KEY    # Should show new value
 ```bash
 # If you manually edited ~/.zsh_secrets (NOT recommended, use secrets.yaml)
 exec zsh                # Reloads all environment variables
+```
+
+### NEW: Secrets Hot Reload (Instant!) ⚡
+
+**Quick reload without rebuilding** - Great for testing API keys!
+
+```bash
+# Reload secrets immediately
+reload-secrets          # Re-sources ~/.zsh_secrets and ~/.zsh_secrets.local
+                       # ⚡ Instant! (~0.5 seconds)
+
+# Verify
+echo $OPENAI_API_KEY   # Should show updated value
+```
+
+**Local Testing Helper:**
+
+```bash
+# Create temporary test credentials
+secrets-local edit      # Opens ~/.zsh_secrets.local in $EDITOR
+# Add: export TEST_API_KEY="sk-test-..."
+# Save and exit
+
+# Apply instantly
+reload-secrets         # ⚡ Instant reload!
+
+# Test your changes
+echo $TEST_API_KEY
+
+# Clean up when done
+secrets-local rm       # Removes local overrides
+```
+
+**Use Cases:**
+- ✅ Testing new API keys before committing to SOPS
+- ✅ Temporary credential overrides
+- ✅ Quick debugging without rebuild
+- ✅ Local development with test credentials
+
+**Files:**
+- `~/.zsh_secrets` - SOPS-managed (permanent)
+- `~/.zsh_secrets.local` - Local testing (temporary, gitignored)
+
+**Commands:**
+```bash
+reload-secrets         # Reload both files
+secrets-local edit     # Edit local overrides
+secrets-local show     # View local secrets
+secrets-local rm       # Remove local overrides
+sec edit               # Shortcut for secrets-local edit
 ```
 
 ### Profile Auto-Restore
