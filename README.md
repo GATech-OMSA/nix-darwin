@@ -249,121 +249,63 @@ update-dev   # Quick update
 secrets-status   # Shows git hooks installation status
 ```
 
----
+## Common Commands
 
-## Daily Usage
 
-### Essential Shortcuts
 
-**System & Configuration:**
-```bash
-nixconf              # Open nix-darwin in VS Code
-nix-rebuild          # Rebuild system (with pre-flight checks)
-nix-rollback         # Rollback to previous generation
-nix-health           # System health check
-reload               # Reload shell config
-restart              # Restart shell (exec zsh)
-c                    # Clear terminal
-vs / vscode          # Open VS Code in current directory
-```
+### Building & Switching
 
-**Secrets Management:**
-```bash
-secrets-status       # Check secrets setup & encryption status
-secrets-edit         # Edit encrypted secrets (SOPS)
-secrets-view         # View decrypted secrets
-secrets-rescan       # Rescan for new secrets
-secrets-backup       # Backup secrets
-secrets-audit        # Audit secret locations
-```
 
-**Git Shortcuts:**
-```bash
-g                    # git
-g s / gs             # git status -s
-g aa                 # git add -A
-g cm                 # git commit
-g ps                 # git push
-g pl                 # git pull
-gsw                  # git switch
-gswc                 # git switch -c (create branch)
-```
-
-**Navigation:**
-```bash
-dev                  # cd ~/Dev
-downloads / down     # cd ~/Downloads
-desktop / desk       # cd ~/Desktop
-fdev                 # Open ~/Dev in Finder
-fdown                # Open ~/Downloads in Finder
-..                   # cd ..
-...                  # cd ../..
-```
-
-**Modern CLI Tools:**
-```bash
-ls / ll / la         # eza with icons
-cat                  # bat (syntax highlighting)
-grep                 # ripgrep
-find                 # fd (fast find)
-```
-
-**Python/Micromamba:**
-```bash
-py                   # python
-m-act                # micromamba activate
-m-create             # micromamba create
-m-list               # micromamba env list
-jl                   # jupyter lab
-jn                   # jupyter notebook
-```
-
-See complete alias list: `workspace/macbook-pro-m1/my-aliases-complete.md`
-
-### Updating Your System
 
 ```bash
-# Quick development update (Nix + Python + VS Code)
-update-dev
 
-# System update (Nix + Homebrew)
-update-system
+# Rebuild system
 
-# Complete update (everything)
-update-all
+just switch
 
-# Just Nix packages
-update-nix
+# or: nix-rebuild
 
-# Just Homebrew
-update-brew
+
+
+# Test build without switching
+
+just build
+
+# or: darwin-rebuild build --flake .
+
 ```
 
-### Making Changes
+
+
+### Updates
+
+
 
 ```bash
-# 1. Edit configuration files
-nixconf              # Opens VS Code to nix-darwin directory
 
-# 2. Rebuild
-nix-rebuild          # Short alias for rebuild + restart
+just update    # Update everything (Nix + Homebrew)
 
-# 3. Changes take effect immediately!
-# Alternative: darwin-rebuild switch --flake ~/nix-darwin
+update-dev     # Quick dev environment update
+
 ```
 
-### Rolling Back
+
+
+### Maintenance & Testing
+
+
 
 ```bash
-# Quick rollback
-nix-rollback         # Rollback to previous generation + restart
 
-# List generations
-darwin-rebuild --list-generations
+just health    # System health check
 
-# Or specific generation
-darwin-rebuild --switch-generation 42
+just test      # Run integration tests
+
+just rollback  # Rollback to previous generation
+
 ```
+
+
 
 ### Adding Packages
 

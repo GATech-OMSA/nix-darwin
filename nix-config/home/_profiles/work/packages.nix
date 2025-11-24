@@ -21,6 +21,7 @@
     # Node.js (required for VS Code extensions like Amazon Q)
     nodejs_20          # Node.js 20 LTS
 
+
     # ODBC drivers and database clients
     unixODBC           # ODBC driver manager
     freetds            # ODBC for SQL Server

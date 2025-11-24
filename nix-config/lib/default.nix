@@ -230,7 +230,7 @@ rec {
   # ============================================
 
   # Import AWS helper library
-  # Provides: mkAwsProfileAliases, mkAwsProjectAliases, mkAwsProfileAliasesWithPrefix
+  # Provides: mkAwsAccountHelper, mkAwsAliasesFromJson, mkAwsInfoCommands, mkAwsSearchCommands, mkAwsProfileAutoRestore
   aws = import ./aws-helpers.nix { inherit lib; };
 
   # ============================================

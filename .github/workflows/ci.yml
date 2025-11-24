@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Nix
+      uses: determinate-systems/nix-installer-action@v10
+      
+    - name: Magic Nix Cache
+      uses: determinate-systems/magic-nix-cache-action@v4
+      
+    - name: Check Flake
+      run: nix flake check
+      
+    - name: Run Tests
+      run: ./tests/run-all-tests.sh --ci
+      
+    - name: Build System (Dry Run)
+      # Builds the system derivation without realizing it (dry-run logic)
+      # Uses the machineId defined in config/machine-config.nix
+      run: |
+        MACHINE_ID=$(grep 'machineId =' config/machine-config.nix | cut -d'"' -f2)
+        echo "Building for machine: $MACHINE_ID"
+        nix build ".#darwinConfigurations.$MACHINE_ID.system" --dry-run
