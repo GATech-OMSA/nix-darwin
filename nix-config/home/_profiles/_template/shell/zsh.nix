@@ -119,18 +119,18 @@ in
       # nix-rebuild runs with pre-flight checks by default
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
       # Automatically restarts shell on success to load new configuration
-      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
+      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
 
       # Skip pre-flight checks for emergency rebuilds (use with caution)
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
       # Automatically restarts shell on success to load new configuration
-      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
+      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
 
       # Debug mode with verbose output for troubleshooting
       # Shows detailed build logs, stack traces, and Home Manager activation details
       # Usage: nix-rebuild-debug (for full rebuild with debug info)
       # Automatically restarts shell on success to load new configuration
-      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir} --impure --show-trace --verbose --print-build-logs && exec zsh";
+      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure --show-trace --verbose --print-build-logs && exec zsh";
 
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
@@ -155,7 +155,7 @@ in
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
       # Automatically restarts shell on success
-      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
+      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
       nix-home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && exec zsh";
 
       # Scaffold new machine configuration from template
