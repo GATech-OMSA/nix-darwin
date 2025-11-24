@@ -142,6 +142,11 @@
                   ./nix-config/home/_template
                   ./nix-config/home/_profiles/${profileName}
                 ];
+
+                # Disable manual generation to avoid builtins.toFile warnings
+                manual.html.enable = false;
+                manual.json.enable = false;
+                manual.manpages.enable = false;
               };
 
               verbose = true;
