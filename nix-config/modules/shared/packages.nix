@@ -115,7 +115,7 @@ let
 
   # Personal-only packages (AI/ML tools not needed on work machines)
   personalPackages = with pkgs; [
-    ollama       # LLM inference engine
+    # ollama       # LLM inference engine - Using Homebrew cask 'ollama-app' instead (build issues in nixpkgs)
   ];
 
 in
