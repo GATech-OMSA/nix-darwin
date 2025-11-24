@@ -370,12 +370,12 @@ check_secrets() {
   fi
 
   # Run comprehensive permission audit
-  if [[ -x "$REPO_ROOT/scripts/audit-permissions.sh" ]]; then
+  if [[ -x "$REPO_ROOT/scripts/validation/audit-permissions.sh" ]]; then
     echo ""
     echo -e "  ${CYAN}Running comprehensive permission audit...${NC}"
 
     # Capture audit output and results
-    audit_output=$("$REPO_ROOT/scripts/audit-permissions.sh" 2>&1)
+    audit_output=$("$REPO_ROOT/scripts/validation/audit-permissions.sh" 2>&1)
     audit_exit_code=$?
 
     # Parse audit results (strip ANSI color codes for parsing)
@@ -390,7 +390,7 @@ check_secrets() {
       if [[ $audit_exit_code -eq 0 ]]; then
         check_pass "Credential file permissions secure" "$secure_count/$total_files files with 600 permissions"
       else
-        check_warn "$insecure_count credential file(s) with insecure permissions" "Run: $REPO_ROOT/scripts/audit-permissions.sh --fix"
+        check_warn "$insecure_count credential file(s) with insecure permissions" "Run: $REPO_ROOT/scripts/validation/audit-permissions.sh --fix"
       fi
 
       if [[ $VERBOSE -eq 1 ]]; then
@@ -399,7 +399,7 @@ check_secrets() {
         echo ""
       fi
     else
-      check_warn "Permission audit failed to complete" "Check: $REPO_ROOT/scripts/audit-permissions.sh"
+      check_warn "Permission audit failed to complete" "Check: $REPO_ROOT/scripts/validation/audit-permissions.sh"
     fi
   else
     # Fallback to basic permission checks
