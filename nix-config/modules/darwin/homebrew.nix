@@ -39,6 +39,7 @@
       "orion"
 
       # Development
+      "antigravity"
       "visual-studio-code"
       "claude-code"
       "iterm2"
