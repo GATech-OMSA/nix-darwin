@@ -1,7 +1,7 @@
 {
-  machineId = "macbook-pro-m3";
-  machineType = "work";
-  description = "DWCLQJ6L5V";
-  expectedHostname = "DWCLQJ6L5V";
+  machineId = "macbook-pro-m1";
+  machineType = "personal";
+  description = "Jimmy's Personal MacBook Pro M1";
+  expectedHostname = "mbp-jimmy";
   system = "aarch64-darwin";
 }
