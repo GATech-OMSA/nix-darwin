@@ -260,4 +260,14 @@ rec {
   #            mkPreFlightCheck, mkNixRebuildWarning, mkCleanupWarning, mkSecretsWarning,
   #            mkGitForceWarning, mkWarningHelpers
   warnings = import ./warnings.nix { inherit lib; };
+
+  # ============================================
+  # HOT RELOAD HELPERS
+  # ============================================
+
+  # Import hot reload functions
+  # Provides instant configuration updates without full rebuild
+  # Functions: mkSecretsReload, mkLocalSecretsHelper, mkAllHotReloadFunctions
+  # Usage: reload-secrets, secrets-local {edit|show|rm}
+  reload = import ./reload-helpers.nix { inherit lib; };
 }

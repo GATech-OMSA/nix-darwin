@@ -3204,6 +3204,14 @@ TEMPLATE
       }
 
       # ============================================
+      # HOT RELOAD FUNCTIONS
+      # ============================================
+      # Quick reload of secrets and environment without rebuild
+      # Functions: reload-secrets, secrets-local {edit|show|rm}
+
+      ${myLib.reload.mkAllHotReloadFunctions}
+
+      # ============================================
       # ZOXIDE INITIALIZATION
       # ============================================
       if command -v zoxide &> /dev/null; then
