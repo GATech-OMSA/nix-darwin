@@ -153,6 +153,14 @@ check_file_permission() {
     return
   fi
 
+  # If it's a symlink, check the target file permissions (SOPS-managed secrets)
+  if [[ -L "$expanded_file" ]]; then
+    local target=$(readlink "$expanded_file")
+    if [[ -e "$target" ]]; then
+      expanded_file="$target"
+    fi
+  fi
+
   # Get file permissions (3 digits only)
   local perms=$(stat -f "%A" "$expanded_file" 2>/dev/null || echo "000")
 
