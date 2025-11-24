@@ -14,8 +14,8 @@ NC='\033[0m' # No Color
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Find all secrets files that should be encrypted
-# Pattern: hosts/*/secrets.yaml
-secrets_files=$(find "$REPO_ROOT/hosts" -type f -name "secrets.yaml" 2>/dev/null || true)
+# Pattern: nix-config/hosts/*/secrets.yaml
+secrets_files=$(find "$REPO_ROOT/nix-config/hosts" -type f -name "secrets.yaml" 2>/dev/null || true)
 
 if [ -z "$secrets_files" ]; then
     echo -e "${YELLOW}No secrets files found to check${NC}"

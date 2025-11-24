@@ -352,7 +352,7 @@ check_secrets() {
   # Check secrets encryption
   secrets_count=0
   encrypted_count=0
-  for secrets_file in $(find "$REPO_ROOT/hosts" -name "secrets.yaml" 2>/dev/null || true); do
+  for secrets_file in $(find "$REPO_ROOT/nix-config/hosts" -name "secrets.yaml" 2>/dev/null || true); do
     ((secrets_count++))
     if grep -q "sops:" "$secrets_file" && grep -q "ENC\[" "$secrets_file"; then
       ((encrypted_count++))

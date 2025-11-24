@@ -155,8 +155,8 @@ in
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
       # Automatically restarts shell on success
-      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
-      nix-home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.$(hostname).config.home-manager.users.${username}.home.activationPackage) && $result/activate && exec zsh";
+      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo darwin-rebuild switch --flake ${nixDarwinDir} --impure && exec zsh";
+      nix-home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && exec zsh";
 
       # Scaffold new machine configuration from template
       nix-scaffold-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";

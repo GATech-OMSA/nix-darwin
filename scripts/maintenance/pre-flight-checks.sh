@@ -290,7 +290,7 @@ check_secrets_encrypted() {
   print_check "Checking secrets encryption..."
 
   local secrets_files
-  secrets_files=$(find "$NIX_DARWIN_DIR/hosts" -name "secrets.yaml" -not -path "*/_template/*")
+  secrets_files=$(find "$NIX_DARWIN_DIR/nix-config/hosts" -name "secrets.yaml" -not -path "*/_template/*")
 
   local unencrypted=0
   for file in $secrets_files; do
