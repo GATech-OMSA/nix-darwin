@@ -775,14 +775,12 @@ create_config_files() {
       info "Use --force to acknowledge file replacement"
     fi
   fi
-  info "Creating config/user-config.nix..."
-  if ! cat > "$REPO_ROOT/config/user-config.nix" <<EOF
-{
-  username = "$USERNAME";
-  fullName = "$FULL_NAME";
-  email = "$EMAIL";
-}
-EOF
+  info "Creating config/user-config.nix from template..."
+  if ! sed -e "s/REPLACE_USERNAME/$USERNAME/g" \
+           -e "s/REPLACE_FULLNAME/$FULL_NAME/g" \
+           -e "s/REPLACE_EMAIL/$EMAIL/g" \
+           "$REPO_ROOT/config/user-config.nix.template" \
+           > "$REPO_ROOT/config/user-config.nix"
   then
     error "Failed to write config/user-config.nix"
     echo ""

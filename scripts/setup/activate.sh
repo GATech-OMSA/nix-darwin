@@ -264,6 +264,37 @@ check_and_handle_secrets() {
 }
 
 # ============================================================================
+# PROXY CONFIGURATION VALIDATION
+# ============================================================================
+
+validate_proxy_config() {
+  # Check if work profile and proxy configuration
+  local profile_type
+  profile_type=$(nix-instantiate --eval --strict -E '(import '"$REPO_ROOT"'/config/machine-config.nix).profileName or "personal"' 2>/dev/null | tr -d '"')
+
+  if [[ "$profile_type" == "work" ]]; then
+    # Check if any proxies are enabled in user-config.nix
+    if ! grep -q "enabled = true" "$REPO_ROOT/config/user-config.nix" 2>/dev/null; then
+      echo ""
+      warning "Work profile detected but no proxy configuration enabled"
+      echo ""
+      info "If you're behind a corporate firewall, you may need to configure proxies:"
+      echo "  1. Edit: $REPO_ROOT/config/user-config.nix"
+      echo "  2. Uncomment and configure the proxies section"
+      echo "  3. Set enabled = true for needed proxy types (go, python, npm)"
+      echo ""
+      info "You can continue without proxies, but Go package downloads may fail."
+      echo ""
+      read -p "Continue without proxy configuration? [y/N]: " continue_without_proxy
+      if [[ ! "$continue_without_proxy" =~ ^[Yy]$ ]]; then
+        info "Activation cancelled. Please configure proxies and run again."
+        exit 0
+      fi
+    fi
+  fi
+}
+
+# ============================================================================
 # BUILD AND ACTIVATION
 # ============================================================================
 
@@ -451,6 +482,7 @@ print_header "Nix-Darwin Activation v${SCRIPT_VERSION}"
 
 check_config_files
 check_and_handle_secrets
+validate_proxy_config
 build_and_activate
 post_activation_steps
 
