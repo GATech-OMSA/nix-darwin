@@ -312,13 +312,18 @@ claudedocs/                    # AI assistant instructions and development
 
 # ⚡ ESSENTIAL COMMANDS
 
+**Task Runner:** Use `just` for simplified common tasks (see `Justfile`).
+
 | Task | Command | Notes |
 |------|---------|-------|
-| Rebuild system | `nix-rebuild` | After ANY config change |
+| Rebuild system | `just switch` (or `nix-rebuild`) | After ANY config change |
+| Build (no switch) | `just build` | Test if config compiles |
 | Restart shell | `exec zsh` | After rebuild |
-| Rollback | `nix-rollback` | If build breaks |
-| Health check | `health-check` | Troubleshooting |
-| Update all | `update-all` | Weekly maintenance |
+| Rollback | `just rollback` (or `nix-rollback`) | If build breaks |
+| Health check | `just health` (or `nix-health`) | Troubleshooting |
+| Update all | `just update` (or `update-all`) | Weekly maintenance |
+| Edit secrets | `just secrets-edit` | Manage encrypted secrets |
+| Run tests | `just test` | Run integration suite |
 | Edit config | `nixconf` | Daily development |
 | Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See nix-config/home/_profiles/_template/programs/git.nix |
 

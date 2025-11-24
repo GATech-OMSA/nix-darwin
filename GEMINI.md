@@ -45,7 +45,7 @@ Configuration adapts based on `profileName` in `config/machine-config.nix`:
 **Always rebuild** after changing `.nix` files to apply changes.
 
 ```bash
-nix-rebuild
+just switch
 # OR
 darwin-rebuild switch --flake .
 ```
@@ -59,13 +59,14 @@ darwin-rebuild switch --flake .
 
 Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without sops.**
 
-*   **Edit Secrets:** `secrets-edit` (opens editor, handles encryption/decryption).
-*   **Add New Secret:** Add to `secrets.yaml` via `secrets-edit`, then reference in `nix-config/hosts/<host>/secrets-*.nix`.
+*   **Edit Secrets:** `just secrets-edit` (or `secrets-edit`).
+*   **Add New Secret:** Add to `secrets.yaml`, then reference in `nix-config/hosts/<host>/secrets-*.nix`.
 *   **Verification:** `secrets-status` to check encryption.
 
 ### 4. Updates
 
-*   `update-all`: Update Flake inputs (nixpkgs) and Homebrew.
+*   `just update`: Update Flake inputs (nixpkgs) and Homebrew.
+*   `just update-nix`: Update only Nix inputs.
 *   `update-dev`: Quick update for development environment.
 
 ### 5. Shell & Aliases
@@ -73,7 +74,16 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 *   **Shell Config:** Managed in `nix-config/home/_profiles/_template/shell/zsh.nix`.
 *   **Aliases:** Add to `shellAliases` set in `zsh.nix`.
 
----
+### 6. Validation & Testing
+
+*   `just test`: Run integration tests.
+*   `just health`: Run health checks.
+*   `just check`: Verify flake syntax.
+*   **Flake Apps:** You can also run scripts directly via Nix:
+    *   `nix run .#health`
+    *   `nix run .#audit`
+    *   `nix run .#test`
+
 
 ## Development Guidelines
 
