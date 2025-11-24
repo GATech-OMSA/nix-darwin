@@ -111,7 +111,7 @@
         inherit system;
 
         specialArgs = {
-          inherit inputs myLib profileName machineId enableHomeManager skipGoPackages;
+          inherit inputs myLib profileName machineId enableHomeManager skipGoPackages userConfig;
           hostname = expectedHostname;
           username = userConfig.username;
           machineType = profileName;  # Use profileName directly (personal/work/minimal)
