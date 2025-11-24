@@ -42,35 +42,9 @@
   };
 
   # Starship prompt - Custom Catppuccin Powerline with AWS
-  # Using personal profile config for all profiles (Catppuccin Mocha theme)
+  # Configuration is profile-specific (personal/work have different themes)
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-    settings = builtins.fromTOML (
-      builtins.readFile ../_profiles/personal/starship.toml
-    );
-  };
-
-  # Zsh configuration with hot-reload layer
-  programs.zsh = {
-    enable = true;
-    initContent = lib.mkBefore ''
-      # ================================================================
-      # HOT-RELOAD LAYER (No rebuild required for changes)
-      # ================================================================
-      # Source local secrets (editable without nix-rebuild)
-      # Usage: echo "export MY_API_KEY=..." >> ~/.config/secrets/local.env
-      #        source ~/.zshrc
-      if [ -f "$HOME/.config/secrets/local.env" ]; then
-        source "$HOME/.config/secrets/local.env"
-      fi
-
-      # Source user customizations (editable without nix-rebuild)
-      # Usage: echo "alias mytest='echo test'" >> ~/.zshrc.local
-      #        source ~/.zshrc
-      if [ -f "$HOME/.zshrc.local" ]; then
-        source "$HOME/.zshrc.local"
-      fi
-    '';
   };
 }

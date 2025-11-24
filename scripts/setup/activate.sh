@@ -277,11 +277,8 @@ build_and_activate() {
   echo "  • Activate Home Manager configuration"
   echo ""
 
-  # Extract machineId for dry-run display
-  MACHINE_ID_DISPLAY=$(grep -E '^\s*machineId\s*=' "$REPO_ROOT/config/machine-config.nix" | sed -E 's/.*"(.*)".*/\1/' || echo "unknown")
-
   if [ "$DRY_RUN" = true ]; then
-    info "[DRY RUN] Would run: darwin-rebuild switch --flake $REPO_ROOT#$MACHINE_ID_DISPLAY"
+    info "[DRY RUN] Would run: darwin-rebuild switch --flake $REPO_ROOT"
     echo ""
     info "[DRY RUN] This would:"
     echo "  • Build the nix-darwin system configuration"
@@ -311,21 +308,9 @@ build_and_activate() {
   # Export FLAKE_ROOT for gitignored config imports
   export FLAKE_ROOT="$REPO_ROOT"
 
-  # Extract machineId from config/machine-config.nix
-  MACHINE_ID=$(grep -E '^\s*machineId\s*=' "$REPO_ROOT/config/machine-config.nix" | sed -E 's/.*"(.*)".*/\1/')
-
-  if [ -z "$MACHINE_ID" ]; then
-    error "Could not extract machineId from config/machine-config.nix"
-    exit 1
-  fi
-
-  info "Building configuration for: $MACHINE_ID"
-  echo ""
-
   # Run darwin-rebuild with flake (requires sudo for system activation)
   # --impure flag is required because we use builtins.getEnv for gitignored configs
-  # Explicitly specify the configuration name using #machineId
-  if sudo FLAKE_ROOT="$FLAKE_ROOT" darwin-rebuild switch --flake "$REPO_ROOT#$MACHINE_ID" --impure; then
+  if sudo FLAKE_ROOT="$FLAKE_ROOT" darwin-rebuild switch --flake "$REPO_ROOT" --impure; then
     echo ""
     success "Build and activation complete!"
   else
@@ -338,7 +323,7 @@ build_and_activate() {
     echo "  • Permission issues → Check: sudo permissions"
     echo ""
     echo "For detailed error output, run:"
-    echo "  sudo FLAKE_ROOT=\"\$PWD\" darwin-rebuild switch --flake .#$MACHINE_ID --impure --show-trace"
+    echo "  sudo FLAKE_ROOT=\"\$PWD\" darwin-rebuild switch --flake . --impure --show-trace"
     exit 1
   fi
 

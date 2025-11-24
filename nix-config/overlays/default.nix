@@ -7,6 +7,13 @@
 
 [
   # ============================================
+  # GO PROXY CONFIGURATION (CORPORATE PROXY)
+  # ============================================
+  # TODO: buildGoModule overlay breaks other packages
+  # Need different approach for corporate proxy
+  # Temporarily disabled - SOPS will also be disabled
+
+  # ============================================
   # PYTHON VERSION PINNING
   # ============================================
   # Pin Python 3.13 to prevent breaking changes from nixpkgs-unstable updates
@@ -44,6 +51,39 @@
   #     # Try newer version or apply patch
   #   });
   # })
+
+  # ============================================
+  # SOPS-NIX CORPORATE PROXY SUPPORT
+  # ============================================
+  # Issue: Corporate proxy blocks Go module downloads from proxy.golang.org
+  # Solution: Use proxyVendor attribute to allow GOPROXY from environment
+  #
+  # Background:
+  # - Example Corp blocks direct access to proxy.golang.org
+  # - Internal Nexus proxy available at nexus.example.com
+  # - nixpkgs buildGoModule supports proxyVendor = true for corporate proxies
+  # - When proxyVendor is true, go mod download respects GOPROXY env var
+  #
+  # Reference:
+  # - nixpkgs PR #173092: "buildGoModule: allow goproxy"
+  # - pkgs/build-support/go/module.nix contains proxyVendor support
+  # - 40+ packages in nixpkgs use this pattern (gitea, go-mockery, mieru, etc.)
+  (final: prev:
+    let
+      # Call sops-nix package set with our modified buildGoModule
+      sops-nix-pkgs = prev.callPackage inputs.sops-nix.outPath {
+        vendorHash = "sha256-pMw/LIOF2TbaOFL+G0MpzfMPsJWJmtIGESrbDjwfi3Y=";
+        # Override buildGo124Module to add proxyVendor for all Go builds in sops-nix
+        buildGo124Module = args: prev.buildGo124Module (args // {
+          proxyVendor = true;
+        });
+      };
+    in
+    {
+      # Use the sops-install-secrets from our modified package set
+      inherit (sops-nix-pkgs) sops-install-secrets;
+    }
+  )
 
   # ============================================
   # ADDITIONAL CUSTOMIZATIONS

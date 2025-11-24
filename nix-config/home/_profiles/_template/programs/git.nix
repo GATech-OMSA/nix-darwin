@@ -74,7 +74,7 @@
 
       # Init settings
       init = {
-        defaultBranch = "main";
+        defaultBranch = "master";
       };
 
       # Git aliases - migrated from ConfigHub .gitconfig

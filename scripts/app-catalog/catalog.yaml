@@ -17,6 +17,12 @@
 # AI & LLM TOOLS
 # ============================================================================
 ai_llm:
+  - name: "Ollama"
+    cask: "ollama"
+    description: "Run 100+ LLMs locally (Llama, Mistral, Qwen, DeepSeek)"
+    tags: [free, essential]
+    homepage: "https://ollama.ai"
+
   - name: "LM Studio"
     cask: "lm-studio"
     description: "Beautiful GUI for local LLMs with model management & performance comparison"
@@ -28,6 +34,12 @@ ai_llm:
     description: "Open-source ChatGPT alternative that runs 100% offline"
     tags: [free, recommended]
     homepage: "https://jan.ai"
+
+  - name: "GPT4All"
+    cask: "gpt4all"
+    description: "Privacy-focused local chatbot with multiple models"
+    tags: [free, optional]
+    homepage: "https://gpt4all.io"
 
   - name: "ChatGPT Desktop"
     cask: "chatgpt"
@@ -41,11 +53,29 @@ ai_llm:
     tags: [freemium, recommended]
     homepage: "https://claude.ai"
 
+  - name: "Pieces for Developers"
+    cask: "pieces"
+    description: "AI copilot with long-term memory, multi-LLM support, runs locally"
+    tags: [freemium, recommended]
+    homepage: "https://pieces.app"
+
   - name: "Perplexity"
     cask: "perplexity"
     description: "AI-powered search engine with citations & research mode"
     tags: [freemium, recommended]
     homepage: "https://perplexity.ai"
+
+  - name: "Gemini CLI"
+    cask: "gemini-cli"
+    description: "Google Gemini CLI for terminal interaction"
+    tags: [free, recommended]
+    homepage: "https://github.com/google/gemini-cli"
+
+  - name: "Wispr Flow"
+    cask: "whisper-flow"
+    description: "Fastest AI dictation tool"
+    tags: [freemium, recommended]
+    homepage: "https://whisperflow.ai"
 
 # ============================================================================
 # AI CODING ASSISTANTS
@@ -57,11 +87,23 @@ ai_coding:
     tags: [freemium, essential]
     homepage: "https://cursor.sh"
 
+  - name: "Continue"
+    cask: "continue"
+    description: "Open-source AI coding assistant for VS Code (supports any LLM)"
+    tags: [free, recommended]
+    homepage: "https://continue.dev"
+
   - name: "Claude Code"
     cask: "claude-code"
     description: "Official Claude CLI for terminal-based AI coding (43K+ installs/month)"
     tags: [free, essential]
     homepage: "https://claude.ai"
+
+  - name: "Windsurf"
+    cask: "windsurf"
+    description: "AI-powered code editor with intelligent flow state"
+    tags: [freemium, optional]
+    homepage: "https://codeium.com/windsurf"
 
 # ============================================================================
 # LOCAL LLM TOOLS
@@ -91,39 +133,28 @@ local_llm:
     tags: [free, recommended]
     homepage: "https://jan.ai"
 
+  - name: "GPT4All"
+    cask: "gpt4all"
+    description: "Privacy-first local LLM with RAG & document chat"
+    tags: [free, recommended]
+    homepage: "https://gpt4all.io"
+
 # ============================================================================
-# TERMINAL EMULATORS
+# AI BROWSERS
 # ============================================================================
-terminal_emulators:
-  - name: "iTerm2"
-    cask: "iterm2"
-    description: "Feature-rich terminal with split panes & profiles"
+ai_browsers:
+  - name: "Arc"
+    cask: "arc"
+    description: "Most innovative browser 2025 with AI Max features & Arc Search"
     tags: [free, essential]
-    homepage: "https://iterm2.com"
+    homepage: "https://arc.net"
 
-  - name: "Warp"
-    cask: "warp"
-    description: "Modern terminal with AI command search & autocomplete"
-    tags: [freemium, recommended]
-    homepage: "https://warp.dev"
-
-  - name: "Alacritty"
-    cask: "alacritty"
-    description: "Fastest terminal emulator (GPU-accelerated, minimal)"
+  - name: "Brave with Leo AI"
+    cask: "brave-browser"
+    description: "Privacy browser with built-in Leo AI assistant (no account needed)"
     tags: [free, recommended]
-    homepage: "https://alacritty.org"
+    homepage: "https://brave.com"
 
-  - name: "Kitty"
-    cask: "kitty"
-    description: "GPU-accelerated terminal with advanced features"
-    tags: [free, recommended]
-    homepage: "https://sw.kovidgoyal.net/kitty"
-
-  - name: "WezTerm"
-    cask: "wezterm"
-    description: "GPU-accelerated terminal with multiplexing built-in"
-    tags: [free, optional]
-    homepage: "https://wezfurlong.org/wezterm"
 
 # ============================================================================
 # TASK MANAGEMENT
@@ -147,33 +178,11 @@ task_management:
     tags: [freemium, recommended]
     homepage: "https://todoist.com"
 
-# ============================================================================
-# WINDOW MANAGEMENT
-# ============================================================================
-window_management:
-  - name: "Rectangle"
-    cask: "rectangle"
-    description: "Window management with keyboard shortcuts (free)"
-    tags: [free, essential]
-    homepage: "https://rectangleapp.com"
-
-  - name: "Magnet"
-    cask: "magnet"
-    description: "Organize windows with drag & drop or shortcuts"
-    tags: [paid, recommended]
-    homepage: "https://magnet.crowdcafe.com"
-
-  - name: "Hammerspoon"
-    cask: "hammerspoon"
-    description: "Powerful macOS automation using Lua scripting"
-    tags: [free, recommended]
-    homepage: "https://hammerspoon.org"
-
-  - name: "Amethyst"
-    cask: "amethyst"
-    description: "Tiling window manager (i3-like for macOS)"
-    tags: [free, optional]
-    homepage: "https://ianyh.com/amethyst"
+  - name: "TickTick"
+    cask: "ticktick"
+    description: "Task manager with Pomodoro timer & calendar integration"
+    tags: [freemium, optional]
+    homepage: "https://ticktick.com"
 
 # ============================================================================
 # PRODUCTIVITY
@@ -190,6 +199,12 @@ productivity:
     description: "Productivity powerhouse with workflows & clipboard history"
     tags: [freemium, recommended]
     homepage: "https://alfredapp.com"
+
+  - name: "Rectangle"
+    cask: "rectangle"
+    description: "Window management with keyboard shortcuts"
+    tags: [free, essential]
+    homepage: "https://rectangleapp.com"
 
   - name: "Obsidian"
     cask: "obsidian"
@@ -208,18 +223,6 @@ productivity:
     description: "All-in-one workspace for notes, docs, and databases"
     tags: [freemium, recommended]
     homepage: "https://notion.so"
-
-  - name: "Spark Mail"
-    cask: "spark"
-    description: "Intelligent email client with snooze & send later"
-    tags: [freemium, recommended]
-    homepage: "https://sparkmailapp.com"
-
-  - name: "Mimestream"
-    cask: "mimestream"
-    description: "Native Gmail client for Mac (official Gmail API)"
-    tags: [paid, recommended]
-    homepage: "https://mimestream.com"
 
   - name: "CleanShot X"
     cask: "cleanshot"
@@ -280,6 +283,12 @@ productivity:
     description: "Advanced gestures, window snapping & automation"
     tags: [paid, recommended]
     homepage: "https://folivora.ai"
+
+  - name: "iClip"
+    cask: "iclip"
+    description: "Advanced clipboard manager with history & snippets"
+    tags: [paid, optional]
+    homepage: "https://iclipapp.com"
 
 # ============================================================================
 # DEVELOPMENT TOOLS
@@ -345,47 +354,29 @@ development:
     tags: [free, recommended]
     homepage: "https://dbeaver.io"
 
-  - name: "Sequel Ace"
-    cask: "sequel-ace"
-    description: "MySQL/MariaDB database management (free, fork of Sequel Pro)"
+  - name: "iTerm2"
+    cask: "iterm2"
+    description: "Terminal emulator with advanced features"
     tags: [free, recommended]
-    homepage: "https://sequel-ace.com"
+    homepage: "https://iterm2.com"
 
-  - name: "Beekeeper Studio"
-    cask: "beekeeper-studio"
-    description: "Modern SQL editor & database manager (open-source)"
+  - name: "Warp"
+    cask: "warp"
+    description: "Modern terminal with AI command search & autocomplete"
     tags: [freemium, recommended]
-    homepage: "https://beekeeperstudio.io"
-
-  - name: "Postico"
-    cask: "postico"
-    description: "PostgreSQL client for macOS (native, beautiful)"
-    tags: [freemium, optional]
-    homepage: "https://eggerapps.at/postico"
-
-  - name: "Proxyman"
-    cask: "proxyman"
-    description: "Modern HTTP debugging proxy (better than Charles)"
-    tags: [freemium, recommended]
-    homepage: "https://proxyman.io"
-
-  - name: "Charles Proxy"
-    cask: "charles"
-    description: "HTTP proxy for debugging network traffic"
-    tags: [paid, optional]
-    homepage: "https://charlesproxy.com"
-
-  - name: "Dash"
-    cask: "dash"
-    description: "API documentation browser with offline access"
-    tags: [freemium, recommended]
-    homepage: "https://kapeli.com/dash"
+    homepage: "https://warp.dev"
 
   - name: "GitKraken"
     cask: "gitkraken"
     description: "Git GUI client with intuitive interface"
     tags: [freemium, optional]
     homepage: "https://gitkraken.com"
+
+  - name: "Fork"
+    cask: "fork"
+    description: "Fast and friendly Git client"
+    tags: [freemium, optional]
+    homepage: "https://git-fork.com"
 
   - name: "Sublime Merge"
     cask: "sublime-merge"
@@ -480,28 +471,6 @@ creative:
     homepage: "https://capcut.com"
 
 # ============================================================================
-# AI IMAGE & VIDEO TOOLS
-# ============================================================================
-ai_creative:
-  - name: "Runway"
-    cask: "runway"
-    description: "AI video generation & editing (Gen-3, multi-motion brush)"
-    tags: [freemium, recommended]
-    homepage: "https://runwayml.com"
-
-  - name: "DiffusionBee"
-    cask: "diffusionbee"
-    description: "Run Stable Diffusion AI locally on your Mac (100% private)"
-    tags: [free, recommended]
-    homepage: "https://diffusionbee.com"
-
-  - name: "Topaz Photo AI"
-    cask: "topaz-photo-ai"
-    description: "AI photo enhancement (upscaling, denoising, sharpening)"
-    tags: [paid, recommended]
-    homepage: "https://topazlabs.com"
-
-# ============================================================================
 # COMMUNICATION
 # ============================================================================
 communication:
@@ -551,40 +520,16 @@ security_privacy:
     tags: [freemium, recommended]
     homepage: "https://protonvpn.com"
 
-  - name: "Mullvad VPN"
-    cask: "mullvad-vpn"
-    description: "Privacy-focused VPN with anonymous accounts (no email required)"
-    tags: [paid, recommended]
-    homepage: "https://mullvad.net"
-
-  - name: "Little Snitch"
-    cask: "little-snitch"
-    description: "Firewall that monitors and controls outgoing network connections"
-    tags: [paid, essential]
-    homepage: "https://obdev.at/products/littlesnitch"
-
-  - name: "Micro Snitch"
-    cask: "micro-snitch"
-    description: "Monitor and alert when camera/microphone is accessed"
-    tags: [paid, recommended]
-    homepage: "https://obdev.at/products/microsnitch"
-
-  - name: "OverSight"
-    cask: "oversight"
-    description: "Free camera & microphone monitoring (Micro Snitch alternative)"
-    tags: [free, recommended]
-    homepage: "https://objective-see.org/products/oversight.html"
-
-  - name: "Encrypto"
-    cask: "encrypto"
-    description: "Free file encryption with password protection"
-    tags: [free, optional]
-    homepage: "https://macpaw.com/encrypto"
-
 # ============================================================================
 # UTILITIES
 # ============================================================================
 utilities:
+  - name: "Homebrew"
+    cask: "homebrew/cask/brew"
+    description: "Package manager for macOS (should already be installed)"
+    tags: [free, essential]
+    homepage: "https://brew.sh"
+
   - name: "AppCleaner"
     cask: "appcleaner"
     description: "Thoroughly uninstall applications"

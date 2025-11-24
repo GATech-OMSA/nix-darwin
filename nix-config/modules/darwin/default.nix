@@ -1,9 +1,14 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, userConfig ? {}, ... }:
 
 # Darwin Modules - Module Imports
 #
 # Imports all macOS-specific configuration modules.
 
+let
+  # Extract proxy configuration from user-config.nix
+  proxies = userConfig.proxies or {};
+  goProxyEnabled = proxies.go.enabled or false;
+in
 {
   imports = [
     ./system.nix
@@ -12,12 +17,37 @@
     ./security.nix
   ];
 
-  # Disable nix-darwin's Nix management - Determinate Nix handles this
-  # Determinate Nix manages the daemon, /etc/nix/nix.conf, and Nix installation
+  # Disable Nix management - Determinate Nix handles daemon and installation
+  # Determinate Nix manages its own daemon that conflicts with nix-darwin's native Nix management
   nix.enable = false;
+  nix.settings = {
+    experimental-features = "nix-command flakes";
+    # Optimize builds
+    max-jobs = "auto";
+    # Keep Determinate Nix cache settings
+    trusted-substituters = [ "https://cache.flakehub.com" ];
 
-  # Note: nix.settings and nix.optimise are not available when nix.enable = false
-  # Determinate Nix provides its own configuration via /etc/nix/nix.conf
+    # Allow Go proxy environment variables to pass through to build sandbox
+    # Required for corporate proxy support with proxyVendor = true
+    # These impure env vars are only used when packages explicitly enable proxyVendor
+    impure-env-vars = lib.mkIf goProxyEnabled [
+      "GOPROXY"
+      "GOPRIVATE"
+      "GOSUMDB"
+    ];
+  };
+
+  # System-wide environment variables for Nix builds
+  # These are available during darwin-rebuild and all Nix builds
+  environment.variables = lib.mkIf goProxyEnabled {
+    GOPROXY = "${proxies.go.url},direct";
+    GOPRIVATE = proxies.go.private;
+    GOSUMDB = "off";  # Corporate proxy cannot mirror Go's sum database
+  };
+
+  # Store optimization disabled - requires nix.enable = true
+  # Determinate Nix handles optimization separately
+  # nix.optimise.automatic = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

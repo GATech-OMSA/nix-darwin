@@ -8,17 +8,17 @@
 
 **New to nix-darwin? Start here:**
 
-1. **[Installation Guide](installation.md)** - Complete setup from scratch
+1. **[Installation Guide](INSTALLATION.md)** - Complete setup from scratch
    - Three-script workflow (bootstrap → configure → activate)
    - Profile selection (personal/work/minimal)
    - First-time configuration
 
-2. **[Secrets Management](secrets.md)** - Secure your credentials
+2. **[Secrets Management](SECRETS.md)** - Secure your credentials
    - SOPS age encryption setup
    - Profile-specific secrets
    - API keys, SSH keys, AWS credentials
 
-3. **[Troubleshooting](troubleshooting.md)** - Fix common issues
+3. **[Troubleshooting](TROUBLESHOOTING.md)** - Fix common issues
    - Profile system debugging
    - Build errors and recovery
    - Configuration problems
@@ -83,7 +83,7 @@ docs/
 ├── troubleshooting.md       # Debugging guide
 ├── backup-and-recovery.md   # Disaster recovery
 ├── secrets.md               # SOPS encryption
-├── modern-tools.md          # Modern CLI tools reference
+├── architecture/            # ADRs and architecture docs
 ├── learning/                # Learning resources
 └── work/aws/                # AWS-specific documentation
 ```
@@ -124,7 +124,7 @@ docs/
 4. **Secrets not decrypting** → Check `~/.config/sops/age/keys.txt` exists
 5. **Config changes not applied** → Run `nix-rebuild && exec zsh`
 
-**Detailed troubleshooting:** See [troubleshooting.md](troubleshooting.md)
+**Detailed troubleshooting:** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ---
 

@@ -15,7 +15,7 @@
     ./karabiner.nix
     ./node.nix
     ./ssh.nix
-    ./vscode.nix
+    # ./vscode.nix  # DISABLED: Let VS Code manage itself, Nix management causes extension issues
     ./zoxide.nix
   ];
 }

@@ -9,6 +9,14 @@
     # ============================================
     # ACTIVE WORK TOOLS
     # ============================================
+    # Python development
+    python313          # Python 3.13
+    uv                 # Fast Python package installer
+    # micromamba       # BROKEN in nixpkgs 1.5.8 (fmt formatter issue) - using Homebrew instead
+
+    # Node.js (required for VS Code extensions like Amazon Q)
+    nodejs_20          # Node.js 20 LTS
+
     # ODBC drivers and database clients
     unixODBC           # ODBC driver manager
     freetds            # ODBC for SQL Server

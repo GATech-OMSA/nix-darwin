@@ -5,8 +5,7 @@
 { config, lib, myLib, ... }:
 
 {
-  # Merge AWS aliases from accounts.json with work-specific aliases
-  programs.zsh.shellAliases = myLib.aws.mkAwsAliasesFromJson // {
+  programs.zsh.shellAliases = {
     # ============================================
     # WORK PROJECT DIRECTORY SHORTCUTS
     # ============================================

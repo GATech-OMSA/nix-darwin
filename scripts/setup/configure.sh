@@ -809,14 +809,10 @@ EOF
   if ! cat > "$REPO_ROOT/config/machine-config.nix" <<EOF
 {
   machineId = "$MACHINE_ID";
-  profileName = "$MACHINE_TYPE";  # Options: "personal" | "work" | "minimal"
+  machineType = "$MACHINE_TYPE";
   description = "$MACHINE_DESCRIPTION";
   expectedHostname = "$(hostname)";
   system = "$SYSTEM_ARCH";
-
-  # Home-Manager Control Options
-  enableHomeManager = true;  # Set to false to completely disable home-manager
-  skipGoPackages = false;    # Set to true to skip Go packages (gopls, etc.) - useful behind proxy
 }
 EOF
   then
@@ -1856,6 +1852,28 @@ success "Directory structure ready"
 success ".sops.yaml configured with your age public key"
 success "Plaintext secrets.yaml created (review before activation)"
 echo ""
+
+# Show proxy configuration reminder for work profiles
+if [[ "$MACHINE_TYPE" == "work" ]]; then
+  echo ""
+  print_step "⚠️  Corporate Proxy Configuration"
+  echo ""
+  echo "If you're behind a corporate proxy, update ${CYAN}config/user-config.nix${NC} with your proxy settings:"
+  echo ""
+  echo "  ${BOLD}proxies = {${NC}"
+  echo "    ${BOLD}go${NC} = { enabled = true; url = \"https://your-nexus.com/...\"; };"
+  echo "    ${BOLD}python${NC} = { enabled = true; url = \"https://your-nexus.com/...\"; };"
+  echo "    ${BOLD}npm${NC} = { enabled = true; url = \"https://your-nexus.com/...\"; };"
+  echo "  ${BOLD}};${NC}"
+  echo ""
+  echo "This enables:"
+  echo "  • Go module downloads (required for sops-nix)"
+  echo "  • Python package installations via pip"
+  echo "  • NPM package installations"
+  echo ""
+  echo "See ${CYAN}config/user-config.nix.template${NC} for full examples."
+  echo ""
+fi
 
 print_step "▶ Next Step"
 echo "Review the checklist above, then run the activation script:"

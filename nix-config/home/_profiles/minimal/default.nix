@@ -6,7 +6,6 @@
 
 {
   imports = [
-    ../../_mixins/base.nix # Base configuration (zoxide, fzf, bat, eza, direnv, starship)
     ./packages.nix
     ./aliases.nix
   ];

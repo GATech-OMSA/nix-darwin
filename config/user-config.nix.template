@@ -15,40 +15,33 @@
   # Example: "john.doe@example.com"
   email = "REPLACE_EMAIL";
 
-  # ============================================
-  # CORPORATE PROXY CONFIGURATION (OPTIONAL)
-  # ============================================
-  # Uncomment and configure if behind corporate proxy/firewall.
-  # These settings apply to Go, Python, and NPM package managers.
-  #
-  # Usage:
-  #   1. Uncomment the proxies section below
-  #   2. Set enabled = true for the proxy types you need
-  #   3. Update URLs to match your corporate infrastructure
-  #   4. Run: nix-rebuild && exec zsh
-  #
-  # Note: Both personal and work profiles can use proxies.
-  #       Work profiles typically need this for corporate networks.
-
+  # Corporate proxy configuration (optional, mainly for work profiles)
+  # Uncomment and configure if you're behind a corporate proxy
   # proxies = {
-  #   # Go module proxy (for Go development and sops-nix)
+  #   # Go module proxy (for sops-nix and other Go-based tools)
   #   go = {
-  #     enabled = false;  # Set to true to enable
-  #     url = "https://nexus.company.com/repository/company-golang/";
-  #     private = "github.com/company-corp/*";  # Comma-separated globs for private modules
+  #     enabled = true;
+  #     url = "https://nexus.example.com/repository/duke-cne-golang/";
+  #     private = "github.com/my-corp/";  # Comma-separated list of private module prefixes
   #   };
   #
-  #   # Python package proxy (for pip, UV, micromamba)
+  #   # Python package proxy
   #   python = {
-  #     enabled = false;  # Set to true to enable
-  #     url = "https://nexus.company.com/repository/pypi-all/simple";
-  #     trustedHost = "nexus.company.com";  # For self-signed certificates
+  #     enabled = false;
+  #     url = "https://nexus.example.com/repository/pypi-proxy/simple";
+  #     trustedHost = "nexus.example.com";  # For --trusted-host flag
   #   };
   #
-  #   # NPM package proxy (for npm, pnpm, yarn)
+  #   # NPM package proxy
   #   npm = {
-  #     enabled = false;  # Set to true to enable
-  #     url = "https://nexus.company.com/repository/npm-proxy/";
+  #     enabled = false;
+  #     url = "https://nexus.example.com/repository/npm-proxy/";
+  #   };
+  #
+  #   # Maven/Gradle proxy (for Java development)
+  #   maven = {
+  #     enabled = false;
+  #     url = "https://nexus.example.com/repository/maven-public/";
   #   };
   # };
 }

@@ -45,14 +45,14 @@ let
     # Network Tools
     wget
     curl
-    xh         # Better httpie alternative (faster, Rust-based)
+    httpie
 
     # System Utilities
     htop
     tree
     watch
     tldr  # Simplified man pages
-    fastfetch  # System info (modern replacement for neofetch)
+    neofetch  # System info
 
     # File Utilities
     rsync
@@ -68,12 +68,6 @@ let
     # Performance & Benchmarking
     hyperfine    # Command-line benchmarking tool
     entr         # Run commands when files change
-
-    # TUI Tools (Terminal User Interfaces)
-    lazygit      # Beautiful TUI for git operations
-    lazydocker   # Beautiful TUI for Docker management
-    yazi         # Blazing fast terminal file manager
-    jless        # Interactive JSON viewer
 
     # Code Quality & Development
     pre-commit   # Git hooks framework
@@ -91,6 +85,30 @@ let
     sops  # Secrets management
   ];
 
+  # Development packages (all dev machines - both work and personal)
+  developmentPackages = with pkgs; [
+    # Development Utilities
+    go  # Go language
+    php  # PHP
+
+    # Containers & Orchestration
+    docker-compose
+    kubectl
+    k9s
+    kubernetes-helm
+
+    # Cloud
+    awscli2
+
+    # Interview Prep & System Design
+    mermaid-cli  # Text-to-diagram for system design
+    graphviz     # Graph/architecture visualization
+    plantuml     # UML diagrams
+
+    # AI/ML Development
+    ollama       # LLM inference engine
+  ];
+
 in
 {
   # System packages shared across all machines
@@ -100,6 +118,9 @@ in
   environment.systemPackages =
     # Essential packages for all machines
     essentialPackages
+
+    # Development packages for all dev machines
+    ++ developmentPackages
   ;
 
   # Implementation Notes:

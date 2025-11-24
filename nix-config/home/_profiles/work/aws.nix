@@ -25,7 +25,7 @@
   # Generated aliases from accounts.json:
   #   tidev, tisbx, tiqa, tiprod, tidev-developer, tisbx-developer, etc.
 
-  programs.zsh.initExtra = lib.mkAfter ''
+  programs.zsh.initContent = lib.mkAfter ''
     ${myLib.aws.mkAwsAccountHelper}
     ${myLib.aws.mkAwsInfoCommands}
     ${myLib.aws.mkAwsSearchCommands}
