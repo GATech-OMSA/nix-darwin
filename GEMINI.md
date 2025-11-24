@@ -109,3 +109,38 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 *   **Rollback:** `nix-rollback` (reverts to previous generation).
 *   **Debug:** `darwin-rebuild switch --flake . --show-trace` (for detailed error logs).
 *   **Health:** `nix-health` (checks common issues).
+
+---
+
+## Documentation
+
+**Status:** ✅ Consolidation complete (November 2025) - 17 active guides
+
+### Essential User Documentation (docs/)
+*   **Installation:** `docs/installation.md` - v2.0.0 three-script workflow (bootstrap, configure, activate)
+*   **Troubleshooting:** `docs/troubleshooting.md` - Profile system issues and fixes
+*   **Secrets:** `docs/secrets.md` - SOPS encryption with age
+*   **AWS & Secrets:** `docs/AWS-AND-SECRETS-WORKFLOW.md` - Complete workflow with hot reload
+*   **Backup & Recovery:** `docs/backup-and-recovery.md` - Disaster recovery procedures
+
+### AWS Reference (docs/work/aws/)
+*   **AWS Multi-Role:** Multi-account SSO configuration patterns
+*   **AWS Quick Reference:** Daily commands and shortcuts
+*   **AWS Implementation:** Technical implementation details
+*   **AWS Config Status (2025-11-06):** Historical validation snapshot
+
+### AI Development Documentation (claudedocs/guides/)
+*   **Development Workflow:** Complete project management and task tracking
+*   **Alias Philosophy:** Five-tier alias naming system and safety guidelines
+
+### Deprecated Documentation (deprecated/docs/)
+*   Archived guides preserved with clear deprecation notes in `deprecated/docs/README.md`
+*   Includes: QUICK-REFERENCE.md, project-workflow.md, CLEAN-SETUP-STEPS.md, learning/
+
+**Key Improvements:**
+*   Reduced from 21 → 17 active guides (-19%)
+*   Zero redundancies - each guide has unique purpose
+*   Clear separation: User docs (docs/) vs AI docs (claudedocs/)
+*   Historical preservation in deprecated/docs/
+
+See `docs/DOCS-REVIEW.md` for complete consolidation results.

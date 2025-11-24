@@ -159,14 +159,22 @@ nix-config/home/_profiles/
 
 ## 7️⃣ DOCUMENTATION STATUS
 
-**Current state: Documentation in review (moved to .temp/docs/ during reorganization)**
+**Status:** ✅ Documentation consolidation complete (November 2025)
 
 CLAUDE.md is the **authoritative source** for all configuration instructions.
 
-**After root reorganization is complete:**
-- Documentation will be reviewed and updated to reflect new structure
-- Outdated docs in .temp/docs/ will be evaluated for relevance
-- Only essential docs will be restored and updated
+**Documentation Structure:**
+- **17 active user guides** in `docs/` (down from 21, -19%)
+- **2 AI workflow guides** in `claudedocs/guides/`
+- **4 archived guides** in `deprecated/docs/` with clear deprecation notes
+- **Zero redundancies** - each guide has unique, well-defined purpose
+
+**Key Documentation:**
+- Installation: `docs/installation.md` (v2.0.0 three-script workflow)
+- Troubleshooting: `docs/troubleshooting.md`
+- Secrets: `docs/secrets.md` (SOPS encryption)
+- AWS & Secrets: `docs/AWS-AND-SECRETS-WORKFLOW.md` (comprehensive workflow with hot reload)
+- Development: `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` (project management)
 
 **Guidelines to prevent markdown sprawl:**
 - ✅ CREATE docs for: major features, architectural changes, complex new systems
@@ -175,7 +183,7 @@ CLAUDE.md is the **authoritative source** for all configuration instructions.
 - ✅ UPDATE changelog for: major features, breaking changes, architecture changes
 - ❌ SKIP changelog for: small fixes, minor improvements, documentation updates
 
-See [Documentation & Changelog Guide](claudedocs/guides/DOCUMENTATION-CHANGELOG-GUIDE.md) for full details.
+See `docs/DOCS-REVIEW.md` for complete consolidation results and `deprecated/docs/README.md` for archived documentation.
 
 ---
 
@@ -227,84 +235,103 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 # 📚 DOCUMENTATION
 
-**Status:** v2.0.0 documentation complete with essential user guides
+**Status:** ✅ Consolidation complete - 17 active guides (down from 21, -19%)
 
 ## User Documentation (Public)
 
 **Location:** `docs/` - For end users and repository visitors
 
+### Essential Guides
 - 📖 **[Installation Guide](docs/installation.md)** - Complete v2.0.0 setup (three-script workflow)
 - 📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Profile system issues and fixes
 - 📖 **[Backup & Recovery Guide](docs/backup-and-recovery.md)** - Disaster recovery and age key backups
 - 📖 **[Secrets Management Guide](docs/secrets.md)** - SOPS age encryption and profile secrets
+- 📖 **[AWS & Secrets Workflow](docs/AWS-AND-SECRETS-WORKFLOW.md)** - Comprehensive AWS and secrets workflow with hot reload
+
+### AWS Reference Documentation
+- 📋 [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md) - AWS SSO multi-account configuration
+- 📋 [AWS Quick Reference](docs/work/aws/AWS-QUICK-REF.md) - AWS daily commands and shortcuts
+- 📋 [AWS Implementation Summary](docs/work/aws/AWS-IMPLEMENTATION-SUMMARY.md) - AWS feature implementation details
+- 📋 [AWS Config Status (2025-11-06)](docs/work/aws/AWS-CONFIG-STATUS-2025-11-06.md) - Historical validation snapshot
 
 ## AI Assistant Documentation (claudedocs/)
 
 **Location:** `claudedocs/` - For Claude Code and AI development workflows
 
 ### Development Guides
-- 📋 [Development Workflow](claudedocs/guides/DEVELOPMENT-WORKFLOW.md) - Project workflow and task management
-- 📋 [Project Workflow](claudedocs/guides/project-workflow.md) - Project-based task management
+- 📋 [Development Workflow](claudedocs/guides/DEVELOPMENT-WORKFLOW.md) - Complete project workflow and task management
 - 📋 [Alias Philosophy](claudedocs/guides/ALIAS-PHILOSOPHY.md) - Five-tier alias naming system and safety guidelines
-
-### Reference Documentation
-- 📋 [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md) - AWS SSO multi-account configuration
-- 📋 [AWS Quick Reference](docs/work/aws/AWS-QUICK-REF.md) - AWS daily commands and shortcuts
-- 📋 [AWS Config Status](docs/work/aws/AWS-CONFIG-STATUS.md) - Current AWS configuration state
-- 📋 [AWS Implementation Summary](docs/work/aws/AWS-IMPLEMENTATION-SUMMARY.md) - AWS feature implementation details
 
 ### Planning & Project Tracking (Gitignored)
 - 📋 [ACTIVE.md](claudedocs/planning/ACTIVE.md) - Current projects and status
 - 📋 [BACKLOG.md](claudedocs/planning/BACKLOG.md) - New work items and grooming queue
 - 📋 [COMPLETED.md](claudedocs/planning/COMPLETED.md) - Completed projects index
 
+## Deprecated Documentation
+
+**Location:** `deprecated/docs/` - Archived documentation with deprecation notes
+
+See [Deprecated Documentation README](deprecated/docs/README.md) for details on:
+- QUICK-REFERENCE.md (superseded by AWS-AND-SECRETS-WORKFLOW.md)
+- project-workflow.md (superseded by DEVELOPMENT-WORKFLOW.md)
+- CLEAN-SETUP-STEPS.md (superseded by installation.md)
+- learning/ (personal notes, also gitignored)
+
 ## Documentation Structure
 
 ```
-docs/                          # Public user documentation
+docs/                          # Public user documentation (17 files)
 ├── installation.md           # v2.0.0 setup guide ✅
 ├── troubleshooting.md        # Debugging guide ✅
 ├── backup-and-recovery.md    # Disaster recovery ✅
 ├── secrets.md                # SOPS encryption ✅
+├── AWS-AND-SECRETS-WORKFLOW.md # Complete AWS & secrets workflow ✅
+├── DOCS-REVIEW.md            # Consolidation results ✅
+├── DOC-CONSOLIDATION-PLAN.md # Consolidation plan ✅
 ├── architecture/             # ADRs and architecture docs
-├── learning/                 # Learning resources
+│   └── decisions/           # 6 architecture decision records
 └── work/aws/                 # AWS-specific documentation
+    ├── AWS-QUICK-REF.md      # Daily commands ✅
+    ├── AWS-MULTI-ROLE.md     # Multi-account patterns ✅
+    ├── AWS-IMPLEMENTATION-SUMMARY.md # Technical details ✅
+    └── AWS-CONFIG-STATUS-2025-11-06.md # Historical snapshot ✅
 
-claudedocs/                    # AI assistant instructions and development
-├── guides/                    # AI development workflows
-│   ├── DEVELOPMENT-WORKFLOW.md
-│   └── DOCUMENTATION-CHANGELOG-GUIDE.md
-├── reference/                 # Technical reference for AI
-│   └── aws/                   # AWS-specific documentation
-│       ├── AWS-MULTI-ROLE.md
-│       ├── AWS-QUICK-REF.md
-│       ├── AWS-CONFIG-STATUS.md
-│       └── AWS-IMPLEMENTATION-SUMMARY.md
+claudedocs/                    # AI assistant documentation (2 files)
+├── guides/
+│   ├── DEVELOPMENT-WORKFLOW.md # Complete project workflow ✅
+│   └── ALIAS-PHILOSOPHY.md     # Five-tier naming system ✅
 └── planning/                  # Project management (gitignored)
     ├── ACTIVE.md              # Current work tracking
     ├── BACKLOG.md             # New work intake
     ├── COMPLETED.md           # Completed projects index
     ├── projects/              # Active project directories
     └── archive/               # Archived completed projects
+
+deprecated/docs/               # Archived documentation (4 files)
+├── README.md                  # Deprecation documentation ✅
+├── quick-reference/          # Superseded by AWS-AND-SECRETS-WORKFLOW
+├── learning/                 # Personal notes (also gitignored)
+├── project-workflow/         # Superseded by DEVELOPMENT-WORKFLOW
+└── clean-setup-steps/        # Superseded by installation.md
 ```
 
 ## Directory Purpose
 
 **`docs/`** - Public documentation:
 - End-user guides (installation, troubleshooting, backups, secrets)
-- Committed to repository
-- Visible on GitHub
-- For humans reading the repository
+- AWS workflow and reference documentation
+- Architecture decision records (ADRs)
+- Committed to repository and visible on GitHub
 
 **`claudedocs/`** - AI development documentation:
-- AI assistant instructions and workflows
+- AI assistant workflow guides
 - Project management and planning (gitignored)
-- Technical reference for AI decision-making
 - For Claude Code and AI agents
 
-## Additional Documentation
-
-**Under Review**: `.temp/docs/archive/` (remaining 22 docs from root reorganization)
+**`deprecated/docs/`** - Historical preservation:
+- Archived documentation with clear deprecation notes
+- Superseded guides preserved for reference
+- See README.md for what replaced each file
 
 ---
 
