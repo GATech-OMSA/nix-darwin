@@ -114,7 +114,7 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 
 ## Documentation
 
-**Status:** ✅ Consolidation complete (November 2025) - 17 active guides
+**Status:** ✅ Consolidation complete (November 2025) - 18 active guides
 
 ### Essential User Documentation (docs/)
 
@@ -122,6 +122,7 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 - **Troubleshooting:** `docs/troubleshooting.md` - Profile system issues and fixes
 - **Secrets:** `docs/secrets.md` - SOPS encryption with age
 - **AWS & Secrets:** `docs/AWS-AND-SECRETS-WORKFLOW.md` - Complete workflow with hot reload
+- **Python Development:** `docs/python-development.md` - UV + direnv auto-activation workflow
 - **Backup & Recovery:** `docs/backup-and-recovery.md` - Disaster recovery procedures
 
 ### AWS Reference (docs/work/aws/)

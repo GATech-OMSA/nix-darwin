@@ -164,7 +164,7 @@ nix-config/home/_profiles/
 CLAUDE.md is the **authoritative source** for all configuration instructions.
 
 **Documentation Structure:**
-- **17 active user guides** in `docs/` (down from 21, -19%)
+- **18 active user guides** in `docs/`
 - **2 AI workflow guides** in `claudedocs/guides/`
 - **4 archived guides** in `deprecated/docs/` with clear deprecation notes
 - **Zero redundancies** - each guide has unique, well-defined purpose
@@ -174,6 +174,7 @@ CLAUDE.md is the **authoritative source** for all configuration instructions.
 - Troubleshooting: `docs/troubleshooting.md`
 - Secrets: `docs/secrets.md` (SOPS encryption)
 - AWS & Secrets: `docs/AWS-AND-SECRETS-WORKFLOW.md` (comprehensive workflow with hot reload)
+- Python: `docs/python-development.md` (UV + direnv auto-activation)
 - Development: `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` (project management)
 
 **Guidelines to prevent markdown sprawl:**
@@ -235,7 +236,7 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 # 📚 DOCUMENTATION
 
-**Status:** ✅ Consolidation complete - 17 active guides (down from 21, -19%)
+**Status:** ✅ Consolidation complete - 18 active guides
 
 ## User Documentation (Public)
 
@@ -247,6 +248,7 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 - 📖 **[Backup & Recovery Guide](docs/backup-and-recovery.md)** - Disaster recovery and age key backups
 - 📖 **[Secrets Management Guide](docs/secrets.md)** - SOPS age encryption and profile secrets
 - 📖 **[AWS & Secrets Workflow](docs/AWS-AND-SECRETS-WORKFLOW.md)** - Comprehensive AWS and secrets workflow with hot reload
+- 📖 **[Python Development Guide](docs/python-development.md)** - UV + direnv auto-activation workflow
 
 ### AWS Reference Documentation
 - 📋 [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md) - AWS SSO multi-account configuration
@@ -280,12 +282,13 @@ See [Deprecated Documentation README](deprecated/docs/README.md) for details on:
 ## Documentation Structure
 
 ```
-docs/                          # Public user documentation (17 files)
+docs/                          # Public user documentation (18 files)
 ├── installation.md           # v2.0.0 setup guide ✅
 ├── troubleshooting.md        # Debugging guide ✅
 ├── backup-and-recovery.md    # Disaster recovery ✅
 ├── secrets.md                # SOPS encryption ✅
 ├── AWS-AND-SECRETS-WORKFLOW.md # Complete AWS & secrets workflow ✅
+├── python-development.md     # UV + direnv workflow ✅
 ├── DOCS-REVIEW.md            # Consolidation results ✅
 ├── DOC-CONSOLIDATION-PLAN.md # Consolidation plan ✅
 ├── architecture/             # ADRs and architecture docs
