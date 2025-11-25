@@ -19,7 +19,55 @@
     strict_env = false
 
     [whitelist]
-    # Add trusted directories here
-    # prefix = [ "/Users/jimmy/Dev" ]
+    prefix = [ "~/Dev" ]
+  '';
+
+  # Custom direnv layouts for Python development
+  # Provides: use uv, use venv
+  home.file.".config/direnv/direnvrc".text = ''
+    # use uv - Create and activate UV virtual environment
+    # Usage in .envrc:
+    #   use uv              # Uses default Python
+    #   use uv 3.12         # Uses Python 3.12
+    use_uv() {
+      local python_version="''${1:-}"
+
+      # Create .venv if it doesn't exist
+      if [[ ! -d .venv ]]; then
+        if [[ -n "$python_version" ]]; then
+          log_status "Creating .venv with Python $python_version"
+          uv venv --python "$python_version"
+        else
+          log_status "Creating .venv"
+          uv venv
+        fi
+      fi
+
+      # Activate the venv
+      source .venv/bin/activate
+
+      # Install dependencies if pyproject.toml exists
+      if [[ -f pyproject.toml ]]; then
+        log_status "Syncing dependencies from pyproject.toml"
+        uv sync --quiet
+      fi
+    }
+
+    # use venv - Activate existing virtual environment
+    # Usage in .envrc:
+    #   use venv            # Looks for .venv or venv
+    #   use venv myenv      # Uses specific directory
+    use_venv() {
+      local venv_path="''${1:-.venv}"
+
+      if [[ -d "$venv_path" ]]; then
+        source "$venv_path/bin/activate"
+      elif [[ -d "venv" ]]; then
+        source venv/bin/activate
+      else
+        log_error "No virtual environment found"
+        return 1
+      fi
+    }
   '';
 }

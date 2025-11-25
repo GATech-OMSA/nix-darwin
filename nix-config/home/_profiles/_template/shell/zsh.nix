@@ -483,52 +483,11 @@ in
       fi
 
       # ============================================
-      # CRITICAL: UV/VENV AUTO-ACTIVATION ON CD
+      # PYTHON VENV ACTIVATION
       # ============================================
-      # This is the feature you asked about!
-      # Automatically activates Python virtual environments when you cd into a directory
-
-      function auto_activate_venv() {
-        # Deactivate any existing virtual environment
-        if [ -n "$VIRTUAL_ENV" ]; then
-          deactivate 2>/dev/null || true
-        fi
-
-        # Check for UV project (pyproject.toml + .venv)
-        if [ -f "pyproject.toml" ] && [ -d ".venv" ]; then
-          source .venv/bin/activate
-          echo "🐍 Activated UV virtual environment: .venv"
-          return
-        fi
-
-        # Check for any .venv directory
-        if [ -d ".venv" ]; then
-          source .venv/bin/activate
-          echo "🐍 Activated virtual environment: .venv"
-          return
-        fi
-
-        # Check for venv directory
-        if [ -d "venv" ]; then
-          source venv/bin/activate
-          echo "🐍 Activated virtual environment: venv"
-          return
-        fi
-
-        # Check for other common venv names
-        if [ -d "env" ]; then
-          source env/bin/activate
-          echo "🐍 Activated virtual environment: env"
-          return
-        fi
-      }
-
-      # Hook into chpwd (runs after every cd)
-      autoload -U add-zsh-hook
-      add-zsh-hook chpwd auto_activate_venv
-
-      # Also check on shell startup
-      auto_activate_venv
+      # NOTE: Auto-activation is handled by direnv (see direnv.nix)
+      # Use .envrc with "use uv" or "use venv" in project directories
+      # Manual activation still available via activate() function
 
       # ============================================
       # LOAD MODULAR FUNCTION FILES
