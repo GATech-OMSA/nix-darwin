@@ -19,6 +19,14 @@
 
     # Define secrets and where they should be placed
     secrets = {
+      # .zsh_secrets - Environment variables and API keys
+      # Automatically sourced in zsh.nix
+      zsh_secrets = {
+        path = "/Users/${username}/.zsh_secrets";
+        owner = username;
+        mode = "0600";
+      };
+
       # SSH Keys (work-specific)
       work_ssh_private_key = {
         path = "/Users/${username}/.ssh/id_ed25519_work";

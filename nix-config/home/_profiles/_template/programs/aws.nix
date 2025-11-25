@@ -34,9 +34,9 @@ let
   # Creates multiple profiles when additional_roles are specified
   generateSsoProfiles =
     let
-      # Read accounts.json from user's home (must exist at runtime)
-      # Note: File must be tracked in repo or use absolute path with impureMode
-      accountsPath = ../../../.aws/accounts.json;  # Relative to this file
+      # Read accounts.json from repo root (evaluated at build time)
+      # Path: 5 levels up from nix-config/home/_profiles/_template/programs/
+      accountsPath = ../../../../../.aws/accounts.json;  # Relative to this file
       accounts = if builtins.pathExists accountsPath
                 then builtins.fromJSON (builtins.readFile accountsPath)
                 else {};
