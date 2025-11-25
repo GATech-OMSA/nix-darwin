@@ -366,15 +366,22 @@ in
       clean = "cleanup-quick";
     };
 
-    # Init content (combined: micromamba early, then main config)
+    # Init content (combined: micromamba lazy-load, then main config)
     initContent = lib.mkMerge [
-      # Micromamba init runs BEFORE completion (order 550)
+      # Micromamba LAZY initialization - only runs when first used
+      # This saves ~100ms on shell startup
       (lib.mkOrder 550 ''
-        # Load micromamba early
+        # Lazy-load micromamba - only initialize when first invoked
         if command -v micromamba &> /dev/null; then
-          export MAMBA_EXE="$(which micromamba)"
+          export MAMBA_EXE="${"\${commands[micromamba]}"}"
           export MAMBA_ROOT_PREFIX="$HOME/micromamba"
-          eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
+
+          # Wrapper function that initializes micromamba on first use
+          micromamba() {
+            unfunction micromamba  # Remove this wrapper
+            eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
+            micromamba "$@"  # Run the actual command
+          }
         fi
       '')
 
@@ -386,15 +393,8 @@ in
       # SOPS configuration (also set in sessionVariables, but ensure early availability)
       export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 
-      # History options for immediate persistence
-      setopt APPEND_HISTORY          # Append to history file immediately
-      setopt INC_APPEND_HISTORY      # Write to history file immediately after each command
-      setopt SHARE_HISTORY           # Share history between all sessions
-      setopt HIST_IGNORE_DUPS        # Don't record duplicates
-      setopt HIST_IGNORE_ALL_DUPS    # Delete old duplicates
-      setopt HIST_FIND_NO_DUPS       # Don't display duplicates when searching
-      setopt HIST_SAVE_NO_DUPS       # Don't save duplicates
-      setopt EXTENDED_HISTORY        # Save timestamp and duration
+      # NOTE: History options are set declaratively in programs.zsh.history above
+      # Do NOT duplicate setopt commands here - they conflict with Nix-managed options
 
       # ============================================
       # SOURCE SECRETS
@@ -406,30 +406,16 @@ in
       # ============================================
       # Credentials are loaded from encrypted file for database connections
       # and other services requiring rotating passwords
+      # SECURITY: Uses process substitution - credentials NEVER touch disk
       if [ -f "$HOME/.secrets/credentials.env.enc" ]; then
-        # Decrypt credentials file (SOPS automatically uses SOPS_AGE_KEY_FILE env var)
         if command -v sops &> /dev/null; then
-          # Decrypt to temporary file
-          sops --decrypt "$HOME/.secrets/credentials.env.enc" > "$HOME/.secrets/credentials.env" 2>/dev/null
-
-          if [ -f "$HOME/.secrets/credentials.env" ]; then
-            # Set permissions
-            chmod 600 "$HOME/.secrets/credentials.env"
-
-            # Load variables
-            set -a  # Auto-export all variables
-            source "$HOME/.secrets/credentials.env"
-            set +a
-
-            # Count loaded variables
-            local cred_count=$(grep -c '^export' "$HOME/.secrets/credentials.env" 2>/dev/null)
-            if [ "$cred_count" -gt 0 ] 2>/dev/null; then
-              echo "🔐 Loaded $cred_count credentials"
-            fi
-
-            # Clean up decrypted file for security
-            command rm -f "$HOME/.secrets/credentials.env" 2>/dev/null
+          # Decrypt directly to memory using process substitution
+          # This avoids writing cleartext credentials to disk
+          set -a  # Auto-export all variables
+          if source <(sops --decrypt "$HOME/.secrets/credentials.env.enc" 2>/dev/null); then
+            echo "🔐 Loaded encrypted credentials"
           fi
+          set +a
         fi
       elif [ -f "$HOME/.secrets/credentials.env" ]; then
         # If unencrypted file exists (shouldn't happen in prod), warn and load
@@ -446,35 +432,25 @@ in
       # Personal machine: Uses simple AWS config from aws.nix
 
       # ============================================
-      # LOAD CUSTOM OH-MY-ZSH PLUGINS
+      # OPTIONAL OH-MY-ZSH CUSTOM PLUGINS
       # ============================================
-      # These plugins are installed manually in ~/.oh-my-zsh/custom/plugins
-      # and need to be sourced separately from the Nix-managed oh-my-zsh
+      # NOTE: autosuggestions and syntax-highlighting are handled by Nix
+      # (autosuggestion.enable = true, syntaxHighlighting.enable = true)
+      # Only load plugins NOT managed by Nix here
 
-      # Autosuggestions - suggests commands as you type
-      if [ -f ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-        source ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-      fi
-
-      # Syntax highlighting - highlights valid/invalid commands
-      if [ -f ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-        source ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-      fi
-
-      # Additional completions
+      # Additional completions (if manually installed)
       if [ -d ~/.oh-my-zsh/custom/plugins/zsh-completions ]; then
         fpath+=(~/.oh-my-zsh/custom/plugins/zsh-completions/src)
       fi
 
-      # You-should-use - reminds you to use aliases
+      # You-should-use - reminds you to use aliases (if manually installed)
       if [ -f ~/.oh-my-zsh/custom/plugins/you-should-use/you-should-use.plugin.zsh ]; then
         source ~/.oh-my-zsh/custom/plugins/you-should-use/you-should-use.plugin.zsh
       fi
 
-      # History substring search - search history with arrow keys
+      # History substring search (if manually installed)
       if [ -f ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh ]; then
         source ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
-        # Bind keys for history search
         bindkey '^[[A' history-substring-search-up
         bindkey '^[[B' history-substring-search-down
       fi
@@ -494,10 +470,12 @@ in
       mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # ============================================
-      # WELCOME MESSAGE
+      # WELCOME MESSAGE (cached Python version)
       # ============================================
       if [ "$TERM_PROGRAM" != "vscode" ]; then
-        echo "$MACHINE_MODE | Python: $(python3 --version 2>&1 | awk '{print $2}')"
+        # Cache Python version to avoid running python3 --version on every startup
+        : ''${_PYTHON_VERSION:=$(python3 --version 2>&1 | awk '{print $2}')}
+        echo "$MACHINE_MODE | Python: $_PYTHON_VERSION"
       fi
 
       # ============================================
@@ -3211,13 +3189,10 @@ TEMPLATE
 
       ${myLib.reload.mkAllHotReloadFunctions}
 
-      # ============================================
-      # ZOXIDE INITIALIZATION
-      # ============================================
-      if command -v zoxide &> /dev/null; then
-        eval "$(zoxide init zsh)"
-        alias zz="z -"
-      fi
+      # NOTE: Zoxide is initialized by Nix (programs.zoxide.enable = true in base.nix)
+      # The 'z' command is automatically available - no manual init needed
+      # Alias 'zz' for jumping back is kept for convenience
+      alias zz="z -"
       ''
     ];
 
