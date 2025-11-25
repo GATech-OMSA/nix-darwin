@@ -57,13 +57,10 @@ in
         # Cloud & AWS
         "aws"
 
-        # Python Development
-        "python"
-        "pip"
-        "virtualenv"
+        # NOTE: Python plugins (python, pip, virtualenv) removed - using UV instead
 
         # Productivity & Navigation
-        "fzf"
+        # NOTE: fzf is handled by Nix (programs.fzf.enable) - removed from oh-my-zsh
         # NOTE: Directory jumping is provided by zoxide (configured in base.nix)
         # Removed oh-my-zsh "z" plugin to avoid conflict with zoxide (2025-11-06)
         "dirhistory"  # Navigate dirs with Alt+Left/Right
@@ -76,11 +73,8 @@ in
 
         # Utilities
         "colored-man-pages"
-        "command-not-found"
-        "web-search"  # Search from terminal (google, stackoverflow, etc)
-        "jsontools"  # Pretty print JSON (pp_json, is_json, urlencode_json)
-        "encode64"  # Base64 encode/decode
         "safe-paste"  # Prevents accidental execution when pasting
+        # NOTE: Removed low-value plugins: command-not-found, web-search, jsontools, encode64
 
         # Note: zsh-autosuggestions and zsh-syntax-highlighting
         # are sourced manually below since they're installed in ~/.oh-my-zsh/custom
@@ -387,6 +381,16 @@ in
 
       # Main shell configuration (runs after oh-my-zsh)
       ''
+      # ============================================
+      # FZF INTEGRATION (manual - suppresses zle warnings)
+      # ============================================
+      # Nix's enableZshIntegration is disabled because fzf's init script
+      # tries to restore options including 'zle on', which warns in subshells
+      # We wrap the entire source in stderr suppression
+      if [[ $options[zle] = on ]] && command -v fzf &>/dev/null; then
+        eval "$(fzf --zsh)" 2>/dev/null
+      fi
+
       # ============================================
       # ENVIRONMENT SETUP
       # ============================================

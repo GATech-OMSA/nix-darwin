@@ -11,11 +11,8 @@
     enableZshIntegration = true;
   };
 
-  # fzf - fuzzy finder
-  programs.fzf = {
-    enable = true;
-    enableZshIntegration = true;
-  };
+  # NOTE: fzf is configured in _template/programs/fzf.nix
+  # with custom zsh integration to suppress zle warnings
 
   # bat - better cat
   programs.bat = {

@@ -7,7 +7,8 @@
 {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true;
+    # Disabled - we source manually in zsh.nix to suppress "can't change option: zle" warnings
+    enableZshIntegration = false;
 
     # Default command and options are set via home.sessionVariables in home/_template/default.nix
     # FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git"
