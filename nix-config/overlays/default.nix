@@ -3,7 +3,12 @@
 # Purpose: Modify existing nixpkgs packages without forking nixpkgs
 # Usage: Import in flake.nix to apply customizations
 
-{ inputs }:
+{ inputs, userConfig }:
+
+let
+  # Extract proxy configuration
+  goProxy = userConfig.proxies.go or { enabled = false; };
+in
 
 [
   # ============================================
@@ -56,32 +61,25 @@
   # SOPS-NIX CORPORATE PROXY SUPPORT
   # ============================================
   # Issue: Corporate proxy blocks Go module downloads from proxy.golang.org
-  # Solution: Use proxyVendor attribute to allow GOPROXY from environment
+  # Solution: Use proxyVendor + GOPROXY from user-config.nix
   #
-  # Background:
-  # - Example Corp blocks direct access to proxy.golang.org
-  # - Internal Nexus proxy available at nexus.example.com
-  # - nixpkgs buildGoModule supports proxyVendor = true for corporate proxies
-  # - When proxyVendor is true, go mod download respects GOPROXY env var
+  # Configuration: Edit config/user-config.nix:
+  #   proxies.go.enabled = true;
+  #   proxies.go.url = "https://your-nexus.company.com/repository/go-proxy/";
   #
   # Reference:
   # - nixpkgs PR #173092: "buildGoModule: allow goproxy"
   # - pkgs/build-support/go/module.nix contains proxyVendor support
-  # - 40+ packages in nixpkgs use this pattern (gitea, go-mockery, mieru, etc.)
   (final: prev:
-    let
-      # Call sops-nix package set with our modified buildGoModule
-      sops-nix-pkgs = prev.callPackage inputs.sops-nix.outPath {
-        vendorHash = "sha256-pMw/LIOF2TbaOFL+G0MpzfMPsJWJmtIGESrbDjwfi3Y=";
-        # Override buildGo124Module to add proxyVendor for all Go builds in sops-nix
-        buildGo124Module = args: prev.buildGo124Module (args // {
-          proxyVendor = true;
-        });
-      };
-    in
-    {
-      # Use the sops-install-secrets from our modified package set
-      inherit (sops-nix-pkgs) sops-install-secrets;
+    if goProxy.enabled or false then {
+      # Override sops-install-secrets to use corporate Go proxy
+      sops-install-secrets = inputs.sops-nix.packages.${prev.system}.sops-install-secrets.overrideAttrs (old: {
+        proxyVendor = true;
+        GOPROXY = "${goProxy.url},direct";
+        GOPRIVATE = goProxy.private or "";
+      });
+    } else {
+      # No override needed - use default sops-install-secrets
     }
   )
 

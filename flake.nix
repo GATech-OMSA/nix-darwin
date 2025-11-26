@@ -43,7 +43,7 @@
       myLib = import ./nix-config/lib { inherit inputs; };
 
       # Import overlays for package customizations
-      overlays = import ./nix-config/overlays { inherit inputs; };
+      overlays = import ./nix-config/overlays { inherit inputs userConfig; };
 
       # ============================================
       # USER & MACHINE CONFIG (required)
