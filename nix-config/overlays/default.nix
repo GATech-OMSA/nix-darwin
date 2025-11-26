@@ -73,14 +73,15 @@ in
   (final: prev:
     if goProxy.enabled or false then {
       # Override sops-install-secrets to use corporate Go proxy
+      # Must use overrideModAttrs to inject GOPROXY into go-modules fetch phase
       sops-install-secrets = inputs.sops-nix.packages.${prev.system}.sops-install-secrets.overrideAttrs (old: {
-        proxyVendor = true;
-        GOPROXY = "${goProxy.url},direct";
-        GOPRIVATE = goProxy.private or "";
+        overrideModAttrs = oldMod: {
+          GOPROXY = "${goProxy.url},direct";
+          GOPRIVATE = goProxy.private or "";
+        };
       });
-    } else {
-      # No override needed - use default sops-install-secrets
-    }
+    } else
+      { }  # No override needed when proxy disabled
   )
 
   # ============================================
