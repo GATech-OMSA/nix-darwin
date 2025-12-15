@@ -80,6 +80,11 @@ let
     nodePackages.markdown-link-check  # Validate markdown links
     just         # Command runner
 
+    # Code Analysis & Search (enhance Claude Code)
+    ast-grep     # Structural code search (AST-based, better than regex)
+    tokei        # Fast code statistics (lines, languages, etc.)
+    repomix      # Pack entire repo into single AI-friendly file
+
     # Note-taking & Documentation
     nb           # CLI note-taking
 

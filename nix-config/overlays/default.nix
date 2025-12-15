@@ -19,18 +19,18 @@ in
   # Temporarily disabled - SOPS will also be disabled
 
   # ============================================
-  # PYTHON VERSION PINNING
+  # PYTHON VERSION PINNING (PLACEHOLDER)
   # ============================================
-  # Pin Python 3.13 to prevent breaking changes from nixpkgs-unstable updates
-  (final: prev: {
-    # Pin to Python 3.13.x - update version as needed for security patches
-    # Check current version: nix eval nixpkgs#python313.version
-    python313 = prev.python313.overrideAttrs (old: {
-      # Uncomment to pin to specific version:
-      # version = "3.13.0";
-      # Note: May require updating hash if pinning exact version
-    });
-  })
+  # Uncomment and configure when you need to pin Python to a specific version
+  # to prevent breaking changes from nixpkgs-unstable updates.
+  #
+  # Example:
+  # (final: prev: {
+  #   python313 = prev.python313.overrideAttrs (old: {
+  #     version = "3.13.0";
+  #     # Note: May require updating hash if pinning exact version
+  #   });
+  # })
 
   # ============================================
   # MICROMAMBA FIX (BROKEN IN NIXPKGS)

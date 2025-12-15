@@ -35,8 +35,8 @@
     # GUI applications only
     casks = [
       # Browsers
-      "firefox"
       "orion"
+      "chrome"
 
       # Development
       "antigravity"
@@ -44,6 +44,9 @@
       "claude-code"
       "iterm2"
       "dash"
+      "warp"
+      "fork"
+      "microsoft-word"
 
       # Productivity
       "alfred"

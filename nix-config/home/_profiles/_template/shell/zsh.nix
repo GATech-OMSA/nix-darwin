@@ -112,19 +112,19 @@ in
       # Nix-Darwin system management
       # nix-rebuild runs with pre-flight checks by default
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      # Automatically restarts shell on success to load new configuration
-      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
+      # Restarts shell only on success; shows error on failure
+      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh || echo '❌ Rebuild failed - shell NOT restarted'";
 
       # Skip pre-flight checks for emergency rebuilds (use with caution)
       # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      # Automatically restarts shell on success to load new configuration
-      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
+      # Restarts shell only on success; shows error on failure
+      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh || echo '❌ Rebuild failed - shell NOT restarted'";
 
       # Debug mode with verbose output for troubleshooting
       # Shows detailed build logs, stack traces, and Home Manager activation details
       # Usage: nix-rebuild-debug (for full rebuild with debug info)
-      # Automatically restarts shell on success to load new configuration
-      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure --show-trace --verbose --print-build-logs && exec zsh";
+      # Restarts shell only on success; shows error on failure
+      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure --show-trace --verbose --print-build-logs && exec zsh || echo '❌ Rebuild failed - shell NOT restarted'";
 
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";

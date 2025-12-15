@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 # ============================================================================
-# AWESOME APPS INSTALLER (GUM Edition)
+# APPS INSTALLER (GUM Edition)
 # ============================================================================
 #
 # Interactive installer for curated macOS applications
 # Uses gum for beautiful terminal UI and config/awesome-apps.yaml catalog
 #
 # Usage:
-#   ./scripts/install-awesome-apps-gum.sh
+#   ./scripts/app-catelog/install-apps.sh
 #
 # Features:
 #   - Interactive multi-select UI powered by gum
@@ -26,8 +26,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-CATALOG_FILE="$REPO_ROOT/config/awesome-apps.yaml"
-HOMEBREW_NIX="$REPO_ROOT/modules/darwin/homebrew.nix"
+CATALOG_FILE="$REPO_ROOT/scripts/app-catalog/catalog.yaml"
+HOMEBREW_NIX="$REPO_ROOT/nix-config/modules/darwin/homebrew.nix"
 TEMP_DIR=$(mktemp -d)
 
 # ============================================================================
@@ -172,7 +172,7 @@ parse_category_apps() {
 # ============================================================================
 
 select_installation_mode() {
-  step "Awesome Apps Installer"
+  step "Apps Installer"
 
   gum style \
     --foreground="$PALETTE_TEAL" \

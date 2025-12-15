@@ -99,11 +99,11 @@ ai_coding:
     tags: [free, essential]
     homepage: "https://claude.ai"
 
-  - name: "Windsurf"
-    cask: "windsurf"
-    description: "AI-powered code editor with intelligent flow state"
-    tags: [freemium, optional]
-    homepage: "https://codeium.com/windsurf"
+  - name: "Antigravity"
+    cask: "antigravity"
+    description: "Agent-first AI development platform"
+    tags: [freemium, essential]
+    homepage: "https://antigravity.google/"
 
 # ============================================================================
 # LOCAL LLM TOOLS

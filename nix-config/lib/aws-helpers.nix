@@ -4,11 +4,32 @@ rec {
   # ==================================================
   # ACCOUNTS.JSON INTEGRATION
   # ==================================================
+  # NOTE: These functions generate shell code that reads accounts.json at RUNTIME.
+  # The Nix evaluation does NOT read the file - all account parsing happens in zsh.
+  # This avoids impure evaluation issues with builtins.getEnv "HOME".
+  #
+  # The loadAccountsJson function below is ONLY used for generating static aliases
+  # during nix-rebuild. If ~/.aws/accounts.json doesn't exist at build time,
+  # aliases won't be generated, but the shell functions (awsuse, awslogin, etc.)
+  # will still work because they read the file at runtime.
+
+  # Load accounts.json at Nix evaluation time (for static alias generation)
+  # Uses FLAKE_ROOT env var which is set during darwin-rebuild
+  # Falls back to empty if file doesn't exist (aliases just won't be generated)
   loadAccountsJson =
-    let accountsPath = "${builtins.getEnv "HOME"}/.aws/accounts.json";
-    in if builtins.pathExists accountsPath
-       then builtins.fromJSON (builtins.readFile accountsPath)
-       else {};
+    let
+      # FLAKE_ROOT is set by our darwin-rebuild wrapper
+      flakeRoot = builtins.getEnv "FLAKE_ROOT";
+      # Try to find accounts.json - first check if we can construct a home path
+      homeDir = builtins.getEnv "HOME";
+      accountsPath = if homeDir != "" then "${homeDir}/.aws/accounts.json" else "";
+    in
+    if accountsPath != "" && builtins.pathExists accountsPath
+    then builtins.fromJSON (builtins.readFile accountsPath)
+    else {};
+    # NOTE: If accounts.json doesn't exist at build time, we return {}
+    # This means mkAwsAliasesFromJson won't generate aliases, but that's OK
+    # because the shell functions (awsuse, awslogin) read the file at runtime
 
   # Generate AWS helper functions using accounts.json
   mkAwsAccountHelper =
