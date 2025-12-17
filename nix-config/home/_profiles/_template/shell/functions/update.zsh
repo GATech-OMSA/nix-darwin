@@ -11,6 +11,14 @@ function update-nix() {
   local errors=0
   local nix_dir="$HOME/nix-darwin"
 
+  # Read machineId from config (hostname != flake config name)
+  local machine_id
+  machine_id=$(nix eval --raw --file "$nix_dir/config/machine-config.nix" machineId 2>/dev/null)
+  if [ -z "$machine_id" ]; then
+    echo "  ❌ Failed to read machineId from config/machine-config.nix" >&2
+    return 1
+  fi
+
   echo "  📦 Updating flake inputs..."
   cd "$nix_dir" || return 1
 
@@ -22,7 +30,7 @@ function update-nix() {
   fi
 
   echo "  📦 Rebuilding darwin configuration..."
-  if sudo FLAKE_ROOT="$nix_dir" darwin-rebuild switch --flake "$nix_dir" --impure; then
+  if sudo FLAKE_ROOT="$nix_dir" darwin-rebuild switch --flake "$nix_dir#$machine_id" --impure; then
     echo "  ✅ Darwin rebuild completed"
   else
     echo "  ❌ Darwin rebuild failed" >&2
