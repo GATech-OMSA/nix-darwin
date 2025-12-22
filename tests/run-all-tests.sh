@@ -239,36 +239,46 @@ main() {
     print_info "Running category: $CATEGORY"
   fi
 
-  # Define test suites by category
-  declare -A test_categories
-  test_categories[build]="$SCRIPT_DIR/build/test-flake-check.sh
+  # Define test suites by category (Bash 3 compatible - no associative arrays)
+  tests_build="$SCRIPT_DIR/build/test-flake-check.sh
 $SCRIPT_DIR/build/test-syntax.sh
 $SCRIPT_DIR/build/test-darwin-build.sh"
 
-  test_categories[security]="$SCRIPT_DIR/security/test-sops-encryption.sh
+  tests_security="$SCRIPT_DIR/security/test-sops-encryption.sh
 $SCRIPT_DIR/security/test-permissions.sh
 $SCRIPT_DIR/security/test-git-hooks.sh"
 
-  test_categories[lib]="$SCRIPT_DIR/lib/test-machine-detection.sh
+  tests_lib="$SCRIPT_DIR/lib/test-machine-detection.sh
 $SCRIPT_DIR/lib/test-helpers.sh"
 
-  test_categories[integration]="$SCRIPT_DIR/integration/test-multi-machine.sh
+  tests_integration="$SCRIPT_DIR/integration/test-multi-machine.sh
 $SCRIPT_DIR/integration/test-rebuild.sh
 $SCRIPT_DIR/integration/test-rollback.sh"
 
+  # Function to get tests for a category (Bash 3 compatible)
+  get_tests_for_category() {
+    case "$1" in
+      build) echo "$tests_build" ;;
+      security) echo "$tests_security" ;;
+      lib) echo "$tests_lib" ;;
+      integration) echo "$tests_integration" ;;
+      *) echo "" ;;
+    esac
+  }
+
   # Determine which tests to run
   if [[ -n "$CATEGORY" ]]; then
-    if [[ -z "${test_categories[$CATEGORY]:-}" ]]; then
+    tests_to_run=$(get_tests_for_category "$CATEGORY")
+    if [[ -z "$tests_to_run" ]]; then
       echo -e "${RED}Error: Unknown category '$CATEGORY'${NC}"
       echo "Valid categories: build, security, lib, integration, all"
       exit 2
     fi
-    tests_to_run="${test_categories[$CATEGORY]}"
   else
     # Run all tests
     tests_to_run=""
     for category in build security lib integration; do
-      tests_to_run+="${test_categories[$category]}"$'\n'
+      tests_to_run+="$(get_tests_for_category "$category")"$'\n'
     done
   fi
 
@@ -291,7 +301,7 @@ $SCRIPT_DIR/integration/test-rollback.sh"
       [[ ! -f "$test_script" ]] && continue
 
       run_test_suite "$test_script" || true
-    done <<< "${test_categories[$category]}"
+    done <<< "$(get_tests_for_category "$category")"
   done
 
   # Generate final report
