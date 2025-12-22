@@ -178,8 +178,12 @@ function cleanup-standard() {
     rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
     command -v npm &>/dev/null && npm cache clean --force &>/dev/null
 
-    # Standard additions
-    [[ -d "$HOME/Dev" ]] && find "$HOME/Dev" -name ".git" -type d -exec sh -c 'cd "$(dirname "{}")" && git gc --quiet 2>/dev/null' \; 2>/dev/null
+    # Standard additions - Git GC on all repos
+    if [[ -d "$HOME/Dev" ]]; then
+      find "$HOME/Dev" -name ".git" -type d -print0 2>/dev/null | while IFS= read -r -d '' gitdir; do
+        git -C "$(dirname "$gitdir")" gc --quiet 2>/dev/null || true
+      done
+    fi
     [[ -d "$HOME/.aws/cli/cache" ]] && rm -rf "$HOME/.aws/cli/cache"/* 2>/dev/null
     rm -rf ~/Library/Application\ Support/Code/Cache/* ~/Library/Application\ Support/Code/CachedData/* ~/Library/Application\ Support/Code/logs/* 2>/dev/null
     rm -rf ~/Library/Logs/* 2>/dev/null

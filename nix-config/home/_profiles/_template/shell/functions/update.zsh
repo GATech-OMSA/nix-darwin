@@ -3,6 +3,18 @@
 # Extracted from zsh.nix for maintainability
 
 # ============================================
+# UPDATE HELPERS
+# ============================================
+
+# Auto-restart shell in interactive mode (for functions that change shell config)
+__update_restart_shell() {
+  if [[ -o interactive ]]; then
+    echo "🔄 Restarting shell..."
+    exec zsh
+  fi
+}
+
+# ============================================
 # UPDATE FUNCTIONS
 # ============================================
 
@@ -22,11 +34,25 @@ function update-nix() {
   echo "  📦 Updating flake inputs..."
   cd "$nix_dir" || return 1
 
+  # Stash uncommitted changes if any
+  local had_changes=false
+  if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+    had_changes=true
+    echo "  📋 Stashing uncommitted changes..."
+    git stash push -m "update-nix auto-stash $(date +%Y%m%d-%H%M%S)" --quiet
+  fi
+
   if nix flake update; then
     echo "  ✅ Flake inputs updated"
   else
     echo "  ❌ Flake update failed" >&2
     ((errors++))
+  fi
+
+  # Restore stashed changes
+  if [[ "$had_changes" == "true" ]]; then
+    echo "  📋 Restoring stashed changes..."
+    git stash pop --quiet
   fi
 
   echo "  📦 Rebuilding darwin configuration..."
@@ -41,6 +67,7 @@ function update-nix() {
 
   if [ $errors -eq 0 ]; then
     echo "✅ Nix update completed successfully"
+    __update_restart_shell
   else
     echo "⚠️  Nix update completed with $errors error(s)"
     return 1
@@ -69,11 +96,16 @@ function update-brew() {
     fi
 
     echo "  📦 Upgrading all casks (including auto-update apps)..."
-    if brew cu -afy; then
-      echo "  ✅ All casks upgraded"
+    if brew commands | grep -q "^cu$"; then
+      if brew cu -afy; then
+        echo "  ✅ All casks upgraded"
+      else
+        echo "  ❌ Cask upgrade failed" >&2
+        ((errors++))
+      fi
     else
-      echo "  ❌ Cask upgrade failed" >&2
-      ((errors++))
+      echo "  ⚠️  brew-cask-upgrade not installed, skipping"
+      echo "     Install: brew tap buo/cask-upgrade && brew install brew-cask-upgrade"
     fi
 
     echo "  🧹 Cleaning up..."
@@ -105,8 +137,14 @@ function update-mamba() {
 
   if command -v micromamba &> /dev/null; then
     echo "  📦 Updating micromamba environments..."
-    # Update all environments dynamically
-    local env_list=$(micromamba env list | tail -n +3 | awk '{print $1}')
+    # Update all environments dynamically using JSON for robust parsing
+    local env_list
+    if command -v jq &>/dev/null; then
+      env_list=$(micromamba env list --json 2>/dev/null | jq -r '.envs[]' 2>/dev/null | xargs -I{} basename {})
+    else
+      # Fallback to text parsing if jq not available
+      env_list=$(micromamba env list 2>/dev/null | tail -n +3 | awk '{print $1}')
+    fi
     if [ -n "$env_list" ]; then
       for env in $env_list; do
         if [ "$env" != "base" ]; then  # Skip the base installation
@@ -115,6 +153,7 @@ function update-mamba() {
             echo "    ✅ $env updated"
           else
             echo "    ⚠️  $env skipped or failed" >&2
+            ((errors++))
           fi
         fi
       done
@@ -136,12 +175,24 @@ function update-mamba() {
 
 function update-vscode() {
   echo "💻 Updating VS Code extensions..."
+  local errors=0
 
   if command -v code &> /dev/null; then
-    code --list-extensions | while read extension; do
-      code --install-extension "$extension" --force &> /dev/null
-    done
-    echo "✅ VS Code extensions updated"
+    local extensions
+    extensions=$(code --list-extensions 2>/dev/null)
+    if [ -n "$extensions" ]; then
+      while IFS= read -r extension; do
+        if ! code --install-extension "$extension" --force &> /dev/null; then
+          ((errors++))
+        fi
+      done <<< "$extensions"
+    fi
+
+    if [ $errors -eq 0 ]; then
+      echo "✅ VS Code extensions updated"
+    else
+      echo "⚠️  VS Code extensions updated ($errors failed)"
+    fi
   else
     echo "⚠️  VS Code not found"
     return 1
@@ -183,6 +234,7 @@ function update-dev() {
 
   if [ $errors -eq 0 ]; then
     echo "✅ Development update completed!"
+    __update_restart_shell
   else
     echo "⚠️  Completed with $errors error(s)"
     return 1
@@ -206,6 +258,7 @@ function update-system() {
 
   if [ $errors -eq 0 ]; then
     echo "✅ System update completed!"
+    __update_restart_shell
   else
     echo "⚠️  Completed with $errors error(s)"
     return 1
@@ -245,7 +298,7 @@ function update-all() {
   if [ $total_errors -eq 0 ]; then
     echo ""
     echo "✅ All updates completed successfully!"
-    echo "💡 Consider restarting your terminal"
+    __update_restart_shell
   else
     echo ""
     echo "⚠️  Completed with $total_errors error(s)"
