@@ -69,21 +69,9 @@ in
   # Zsh configuration (base setup, extended in Home Manager)
   programs.zsh = {
     enable = true;
+    enableCompletion = false; # Disable system-wide compinit (handled by Home Manager)
 
     shellInit = ''
-      # Enable completion
-      autoload -Uz compinit && compinit
-
-      # History configuration
-      export HISTFILE="$HOME/.zsh_history"
-      export HISTSIZE=10000
-      export SAVEHIST=10000
-      setopt HIST_IGNORE_DUPS
-      setopt HIST_IGNORE_ALL_DUPS
-      setopt HIST_FIND_NO_DUPS
-      setopt HIST_SAVE_NO_DUPS
-      setopt SHARE_HISTORY
-
       # PATH management
       typeset -U PATH path
       path=(

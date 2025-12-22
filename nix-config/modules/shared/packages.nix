@@ -122,6 +122,7 @@ let
     k9s
     kubernetes-helm
     stern        # Multi-pod log tailing for K8s
+    terraform    # Infrastructure as code
 
     # Database
     usql         # Universal SQL client (PostgreSQL, MySQL, SQLite, MSSQL, etc.)
