@@ -258,8 +258,8 @@ check_shell_config() {
     check_fail ".zshrc not found"
   fi
 
-  # Check critical aliases
-  if grep -q "alias.*nix-rebuild=" "$HOME/.zshrc" 2>/dev/null; then
+  # Check critical aliases (use shell subprocess to test if command resolves)
+  if zsh -i -c 'type nix-rebuild' &>/dev/null; then
     check_pass "nix-rebuild alias available"
   else
     check_warn "nix-rebuild alias not found" "May need to reload shell"

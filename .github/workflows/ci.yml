@@ -23,10 +23,10 @@ jobs:
         # Generate dummy configs for CI
         cp config/machine-config.nix.template config/machine-config.nix
         cp config/user-config.nix.template config/user-config.nix
-        
-        # Set a valid machineId for the dry-run
-        sed -i '' 's/machineId = ".*"/machineId = "macbook-pro-m1"/' config/machine-config.nix
-        sed -i '' 's/profileName = ".*"/profileName = "personal"/' config/machine-config.nix
+
+        # Set a valid machineId for the dry-run (portable sed - works on BSD and GNU)
+        sed 's/machineId = ".*"/machineId = "macbook-pro-m1"/' config/machine-config.nix > config/machine-config.nix.tmp && mv config/machine-config.nix.tmp config/machine-config.nix
+        sed 's/profileName = ".*"/profileName = "personal"/' config/machine-config.nix > config/machine-config.nix.tmp && mv config/machine-config.nix.tmp config/machine-config.nix
       
     - name: Check Flake
       run: nix flake check

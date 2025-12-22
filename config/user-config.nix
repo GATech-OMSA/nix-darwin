@@ -1,7 +1,7 @@
 {
   username = "jimmy";
   fullName = "Jim";
-  email = "no-reply.j@outlook.com";
+  email = "13123674+jimmy-jain@users.noreply.github.com";
 
   # Proxy configuration for corporate environments
   proxies = {

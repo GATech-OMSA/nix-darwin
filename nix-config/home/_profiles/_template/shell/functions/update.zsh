@@ -7,6 +7,9 @@
 # ============================================
 
 # Auto-restart shell in interactive mode (for functions that change shell config)
+# WARNING: This function calls `exec zsh` which terminates the current shell immediately.
+# MUST be called as the LAST statement in any function - no code after it will execute.
+# Only call this after all cleanup, logging, and state updates are complete.
 __update_restart_shell() {
   if [[ -o interactive ]]; then
     echo "🔄 Restarting shell..."
@@ -138,11 +141,16 @@ function update-mamba() {
   if command -v micromamba &> /dev/null; then
     echo "  📦 Updating micromamba environments..."
     # Update all environments dynamically using JSON for robust parsing
-    local env_list
+    local env_list=""
     if command -v jq &>/dev/null; then
-      env_list=$(micromamba env list --json 2>/dev/null | jq -r '.envs[]' 2>/dev/null | xargs -I{} basename {})
-    else
-      # Fallback to text parsing if jq not available
+      # Try JSON parsing first (more robust)
+      local json_output
+      if json_output=$(micromamba env list --json 2>/dev/null) && [[ -n "$json_output" ]]; then
+        env_list=$(echo "$json_output" | jq -r '.envs[]' 2>/dev/null | xargs -I{} basename {} 2>/dev/null)
+      fi
+    fi
+    # Fallback to text parsing if jq not available or JSON parsing failed
+    if [[ -z "$env_list" ]]; then
       env_list=$(micromamba env list 2>/dev/null | tail -n +3 | awk '{print $1}')
     fi
     if [ -n "$env_list" ]; then
