@@ -172,6 +172,7 @@ CLAUDE.md is the **authoritative source** for all configuration instructions.
 **Key Documentation:**
 - Installation: `docs/installation.md` (v2.0.0 three-script workflow)
 - Troubleshooting: `docs/troubleshooting.md`
+- Maintenance: `docs/guides/maintenance.md` (Cleanup tiers & tools)
 - Secrets: `docs/secrets.md` (SOPS encryption)
 - AWS & Secrets: `docs/AWS-AND-SECRETS-WORKFLOW.md` (comprehensive workflow with hot reload)
 - Python: `docs/python-development.md` (UV + direnv auto-activation)
@@ -346,10 +347,12 @@ deprecated/docs/               # Archived documentation (4 files)
 
 | Task | Command | Notes |
 |------|---------|-------|
-| Rebuild system | `just switch` (or `nix-rebuild`) | After ANY config change |
+| Rebuild system | `nix-rebuild` (or `just switch`) | Smart rebuild with pre-flight checks |
 | Build (no switch) | `just build` | Test if config compiles |
 | Restart shell | `exec zsh` | After rebuild |
 | Rollback | `just rollback` (or `nix-rollback`) | If build breaks |
+| System Cleanup | `system-cleanup` | Interactive cache/log/docker cleaning |
+| Brew Audit | `nix-brew-audit` | Check Brew apps for Nix migration |
 | Health check | `just health` (or `nix-health`) | Troubleshooting |
 | Update all | `just update` (or `update-all`) | Weekly maintenance |
 | Edit secrets | `just secrets-edit` | Manage encrypted secrets |

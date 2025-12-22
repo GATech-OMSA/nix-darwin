@@ -556,11 +556,12 @@ After setup, you have:
 
 **Focused learning with comprehensive reference**
 
-### Quick Start
+### Essential Guides
 
 1. **[Installation Guide](docs/installation.md)** - Complete setup instructions
-2. **[Learning Guide](docs/learning/README.md)** - Progressive Nix learning path
-3. **[Documentation Hub](docs/README.md)** - All available documentation
+2. **[Maintenance Guide](docs/guides/maintenance.md)** - System cleanup & health
+3. **[Learning Guide](docs/learning/README.md)** - Progressive Nix learning path
+4. **[Documentation Hub](docs/README.md)** - All available documentation
 
 ### Comprehensive Reference
 
