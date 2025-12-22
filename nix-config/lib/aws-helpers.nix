@@ -22,12 +22,20 @@ rec {
       flakeRoot = builtins.getEnv "FLAKE_ROOT";
       # Try to find accounts.json - first check if we can construct a home path
       homeDir = builtins.getEnv "HOME";
+      
+      # Determine path - only if we have a valid home directory
       accountsPath = if homeDir != "" then "${homeDir}/.aws/accounts.json" else "";
+      
+      # Check if file exists - this requires 'impure' mode or file to be in store
+      # We wrap in tryEval-like logic by checking path existence first
+      # Note: builtins.pathExists is allowed in pure mode for relative paths, 
+      # but absolute paths (like homeDir) generally require --impure.
+      hasFile = if accountsPath != "" then builtins.pathExists accountsPath else false;
     in
-    if accountsPath != "" && builtins.pathExists accountsPath
+    if hasFile
     then builtins.fromJSON (builtins.readFile accountsPath)
     else {};
-    # NOTE: If accounts.json doesn't exist at build time, we return {}
+    # NOTE: If accounts.json doesn't exist at build time (CI, fresh install), we return {}
     # This means mkAwsAliasesFromJson won't generate aliases, but that's OK
     # because the shell functions (awsuse, awslogin) read the file at runtime
 
