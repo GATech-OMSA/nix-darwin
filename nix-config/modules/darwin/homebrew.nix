@@ -36,7 +36,7 @@
     casks = [
       # Browsers
       "orion"
-      "chrome"
+      "google-chrome"
 
       # Development
       "antigravity"
