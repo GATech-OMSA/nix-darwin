@@ -110,21 +110,11 @@ in
       zshsec = "code ${homeDir}/.zsh_secrets";
 
       # Nix-Darwin system management
-      # nix-rebuild runs with pre-flight checks by default
-      # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      # Restarts shell only on success; shows error on failure
-      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh || echo '❌ Rebuild failed - shell NOT restarted'";
-
-      # Skip pre-flight checks for emergency rebuilds (use with caution)
-      # IMPORTANT: Must export FLAKE_ROOT for gitignored config imports
-      # Restarts shell only on success; shows error on failure
-      nix-rebuild-skip-checks = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh || echo '❌ Rebuild failed - shell NOT restarted'";
-
-      # Debug mode with verbose output for troubleshooting
-      # Shows detailed build logs, stack traces, and Home Manager activation details
-      # Usage: nix-rebuild-debug (for full rebuild with debug info)
-      # Restarts shell only on success; shows error on failure
-      nix-rebuild-debug = "sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure --show-trace --verbose --print-build-logs && exec zsh || echo '❌ Rebuild failed - shell NOT restarted'";
+      # Usage: nix-rebuild [options]
+      # See: scripts/maintenance/rebuild.sh
+      nix-rebuild = "${nixDarwinDir}/scripts/maintenance/rebuild.sh";
+      nix-rebuild-skip-checks = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --skip-checks";
+      nix-rebuild-debug = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --debug";
 
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
@@ -144,7 +134,7 @@ in
       nix-config-diff-verbose = "${nixDarwinDir}/scripts/maintenance/config-diff.sh --verbose";
 
       # Rollback to previous generation and restart shell
-      nix-rollback = "sudo darwin-rebuild --rollback && exec zsh";
+      nix-rollback = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --rollback";
 
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
@@ -166,6 +156,7 @@ in
 
       # Maintenance & validation
       nix-verify-backups = "${nixDarwinDir}/scripts/maintenance/verify-backups.sh";
+      nix-brew-audit = "${nixDarwinDir}/scripts/maintenance/brew-nix-audit.sh";
 
       # ============================================
       # WORKFLOW HELPERS
@@ -353,12 +344,23 @@ in
       codellama = "ollama run codellama";
 
       # ============================================
-      # CLEANUP ALIASES
+      # CLEANUP & MAINTENANCE
       # ============================================
-      # Note: cleanup function is defined below and defaults to cleanup-standard
-      # cleanup-all is an alias for cleanup-aggressive
+      # Main cleanup command (Standard Tier)
+      cleanup = "cleanup-standard";
       clean = "cleanup-quick";
+      
+      # Specific cleanup tasks (Zsh functions)
+      # cleanup-safe       : Logs/temp files only
+      # cleanup-quick      : Safe + brew cleanup
+      # cleanup-standard   : Quick + Docker prune + Nix GC
+      # cleanup-aggressive : Deep clean (requires confirmation)
+      
+      # Script-based maintenance
+      cleanup-system = "${nixDarwinDir}/scripts/maintenance/system-cleanup.sh";  # External script
+      repo-reset = "${nixDarwinDir}/scripts/maintenance/repo-reset.sh";           # Reset repo config
     };
+
 
     # Init content (combined: micromamba lazy-load, then main config)
     initContent = lib.mkMerge [
@@ -500,6 +502,7 @@ in
       ${builtins.readFile ./functions/python.zsh}
       ${builtins.readFile ./functions/cleanup.zsh}
       ${builtins.readFile ./functions/credentials-mgmt.zsh}
+      ${builtins.readFile ./functions/aws-completion.zsh}
 
       # ============================================
       # INLINE FUNCTIONS BELOW (duplicates of above, to be removed)

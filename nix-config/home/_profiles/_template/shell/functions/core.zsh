@@ -11,6 +11,33 @@ function mkcd() {
   mkdir -p "$1" && cd "$1"
 }
 
+# Search and find aliases using fzf
+function find-alias() {
+  if command -v fzf &> /dev/null; then
+    alias | fzf --query="$1" --header "Search Aliases" --preview 'echo {}' --preview-window=up:1:wrap
+  else
+    alias | grep -i "$1"
+  fi
+}
+alias als="find-alias"
+
+# Profile zsh startup time (runs 10 iterations)
+function zsh-profile() {
+  local shell=${1:-zsh}
+  echo "⏱️  Profiling $shell startup time (10 iterations)..."
+  for i in $(seq 1 10); do /usr/bin/time $shell -i -c exit; done
+}
+
+# Add directory to PATH safely (avoids duplicates)
+function path-add() {
+  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
+    export PATH="$1:$PATH"
+    echo "✅ Added to PATH: $1"
+  else
+    echo "ℹ️  Path already exists or directory not found: $1"
+  fi
+}
+
 # Quick backup
 function backup() {
   if [ -z "$1" ]; then

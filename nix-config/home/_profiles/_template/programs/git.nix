@@ -77,6 +77,23 @@
         defaultBranch = "master";
       };
 
+      # Modern Git 2.x features
+      column = {
+        ui = "auto";
+      };
+      branch = {
+        sort = "-committerdate";
+      };
+      tag = {
+        sort = "version:refname";
+      };
+      help = {
+        autocorrect = "prompt";
+      };
+      maintenance = {
+        auto = true;
+      };
+
       # Git aliases - migrated from ConfigHub .gitconfig
       alias = {
       # Status
