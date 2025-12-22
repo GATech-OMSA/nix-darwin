@@ -18,6 +18,16 @@ jobs:
     - name: Magic Nix Cache
       uses: determinate-systems/magic-nix-cache-action@v4
       
+    - name: Generate Configs
+      run: |
+        # Generate dummy configs for CI
+        cp config/machine-config.nix.template config/machine-config.nix
+        cp config/user-config.nix.template config/user-config.nix
+        
+        # Set a valid machineId for the dry-run
+        sed -i '' 's/machineId = ".*"/machineId = "macbook-pro-m1"/' config/machine-config.nix
+        sed -i '' 's/profileName = ".*"/profileName = "personal"/' config/machine-config.nix
+      
     - name: Check Flake
       run: nix flake check
       
