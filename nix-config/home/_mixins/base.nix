@@ -44,4 +44,39 @@
     enable = true;
     enableZshIntegration = true;
   };
+
+  # Atuin - magical shell history with SQLite storage
+  # Replaces Ctrl-R with powerful fuzzy search, filter by exit code, directory, etc.
+  programs.atuin = {
+    enable = true;
+    enableZshIntegration = true;
+    flags = [
+      "--disable-up-arrow"  # Keep up-arrow for normal history navigation
+    ];
+    settings = {
+      # Search mode: prefix (default), fulltext, fuzzy, skim
+      search_mode = "fuzzy";
+      # Filter mode: global (all history), host, session, directory
+      filter_mode = "global";
+      # Style: auto, full, compact
+      style = "compact";
+      # Show preview of full command
+      show_preview = true;
+      # Max preview height
+      max_preview_height = 4;
+      # Inline height (0 = full screen)
+      inline_height = 0;
+      # History filter - exclude commands starting with space
+      history_filter = [
+        "^\\s+"      # Ignore commands starting with space
+        "^exit$"     # Ignore exit
+        "^clear$"    # Ignore clear
+      ];
+      # Sync settings (disabled by default - enable if you want cloud sync)
+      auto_sync = false;
+      sync_frequency = "1h";
+      # Enter accepts immediately (vs enter to select, tab to accept)
+      enter_accept = true;
+    };
+  };
 }

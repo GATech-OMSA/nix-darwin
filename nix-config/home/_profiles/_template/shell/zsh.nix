@@ -37,6 +37,11 @@ in
 
       # Ensure history is immediately written
       HISTFILE = "${config.home.homeDirectory}/.zsh_history";
+
+      # nh (Nix Helper) configuration - enables zero-arg nh commands
+      # Note: NH_DARWIN_FLAKE is the flake path, NH_DARWIN_HOSTNAME is our custom var for -H
+      NH_DARWIN_FLAKE = nixDarwinDir;
+      NH_DARWIN_HOSTNAME = machineId;
     };
 
     # Oh My Zsh integration - Controlled by enableOhMyZsh flag
@@ -135,6 +140,14 @@ in
 
       # Rollback to previous generation and restart shell
       nix-rollback = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --rollback";
+
+      # nh (Nix Helper) convenience aliases
+      # Uses subshell to cd to flake directory (nh works best from within flake dir)
+      nh-switch = "(cd ${nixDarwinDir} && nh darwin switch -H ${machineId} . --impure)";
+      nh-build = "(cd ${nixDarwinDir} && nh darwin build -H ${machineId} . --impure)";
+      nh-clean = "nh clean all --keep 5";          # Smart cleanup, keep 5 generations
+      nh-clean-aggressive = "nh clean all --keep 2";  # Aggressive cleanup
+      nh-search = "nh search";                     # Search nixpkgs
 
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md

@@ -2,9 +2,9 @@
 #
 # Smart Rebuild Script for nix-darwin
 #
-# Wraps darwin-rebuild with:
+# Wraps nh (Nix Helper) with:
 # 1. Pre-flight health checks
-# 2. Environment setup (FLAKE_ROOT)
+# 2. Environment setup (FLAKE_ROOT, NH_DARWIN_FLAKE)
 # 3. Proper error handling
 # 4. Sudo management
 #
@@ -16,6 +16,7 @@
 #   --debug          Enable verbose output and trace
 #   --impure         Allow impure expressions (default: true)
 #   --rollback       Rollback to previous generation
+#   --legacy         Use darwin-rebuild instead of nh (fallback)
 
 set -e
 
@@ -32,6 +33,7 @@ MACHINE_ID=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/machine-config.nix"
 SKIP_CHECKS=false
 DEBUG_MODE=false
 ROLLBACK=false
+USE_LEGACY=false
 
 args=()
 while [[ $# -gt 0 ]]; do
@@ -46,6 +48,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --rollback)
       ROLLBACK=true
+      shift
+      ;;
+    --legacy)
+      USE_LEGACY=true
       shift
       ;;
     *)
@@ -76,9 +82,6 @@ fi
 # ============================================
 echo "🚀 Starting system rebuild for machine: ${MACHINE_ID}..."
 
-# Export FLAKE_ROOT for gitignored config imports in flake.nix
-export FLAKE_ROOT="$NIX_DARWIN_DIR"
-
 if [[ "$ROLLBACK" == "true" ]]; then
   echo "🔙 Rolling back to previous generation..."
   if sudo darwin-rebuild --rollback; then
@@ -91,29 +94,63 @@ if [[ "$ROLLBACK" == "true" ]]; then
   fi
 fi
 
-# Construct build command
-CMD="darwin-rebuild switch --flake ${NIX_DARWIN_DIR}#${MACHINE_ID} --impure"
+# Use nh by default, darwin-rebuild as fallback
+if [[ "$USE_LEGACY" == "true" ]] || ! command -v nh &>/dev/null; then
+  # Legacy mode: use darwin-rebuild directly
+  if [[ "$USE_LEGACY" == "true" ]]; then
+    echo "📦 Using legacy darwin-rebuild (--legacy flag)"
+  else
+    echo "⚠️  nh not found, falling back to darwin-rebuild"
+  fi
 
-if [[ "$DEBUG_MODE" == "true" ]]; then
-  CMD="$CMD --show-trace --verbose --print-build-logs"
-fi
+  # Export FLAKE_ROOT for gitignored config imports in flake.nix (legacy only)
+  export FLAKE_ROOT="$NIX_DARWIN_DIR"
 
-# Add any passed arguments
-if [[ ${#args[@]} -gt 0 ]]; then
-  CMD="$CMD ${args[@]}"
-fi
+  CMD="darwin-rebuild switch --flake ${NIX_DARWIN_DIR}#${MACHINE_ID} --impure"
 
-echo "Running: sudo $CMD"
+  if [[ "$DEBUG_MODE" == "true" ]]; then
+    CMD="$CMD --show-trace --verbose --print-build-logs"
+  fi
 
-# Execute with sudo
-if sudo FLAKE_ROOT="$FLAKE_ROOT" $CMD; then
-  echo "✅ Rebuild successful"
-  
-  # Restart shell to apply changes
-  echo "🔄 Restarting shell..."
-  exec zsh
+  if [[ ${#args[@]} -gt 0 ]]; then
+    CMD="$CMD ${args[@]}"
+  fi
+
+  echo "Running: sudo $CMD"
+
+  if sudo FLAKE_ROOT="$FLAKE_ROOT" $CMD; then
+    echo "✅ Rebuild successful"
+    echo "🔄 Restarting shell..."
+    exec zsh
+  else
+    echo "❌ Rebuild failed"
+    exit 1
+  fi
 else
-  echo "❌ Rebuild failed"
-  # Do NOT restart shell on failure, so user can see errors
-  exit 1
+  # Modern mode: use nh (better output, package diff)
+  # cd to flake directory (nh works better from within the flake dir)
+  cd "$NIX_DARWIN_DIR" || exit 1
+  CMD="nh darwin switch -H ${MACHINE_ID} . --impure"
+
+  if [[ "$DEBUG_MODE" == "true" ]]; then
+    CMD="$CMD --show-trace --print-build-logs --verbose"
+  fi
+
+  if [[ ${#args[@]} -gt 0 ]]; then
+    CMD="$CMD -- ${args[@]}"
+  fi
+
+  echo "Running: $CMD"
+
+  # nh works from within the flake directory (cd done above)
+  # Don't set FLAKE_ROOT - it causes nh flake resolution to fail
+  # The flake.nix getEnv "FLAKE_ROOT" defaults to pwd when unset
+  if $CMD; then
+    echo "✅ Rebuild successful"
+    echo "🔄 Restarting shell..."
+    exec zsh
+  else
+    echo "❌ Rebuild failed"
+    exit 1
+  fi
 fi

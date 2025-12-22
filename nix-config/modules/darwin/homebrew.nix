@@ -43,6 +43,7 @@
       "visual-studio-code"
       "claude-code"
       "iterm2"
+      "ghostty"         # Modern terminal emulator (alongside iTerm2)
       "dash"
       "warp"
       "fork"

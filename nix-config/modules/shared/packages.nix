@@ -25,10 +25,11 @@ let
     zsh
 
     # Modern CLI Tools (replacements for standard Unix tools)
-    # Note: bat, eza, fzf, zoxide, direnv - installed via programs.* in home/_mixins/base.nix
+    # Note: bat, eza, fzf, zoxide, direnv, atuin - installed via programs.* in home/_mixins/base.nix
     ripgrep  # Better grep (rg)
     fd  # Better find
-    delta  # Better git diff
+    delta  # Better git diff (line-based)
+    difftastic  # Syntax-aware diff (structural, use alongside delta)
     dust  # Better du
     duf  # Better df
     btop  # Better top
@@ -52,7 +53,9 @@ let
     tree
     watch
     tldr  # Simplified man pages
+    navi  # Interactive command cheatsheet (better than tldr for complex commands)
     fastfetch  # System info (modern replacement for neofetch)
+    glow  # Terminal markdown viewer
 
     # File Utilities
     rsync
@@ -74,6 +77,8 @@ let
     lazydocker   # Beautiful TUI for Docker management
     yazi         # Blazing fast terminal file manager
     jless        # Interactive JSON viewer
+    zellij       # Modern terminal multiplexer (alongside tmux)
+    helix        # Fast modal editor (alternative to vim/neovim)
 
     # Code Quality & Development
     pre-commit   # Git hooks framework
@@ -87,10 +92,17 @@ let
 
     # Note-taking & Documentation
     nb           # CLI note-taking
+    mdbook       # Fast documentation generator (Rust)
+
+    # Security
+    gitleaks     # Secret scanning for git repos (pre-commit integration)
 
     # macOS Specific
     mkalias
     tmux  # Terminal multiplexer
+
+    # Nix Tooling
+    nh  # Modern Nix helper (better darwin-rebuild UX)
 
     # Secrets Management
     age  # Encryption tool (for secrets)
@@ -106,8 +118,13 @@ let
     # Containers & Orchestration
     docker-compose
     kubectl
+    kubectx      # Fast K8s context/namespace switching (includes kubens)
     k9s
     kubernetes-helm
+    stern        # Multi-pod log tailing for K8s
+
+    # Database
+    usql         # Universal SQL client (PostgreSQL, MySQL, SQLite, MSSQL, etc.)
 
     # Cloud
     awscli2
