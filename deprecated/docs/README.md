@@ -46,6 +46,16 @@ These files are kept for historical reference but should not be used as the prim
 - **Historical Value:** Shows the thinking and design decisions during the username-agnostic machine ID refactoring
 - **Use instead:** See `docs/installation.md` for current installation instructions
 
+### doc-consolidation-plan.md
+- **Deprecated:** December 2025
+- **Reason:** Process artifact describing the plan for the November 2025 documentation cleanup. The work is complete.
+- **Status:** Archived for historical record of the consolidation strategy.
+
+### docs-review-nov-2025.md
+- **Deprecated:** December 2025
+- **Reason:** Process artifact containing the detailed inventory and audit results of the November 2025 documentation review.
+- **Status:** Archived for historical record.
+
 ---
 
 ## For Current Documentation
