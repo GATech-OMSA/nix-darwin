@@ -21,7 +21,7 @@
   #   # Go module proxy (for sops-nix and other Go-based tools)
   #   go = {
   #     enabled = true;
-  #     url = "https://nexus.example.com/repository/duke-cne-golang/";
+  #     url = "https://nexus.example.com/repository/golang-proxy/";
   #     private = "github.com/my-corp/";  # Comma-separated list of private module prefixes
   #   };
   #
