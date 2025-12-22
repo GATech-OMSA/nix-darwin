@@ -259,7 +259,7 @@ check_shell_config() {
   fi
 
   # Check critical aliases
-  if command -v nix-rebuild &> /dev/null; then
+  if grep -q "alias.*nix-rebuild=" "$HOME/.zshrc" 2>/dev/null; then
     check_pass "nix-rebuild alias available"
   else
     check_warn "nix-rebuild alias not found" "May need to reload shell"
@@ -513,7 +513,7 @@ check_backup_verification() {
   print_category "BACKUP VERIFICATION"
 
   # Check if verification script exists
-  if [[ ! -x "$REPO_ROOT/scripts/verify-backups.sh" ]]; then
+  if [[ ! -x "$REPO_ROOT/scripts/maintenance/verify-backups.sh" ]]; then
     check_warn "Backup verification script not found or not executable"
     return
   fi
@@ -523,7 +523,7 @@ check_backup_verification() {
   echo ""
 
   # Run verification and capture full output
-  verify_output=$("$REPO_ROOT/scripts/verify-backups.sh" 2>&1)
+  verify_output=$("$REPO_ROOT/scripts/maintenance/verify-backups.sh" 2>&1)
   verify_exit_code=$?
 
   # Parse verification results (strip ANSI codes for parsing)
@@ -539,9 +539,9 @@ check_backup_verification() {
     if [[ $verify_exit_code -eq 0 ]]; then
       check_pass "Backup verification passed" "$passed/$total checks passed"
     elif [[ $failed -gt 0 ]]; then
-      check_fail "$failed backup verification check(s) failed" "Run: $REPO_ROOT/scripts/verify-backups.sh --verbose"
+      check_fail "$failed backup verification check(s) failed" "Run: $REPO_ROOT/scripts/maintenance/verify-backups.sh --verbose"
     else
-      check_warn "$warnings backup verification warning(s)" "Review with: $REPO_ROOT/scripts/verify-backups.sh --verbose"
+      check_warn "$warnings backup verification warning(s)" "Review with: $REPO_ROOT/scripts/maintenance/verify-backups.sh --verbose"
     fi
 
     # Show verbose output if requested

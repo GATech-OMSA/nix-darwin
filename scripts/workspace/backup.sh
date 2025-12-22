@@ -27,6 +27,10 @@ mkdir -p "$BACKUP_DIR"
 echo "📦 Backing up user data to $BACKUP_DIR"
 echo ""
 
+# Copy backup script itself for self-contained backup
+cp "$0" "$BACKUP_DIR/"
+chmod +x "$BACKUP_DIR/backup.sh"
+
 # App Configs
 echo "🔧 Backing up application configs..."
 mkdir -p "$BACKUP_DIR/app-configs"

@@ -19,7 +19,23 @@ NC='\033[0m' # No Color
 # CONFIGURATION
 # ============================================================================
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BACKUP_DIR="$REPO_ROOT/user-data"
+
+# Extract machineId from config/machine-config.nix
+MACHINE_CONFIG="$REPO_ROOT/config/machine-config.nix"
+if [[ -f "$MACHINE_CONFIG" ]]; then
+  MACHINE_ID=$(grep 'machineId' "$MACHINE_CONFIG" | cut -d'"' -f2)
+else
+  # Fallback or error if config doesn't exist
+  echo "❌ Error: Machine config not found at $MACHINE_CONFIG"
+  exit 1
+fi
+
+if [[ -z "$MACHINE_ID" ]]; then
+  echo "❌ Error: Could not determine machineId from config"
+  exit 1
+fi
+
+BACKUP_DIR="$REPO_ROOT/workspace/$MACHINE_ID"
 TEMP_RESTORE_DIR="/tmp/nix-darwin-restore-test-$$"
 VERBOSE=0
 TOTAL_CHECKS=0
