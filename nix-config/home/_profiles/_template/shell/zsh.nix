@@ -12,6 +12,9 @@ let
   # Static generation of shell init scripts to improve startup time
   # This moves ~15-30ms of processing from shell-start to build-time
   shellInitCache = pkgs.runCommand "shell-init-cache" {} ''
+    # Fix for tools attempting to write to locked /homeless-shelter
+    export HOME=$(mktemp -d)
+    
     mkdir -p $out
     ${pkgs.starship}/bin/starship init zsh > $out/starship.zsh
     ${pkgs.zoxide}/bin/zoxide init zsh > $out/zoxide.zsh
@@ -27,7 +30,7 @@ in
     enable = true;
     enableCompletion = false;
     autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
+    syntaxHighlighting.enable = false; # Replaced by fast-syntax-highlighting (see initExtra)
 
     # History configuration
     history = {
@@ -637,6 +640,13 @@ in
       # Alias 'zz' for jumping back is kept for convenience
       alias zz="z -"
       ''
+      
+      (lib.mkOrder 900 ''
+        # FAST SYNTAX HIGHLIGHTING
+        # Replaces standard zsh-syntax-highlighting (saves ~700ms)
+        # Sourced at the end to ensure it wraps all widgets correctly
+        source ${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+      '')
     ];
 
     # Login shell init
