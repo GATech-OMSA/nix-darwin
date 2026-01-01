@@ -65,7 +65,7 @@ echo $ANTHROPIC_API_KEY
 Reference secrets in your Nix files:
 
 ```nix
-programs.zsh.initExtra = ''
+programs.zsh.initContent = ''
   export OPENAI_API_KEY="$(cat ${config.sops.secrets.openai_api_key.path})"
 '';
 ```

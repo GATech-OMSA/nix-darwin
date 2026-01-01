@@ -623,7 +623,7 @@ function mkcd() {
 
 ```nix
 # home/_profiles/_template/shell/zsh.nix
-programs.zsh.initExtra = ''
+programs.zsh.initContent = ''
   mkcd() {
     mkdir -p "$1" && cd "$1"
   }

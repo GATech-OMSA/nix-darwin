@@ -30,7 +30,7 @@ in
     enable = true;
     enableCompletion = false;
     autosuggestion.enable = true;
-    syntaxHighlighting.enable = false; # Replaced by fast-syntax-highlighting (see initExtra)
+    syntaxHighlighting.enable = false; # Replaced by fast-syntax-highlighting (see initContent)
 
     # History configuration
     history = {
@@ -389,7 +389,7 @@ in
 
 
     # Init content (combined: micromamba lazy-load, then main config)
-    initExtra = lib.mkMerge [
+    initContent = lib.mkMerge [
       # PERFORMANCE OPTIMIZATIONS (The <0.5s Goal)
       # Hybrid Approach: Static generation of init scripts
       # Moves ~20ms of processing from shell-start to build-time
