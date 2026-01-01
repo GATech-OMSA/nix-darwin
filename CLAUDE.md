@@ -544,6 +544,17 @@ COMPLETED.md (chronological index)
 
 ---
 
+# 📜 RULES INDEX
+
+<!-- RULES-INDEX-START -->
+| Scope | Rule | Purpose |
+|-------|------|---------|
+| `**/*.nix` | [Nix Standards](.claude/rules/gen-lang-nix.md) | myLib patterns, file headers, state versions |
+| `.github/workflows/**` | [GitHub Actions](.claude/rules/gen-ci-github-actions.md) | Nix CI, dry-run builds, config templates |
+<!-- RULES-INDEX-END -->
+
+---
+
 # 📊 FILE STATS
 
 | Metric | Value | Status |

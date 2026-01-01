@@ -1,5 +1,8 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+# Increase scan timeout for large directories (default 30ms is too short)
+scan_timeout = 100
+
 # LEFT PROMPT - Main powerline
 format = """
 $container\
