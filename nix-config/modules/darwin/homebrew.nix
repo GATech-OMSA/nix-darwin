@@ -30,6 +30,7 @@
       "mas"         # Mac App Store CLI
       "micromamba"  # Conda replacement
       "gemini-cli"  # Google Gemini CLI
+      "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
     ];
 
     # GUI applications only
@@ -84,7 +85,6 @@
       "Consent-O-Matic" = 1606897889;
       "Pages" = 409201541;
       "Rakuten Cash Back" = 1451893560;
-      "TrashMe 3" = 1490879410;
     };
   };
 }

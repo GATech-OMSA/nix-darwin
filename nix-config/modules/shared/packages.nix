@@ -29,7 +29,7 @@ let
     ripgrep  # Better grep (rg)
     fd  # Better find
     delta  # Better git diff (line-based)
-    difftastic  # Syntax-aware diff (structural, use alongside delta)
+    # difftastic  # REMOVED: delta is sufficient for most diffs
     dust  # Better du
     duf  # Better df
     btop  # Better top
@@ -53,7 +53,7 @@ let
     tree
     watch
     tldr  # Simplified man pages
-    navi  # Interactive command cheatsheet (better than tldr for complex commands)
+    # navi  # Interactive command cheatsheet - REMOVED: tldr is sufficient
     fastfetch  # System info (modern replacement for neofetch)
     glow  # Terminal markdown viewer
 
@@ -77,8 +77,8 @@ let
     lazydocker   # Beautiful TUI for Docker management
     yazi         # Blazing fast terminal file manager
     jless        # Interactive JSON viewer
-    zellij       # Modern terminal multiplexer (alongside tmux)
-    helix        # Fast modal editor (alternative to vim/neovim)
+    # zellij       # REMOVED: tmux already installed
+    # helix        # REMOVED: vim/neovim already installed
 
     # Code Quality & Development
     pre-commit   # Git hooks framework
@@ -91,8 +91,8 @@ let
     repomix      # Pack entire repo into single AI-friendly file
 
     # Note-taking & Documentation
-    nb           # CLI note-taking
-    mdbook       # Fast documentation generator (Rust)
+    # nb           # REMOVED: Use Obsidian/Notion instead
+    # mdbook       # REMOVED: Only needed for Rust-style docs
 
     # Security
     gitleaks     # Secret scanning for git repos (pre-commit integration)
@@ -121,11 +121,11 @@ let
     kubectx      # Fast K8s context/namespace switching (includes kubens)
     k9s
     kubernetes-helm
-    stern        # Multi-pod log tailing for K8s
+    # stern        # REMOVED: k9s has built-in log viewing
     terraform    # Infrastructure as code
 
     # Database
-    usql         # Universal SQL client (PostgreSQL, MySQL, SQLite, MSSQL, etc.)
+    # usql         # REMOVED: Use DB-specific clients as needed
 
     # Cloud
     awscli2

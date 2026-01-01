@@ -190,6 +190,10 @@ in
       # Note: Personal app launchers (ff, cld, gpt, cursor, etc.) moved to personal.nix
       # to prevent them from appearing on work machine where Homebrew is disabled
       cc = "claude";  # Claude Code CLI (universal - works on both machines)
+      ccr = "claude --resume";  # Resume last conversation
+      ccc = "claude --continue";  # Continue last conversation
+      cca = "claude --add-dir";  # Add directory to context
+      "cc!" = "claude --dangerously-skip-permissions";  # Auto-approve (use with caution)
       show = "open -R";        # Reveal in Finder
       ql = "qlmanage -p";      # Quick Look preview
       copy = "pbcopy";         # Pipe to clipboard

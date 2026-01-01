@@ -14,8 +14,8 @@
     nerd-fonts.jetbrains-mono
 
     # Regular fonts
-    fira-code
-    jetbrains-mono
+    # fira-code        # REMOVED: Already have nerd-fonts.fira-code
+    # jetbrains-mono   # REMOVED: Pulls in gftools→twisted (20min build). Use nerd-fonts version.
     source-code-pro
 
     # Optional: More fonts if needed
