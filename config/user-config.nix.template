@@ -15,6 +15,15 @@
   # Example: "john.doe@example.com"
   email = "REPLACE_EMAIL";
 
+  # AWS SSO configuration (optional)
+  # Configure your AWS IAM Identity Center for SSO-based authentication
+  # Used by both personal and work profiles - configure during setup
+  awsSso = {
+    enabled = REPLACE_AWS_SSO_ENABLED;
+    startUrl = "REPLACE_AWS_SSO_URL";
+    region = "REPLACE_AWS_SSO_REGION";
+  };
+
   # Corporate proxy configuration (optional, mainly for work profiles)
   # Uncomment and configure if you're behind a corporate proxy
   # proxies = {

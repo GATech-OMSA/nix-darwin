@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, machineType, ... }:
+{ config, pkgs, lib, hostname, myLib, machineType, userConfig, ... }:
 
 let
   # CA bundle path for corporate certificates (work machines only)
@@ -6,8 +6,30 @@ let
   caBundle = config.programs.aws.caBundle or null;
   caBundleConfig = if caBundle != null then ''ca-bundle = "${caBundle}"'' else "";
 
+  # AWS SSO configuration from user-config.nix (unified for all profiles)
+  awsSso = userConfig.awsSso or { enabled = false; };
+  ssoEnabled = (awsSso.enabled or false) && (awsSso.startUrl or "") != "";
+  ssoRegion = awsSso.region or "us-east-1";
+  ssoSessionName = if machineType == "work" then "sso-work" else "sso-personal";
+
   # Personal machine AWS config
-  personalConfig = ''
+  # Uses SSO if enabled AND startUrl is configured, otherwise falls back to static IAM config
+  personalConfig = if ssoEnabled then ''
+    [default]
+    region = us-east-1
+    output = json
+
+    # SSO Session Configuration (Personal)
+    [sso-session ${ssoSessionName}]
+    sso_start_url = ${awsSso.startUrl}
+    sso_region = ${ssoRegion}
+    sso_registration_scopes = sso:account:access
+    output = json
+    region = ${ssoRegion}
+    duration_seconds = 57600
+
+  '' + generateSsoProfiles ssoSessionName
+  else ''
     [default]
     region = us-east-1
     output = json
@@ -32,7 +54,8 @@ let
   # Generate SSO profiles from accounts.json
   # Supports both string and object account values
   # Creates multiple profiles when additional_roles are specified
-  generateSsoProfiles =
+  # Takes ssoSessionName parameter to support different SSO sessions (personal vs work)
+  generateSsoProfiles = ssoSessionName:
     let
       # Read accounts.json from repo root (evaluated at build time)
       # Path: 5 levels up from nix-config/home/_profiles/_template/programs/
@@ -50,7 +73,7 @@ let
           profileName = if role == "support" then "${project}-${env}" else "${project}-${env}-${role}";
         in ''
         [profile ${profileName}]
-        sso_session = sso-east-1
+        sso_session = ${ssoSessionName}
         sso_account_id = ${accountId}
         sso_role_name = ${role}
         region = ${region}
@@ -89,23 +112,32 @@ let
     lib.concatStringsSep "\n\n" (lib.mapAttrsToList projectProfiles accounts);
 
   # Work machine AWS config (AWS SSO)
-  workConfig = ''
+  # Uses same unified awsSso config from user-config.nix
+  workConfig = if ssoEnabled then ''
     [default]
     region = us-east-1
     output = json
     ${caBundleConfig}
 
-    # SSO Session Configuration
-    [sso-session sso-east-1]
-    sso_start_url = https://d-906751770e.awsapps.com/start/
-    sso_region = us-east-1
+    # SSO Session Configuration (Work)
+    [sso-session ${ssoSessionName}]
+    sso_start_url = ${awsSso.startUrl}
+    sso_region = ${ssoRegion}
     sso_registration_scopes = sso:account:access
     output = json
-    region = us-east-1
+    region = ${ssoRegion}
     duration_seconds = 57600
     ${caBundleConfig}
 
-  '' + generateSsoProfiles;
+  '' + generateSsoProfiles ssoSessionName
+  else ''
+    [default]
+    region = us-east-1
+    output = json
+    ${caBundleConfig}
+
+    # SSO not configured - set awsSso in config/user-config.nix
+  '';
 in
 {
   # AWS CLI configuration - Declarative management

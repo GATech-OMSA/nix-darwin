@@ -1,0 +1,51 @@
+{
+  "personal-infra": {
+    "alias": "pi",
+    "description": "Personal infrastructure account",
+    "default_role": "developer",
+    "default_region": "us-east-1",
+    "accounts": {
+      "dev": {
+        "id": "111111111111",
+        "additional_roles": ["admin"],
+        "region": "us-east-1"
+      }
+    }
+  },
+  "side-project": {
+    "alias": "sp",
+    "description": "Side project account",
+    "default_role": "developer",
+    "default_region": "us-east-1",
+    "accounts": {
+      "dev": {
+        "id": "222222222222",
+        "additional_roles": ["admin"],
+        "region": "us-east-1"
+      }
+    }
+  },
+  "startup-saas": {
+    "alias": "ss",
+    "description": "Multi-environment SaaS project",
+    "default_role": "developer",
+    "default_region": "us-east-1",
+    "accounts": {
+      "dev": {
+        "id": "333333333001",
+        "additional_roles": ["admin"],
+        "region": "us-east-1"
+      },
+      "staging": {
+        "id": "333333333002",
+        "additional_roles": ["admin"],
+        "region": "us-east-1"
+      },
+      "prod": {
+        "id": "333333333003",
+        "additional_roles": ["admin"],
+        "region": "us-east-1"
+      }
+    }
+  }
+}
