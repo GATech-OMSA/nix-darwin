@@ -69,7 +69,7 @@ sso_role_name = developer
 
 ### 3. **Documentation Created**
 
-#### **`claudeclaudedocs/AWS-MULTI-ROLE.md`**
+#### **`docs/work/aws/aws-multi-role.md`**
 Comprehensive guide covering:
 - Schema reference (string vs object formats)
 - Usage examples
@@ -339,7 +339,7 @@ awslogin ti dev developer
 3. **Optional**: Update `~/.aws/accounts.json` to add developer roles where needed
 4. **Rebuild again** to test enhanced config
 5. **Test new functions** (`awslist`, `awswhere`, `awscheck`)
-6. **Review documentation** in `claudedocs/AWS-MULTI-ROLE.md`
+6. **Review documentation** in `docs/work/aws/aws-multi-role.md`
 
 ---
 
@@ -347,7 +347,7 @@ awslogin ti dev developer
 
 - ✅ `lib/aws-helpers.nix` - Core functions with role support
 - ✅ `home/_profiles/_template/programs/aws.nix` - Profile generation
-- ✅ `claudedocs/AWS-MULTI-ROLE.md` - New documentation
+- ✅ `docs/work/aws/aws-multi-role.md` - Documentation
 - ✅ `.aws/accounts.json.example` - Example configuration
 - ⏳ `docs/reference/infrastructure.md` - Needs update (remove generic aliases docs)
 
@@ -355,6 +355,6 @@ awslogin ti dev developer
 
 ## Questions?
 
-- See `claudedocs/AWS-MULTI-ROLE.md` for comprehensive guide
+- See `docs/work/aws/aws-multi-role.md` for comprehensive guide
 - Check `.aws/accounts.json.example` for configuration examples
 - Test incrementally: first with unchanged config, then with roles added

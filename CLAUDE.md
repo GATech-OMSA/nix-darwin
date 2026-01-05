@@ -164,9 +164,9 @@ nix-config/home/_profiles/
 CLAUDE.md is the **authoritative source** for all configuration instructions.
 
 **Documentation Structure:**
-- **18 active user guides** in `docs/`
+- **17 active user guides** in `docs/`
 - **2 AI workflow guides** in `claudedocs/guides/`
-- **4 archived guides** in `deprecated/docs/` with clear deprecation notes
+- **5 archived guides** in `deprecated/docs/` with clear deprecation notes
 - **Zero redundancies** - each guide has unique, well-defined purpose
 
 **Key Documentation:**
@@ -174,7 +174,7 @@ CLAUDE.md is the **authoritative source** for all configuration instructions.
 - Troubleshooting: `docs/troubleshooting.md`
 - Maintenance: `docs/guides/maintenance.md` (Cleanup tiers & tools)
 - Secrets: `docs/secrets.md` (SOPS encryption)
-- AWS & Secrets: `docs/AWS-AND-SECRETS-WORKFLOW.md` (comprehensive workflow with hot reload)
+- AWS & Secrets: `docs/aws-and-secrets-workflow.md` (comprehensive workflow with hot reload)
 - Python: `docs/python-development.md` (UV + direnv auto-activation)
 - Development: `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` (project management)
 
@@ -248,14 +248,13 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 - 📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Profile system issues and fixes
 - 📖 **[Backup & Recovery Guide](docs/backup-and-recovery.md)** - Disaster recovery and age key backups
 - 📖 **[Secrets Management Guide](docs/secrets.md)** - SOPS age encryption and profile secrets
-- 📖 **[AWS & Secrets Workflow](docs/AWS-AND-SECRETS-WORKFLOW.md)** - Comprehensive AWS and secrets workflow with hot reload
+- 📖 **[AWS & Secrets Workflow](docs/aws-and-secrets-workflow.md)** - Comprehensive AWS and secrets workflow with hot reload
 - 📖 **[Python Development Guide](docs/python-development.md)** - UV + direnv auto-activation workflow
 
 ### AWS Reference Documentation
-- 📋 [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md) - AWS SSO multi-account configuration
-- 📋 [AWS Quick Reference](docs/work/aws/AWS-QUICK-REF.md) - AWS daily commands and shortcuts
-- 📋 [AWS Implementation Summary](docs/work/aws/AWS-IMPLEMENTATION-SUMMARY.md) - AWS feature implementation details
-- 📋 [AWS Config Status (2025-11-06)](docs/work/aws/AWS-CONFIG-STATUS-2025-11-06.md) - Historical validation snapshot
+- 📋 [AWS Multi-Role Guide](docs/work/aws/aws-multi-role.md) - AWS SSO multi-account configuration
+- 📋 [AWS Quick Reference](docs/work/aws/aws-quick-ref.md) - AWS daily commands and shortcuts
+- 📋 [AWS Implementation Summary](docs/work/aws/aws-implementation-summary.md) - AWS feature implementation details
 
 ## AI Assistant Documentation (claudedocs/)
 
@@ -275,7 +274,7 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 **Location:** `deprecated/docs/` - Archived documentation with deprecation notes
 
 See [Deprecated Documentation README](deprecated/docs/README.md) for details on:
-- QUICK-REFERENCE.md (superseded by AWS-AND-SECRETS-WORKFLOW.md)
+- QUICK-REFERENCE.md (superseded by aws-and-secrets-workflow.md)
 - project-workflow.md (superseded by DEVELOPMENT-WORKFLOW.md)
 - CLEAN-SETUP-STEPS.md (superseded by installation.md)
 - learning/ (personal notes, also gitignored)
@@ -288,17 +287,15 @@ docs/                          # Public user documentation (18 files)
 ├── troubleshooting.md        # Debugging guide ✅
 ├── backup-and-recovery.md    # Disaster recovery ✅
 ├── secrets.md                # SOPS encryption ✅
-├── AWS-AND-SECRETS-WORKFLOW.md # Complete AWS & secrets workflow ✅
+├── aws-and-secrets-workflow.md # Complete AWS & secrets workflow ✅
 ├── python-development.md     # UV + direnv workflow ✅
 ├── DOCS-REVIEW.md            # Consolidation results ✅
-├── DOC-CONSOLIDATION-PLAN.md # Consolidation plan ✅
 ├── architecture/             # ADRs and architecture docs
 │   └── decisions/           # 6 architecture decision records
 └── work/aws/                 # AWS-specific documentation
-    ├── AWS-QUICK-REF.md      # Daily commands ✅
-    ├── AWS-MULTI-ROLE.md     # Multi-account patterns ✅
-    ├── AWS-IMPLEMENTATION-SUMMARY.md # Technical details ✅
-    └── AWS-CONFIG-STATUS-2025-11-06.md # Historical snapshot ✅
+    ├── aws-quick-ref.md      # Daily commands ✅
+    ├── aws-multi-role.md     # Multi-account patterns ✅
+    └── aws-implementation-summary.md # Technical details ✅
 
 claudedocs/                    # AI assistant documentation (2 files)
 ├── guides/
@@ -311,9 +308,9 @@ claudedocs/                    # AI assistant documentation (2 files)
     ├── projects/              # Active project directories
     └── archive/               # Archived completed projects
 
-deprecated/docs/               # Archived documentation (4 files)
+deprecated/docs/               # Archived documentation (5 files)
 ├── README.md                  # Deprecation documentation ✅
-├── quick-reference/          # Superseded by AWS-AND-SECRETS-WORKFLOW
+├── quick-reference/          # Superseded by aws-and-secrets-workflow
 ├── learning/                 # Personal notes (also gitignored)
 ├── project-workflow/         # Superseded by DEVELOPMENT-WORKFLOW
 └── clean-setup-steps/        # Superseded by installation.md
@@ -359,6 +356,11 @@ deprecated/docs/               # Archived documentation (4 files)
 | Run tests | `just test` | Run integration suite |
 | Edit config | `nixconf` | Daily development |
 | Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See nix-config/home/_profiles/_template/programs/git.nix |
+| AWS login | `awslogin <alias> <env> [role]` | Dynamic profile creation |
+| AWS list | `awslist` | Show all configured accounts |
+| AWS find | `awsfind <name>` | Search accounts by name/alias |
+| AWS where | `awswhere <account-id>` | Find account by ID |
+| AWS who | `awswho` | Show current AWS identity |
 
 **First-time setup:**
 ```bash
@@ -537,8 +539,8 @@ COMPLETED.md (chronological index)
 - Cross-project dependencies: `project-name #XXX` in Blockers field
 
 **Reference documentation:**
-- [AWS Multi-Role Guide](docs/work/aws/AWS-MULTI-ROLE.md)
-- [AWS Quick Reference](docs/work/aws/AWS-QUICK-REF.md)
+- [AWS Multi-Role Guide](docs/work/aws/aws-multi-role.md)
+- [AWS Quick Reference](docs/work/aws/aws-quick-ref.md)
 
 ---
 
@@ -559,14 +561,14 @@ COMPLETED.md (chronological index)
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| CLAUDE.md size | ~11KB (target <50KB) | ✅ Optimized |
-| Token count | ~1.6K (target <8K) | ✅ Efficient |
-| Documentation files | 19 comprehensive guides | ✅ Complete |
-| Core instructions | 8 critical rules | ✅ Clear |
+| CLAUDE.md size | ~12KB (target <50KB) | ✅ Optimized |
+| Token count | ~1.8K (target <8K) | ✅ Efficient |
+| Documentation files | 17 user guides + 2 AI guides | ✅ Complete |
+| Core instructions | 9 critical rules | ✅ Clear |
 | System status | Production Ready | ✅ Stable |
 
 ---
 
-**Version:** 2.2.0 – Modular, ClaudeLog-optimized
-**Last Updated:** November 2025
+**Version:** 2.3.0 – AWS SSO + Shell Optimization
+**Last Updated:** January 2026
 **Status:** AI-First Design ✅

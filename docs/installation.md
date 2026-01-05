@@ -362,7 +362,7 @@ awsuse prod   # Switches to production account
 - Encrypted storage: `hosts/[machine-id]/secrets.yaml` (aws_accounts field)
 - Deployed to: `~/.aws/accounts.json` (auto-generated from secrets)
 
-See [AWS Multi-Role Guide](../reference/aws/AWS-MULTI-ROLE.md) for complete setup instructions.
+See [AWS Multi-Role Guide](work/aws/aws-multi-role.md) for complete setup instructions.
 
 ### 8. Test Python Setup
 
@@ -836,10 +836,10 @@ source ~/.zshrc
 
 ## Next Steps
 
-1. **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Debug common issues
-2. **[Secrets Management](SECRETS.md)** - Manage encrypted secrets
+1. **[Troubleshooting Guide](troubleshooting.md)** - Debug common issues
+2. **[Secrets Management](secrets.md)** - Manage encrypted secrets
 3. **[Backup & Recovery](backup-and-recovery.md)** - Protect your configuration
-4. **[AWS Multi-Role Guide](../reference/aws/AWS-MULTI-ROLE.md)** - AWS SSO setup (work profile)
+4. **[AWS Multi-Role Guide](work/aws/aws-multi-role.md)** - AWS SSO setup (work profile)
 
 ---
 

@@ -590,8 +590,8 @@ Profiles can define different secret scopes:
 ## Documentation Updates
 
 **New Documentation**:
-- [Installation Guide](../../docs/INSTALLATION.md) - Updated for configure.sh workflow
-- [Troubleshooting Guide](../../docs/TROUBLESHOOTING.md) - Profile-specific issues
+- [Installation Guide](../../installation.md) - Updated for configure.sh workflow
+- [Troubleshooting Guide](../../troubleshooting.md) - Profile-specific issues
 - [CLAUDE.md](../../CLAUDE.md) - Profile system instructions
 
 **Updated Guides**:
@@ -606,8 +606,8 @@ Profiles can define different secret scopes:
 
 - [ADR-001: Machine Detection Strategy](ADR-001-machine-detection-strategy.md) - v1.x approach
 - [ADR-004: User vs Machine Config Separation](ADR-004-user-vs-machine-config-separation.md) - Foundation
-- [Installation Guide](../../docs/INSTALLATION.md)
-- [Troubleshooting Guide](../../docs/TROUBLESHOOTING.md)
+- [Installation Guide](../../installation.md)
+- [Troubleshooting Guide](../../troubleshooting.md)
 - [CLAUDE.md](../../CLAUDE.md)
 
 ---

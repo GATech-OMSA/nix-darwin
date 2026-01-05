@@ -105,7 +105,7 @@ hosts/$(hostname)/secrets.yaml        # Encrypted with age
 
 **Requirement:** Age private key in `~/.config/sops/age/keys.txt`
 
-**See:** [Secrets Management Guide](SECRETS.md)
+**See:** [Secrets Management Guide](secrets.md)
 
 ---
 
@@ -699,10 +699,10 @@ exec zsh
 
 ## Links
 
-- **[Installation Guide](INSTALLATION.md)** - New machine setup with v2.0.0
-- **[Secrets Management](SECRETS.md)** - SOPS age encryption setup
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Recovery procedures
-- **[AWS Multi-Role Guide](../reference/aws/AWS-MULTI-ROLE.md)** - Work profile AWS setup
+- **[Installation Guide](installation.md)** - New machine setup with v2.0.0
+- **[Secrets Management](secrets.md)** - SOPS age encryption setup
+- **[Troubleshooting](troubleshooting.md)** - Recovery procedures
+- **[AWS Multi-Role Guide](work/aws/aws-multi-role.md)** - Work profile AWS setup
 
 ---
 

@@ -732,9 +732,9 @@ alias tidev
 
 ## 📚 Related Documentation
 
-- **[AWS Quick Reference](work/aws/AWS-QUICK-REF.md)** - Daily commands and examples
-- **[AWS Multi-Role Guide](work/aws/AWS-MULTI-ROLE.md)** - Role-based access patterns
-- **[AWS Implementation Summary](work/aws/AWS-IMPLEMENTATION-SUMMARY.md)** - Technical details
+- **[AWS Quick Reference](work/aws/aws-quick-ref.md)** - Daily commands and examples
+- **[AWS Multi-Role Guide](work/aws/aws-multi-role.md)** - Role-based access patterns
+- **[AWS Implementation Summary](work/aws/aws-implementation-summary.md)** - Technical details
 - **[Secrets Management Guide](secrets.md)** - SOPS encryption guide
 - **[CLAUDE.md](../CLAUDE.md)** - Main configuration guide
 

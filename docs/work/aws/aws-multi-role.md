@@ -408,7 +408,6 @@ awsuse ti dev developer
 
 ## See Also
 
-- [Infrastructure Reference](../../../docs/reference/infrastructure.md) - Full AWS documentation
-- [Quick Reference](../../../docs/QUICK-REFERENCE.md) - Command cheat sheet
-- [AWS Quick Ref](./AWS-QUICK-REF.md) - Quick command reference
+- [AWS Quick Ref](./aws-quick-ref.md) - Quick command reference
+- [AWS and Secrets Workflow](../../aws-and-secrets-workflow.md) - Complete workflow guide
 - `.aws/accounts.json.example` - Example configuration

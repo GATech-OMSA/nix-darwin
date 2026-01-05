@@ -728,10 +728,10 @@ edit-secrets  # Re-encrypt secrets.yaml
 
 ## Related Documentation
 
-- [Installation Guide](INSTALLATION.md) - Setup from scratch
-- [Secrets Management](SECRETS.md) - SOPS encryption details
+- [Installation Guide](installation.md) - Setup from scratch
+- [Secrets Management](secrets.md) - SOPS encryption details
 - [Backup & Recovery](backup-and-recovery.md) - Protect your config
-- [AWS Multi-Role Guide](../reference/aws/AWS-MULTI-ROLE.md) - AWS SSO troubleshooting
+- [AWS Multi-Role Guide](work/aws/aws-multi-role.md) - AWS SSO troubleshooting
 
 ---
 

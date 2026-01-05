@@ -438,8 +438,8 @@ Binary only - pass or fail.
 - [Test Framework](../../../tests/)
 - [Git Hooks](../../../.git/hooks/)
 - [Warning System](../../../lib/warnings.nix)
-- [Secrets Guide](../../docs/SECRETS.md)
-- [Troubleshooting Guide](../../docs/TROUBLESHOOTING.md)
+- [Secrets Guide](../../secrets.md)
+- [Troubleshooting Guide](../../troubleshooting.md)
 
 ---
 

@@ -139,4 +139,4 @@ ghostty-1.2.3
 
 - Analysis performed: December 2025
 - Validated against nixpkgs-unstable
-- See `docs/guides/CLI-TOOLS-GUIDE.md` for usage documentation
+- See `docs/guides/cli-tools-guide.md` for usage documentation

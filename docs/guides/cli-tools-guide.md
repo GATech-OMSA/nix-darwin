@@ -1435,5 +1435,5 @@ rm                         # rm -i
 ## See Also
 
 - [ADR-007: CLI Tool Selection](../architecture/decisions/ADR-007-cli-tool-selection.md) - Tool selection rationale
-- [AWS-AND-SECRETS-WORKFLOW.md](../AWS-AND-SECRETS-WORKFLOW.md) - AWS and secrets guide
+- [aws-and-secrets-workflow.md](../aws-and-secrets-workflow.md) - AWS and secrets guide
 - [troubleshooting.md](../troubleshooting.md) - Common issues

@@ -147,9 +147,9 @@ These still work but prefer project-specific aliases:
 
 ## 📚 More Info
 
-- **Full Guide**: `claudedocs/AWS-MULTI-ROLE.md`
-- **Implementation**: `claudedocs/AWS-IMPLEMENTATION-SUMMARY.md`
-- **Infrastructure Docs**: `docs/reference/infrastructure.md`
+- **Full Guide**: `docs/work/aws/aws-multi-role.md`
+- **Implementation**: `docs/work/aws/aws-implementation-summary.md`
+- **Workflow**: `docs/aws-and-secrets-workflow.md`
 - **Test Script**: `scripts/test-aws-helpers.sh`
 
 ## 💡 Tips

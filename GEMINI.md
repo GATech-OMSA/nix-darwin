@@ -85,6 +85,14 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
   - `nix run .#audit`
   - `nix run .#test`
 
+### 7. AWS SSO Commands
+
+- `awslogin <alias> <env> [role]` - Login with dynamic profile creation.
+- `awslist` - Show all configured accounts from `~/.aws/accounts.json`.
+- `awsfind <name>` - Search accounts by name or alias.
+- `awswhere <account-id>` - Find account by ID.
+- `awswho` - Show current AWS identity.
+
 ## Development Guidelines
 
 1.  **Conventions:** Match existing coding style. Use `let ... in` blocks for local variables.
@@ -125,14 +133,14 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 
 ## Documentation
 
-**Status:** ✅ Consolidation complete (November 2025) - 18 active guides
+**Status:** ✅ Consolidation complete (January 2026) - 17 active guides
 
 ### Essential User Documentation (docs/)
 
 - **Installation:** `docs/installation.md` - v2.0.0 three-script workflow (bootstrap, configure, activate)
 - **Troubleshooting:** `docs/troubleshooting.md` - Profile system issues and fixes
 - **Secrets:** `docs/secrets.md` - SOPS encryption with age
-- **AWS & Secrets:** `docs/AWS-AND-SECRETS-WORKFLOW.md` - Complete workflow with hot reload
+- **AWS & Secrets:** `docs/aws-and-secrets-workflow.md` - Complete workflow with hot reload
 - **Python Development:** `docs/python-development.md` - UV + direnv auto-activation workflow
 - **Backup & Recovery:** `docs/backup-and-recovery.md` - Disaster recovery procedures
 
@@ -141,7 +149,6 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 - **AWS Multi-Role:** Multi-account SSO configuration patterns
 - **AWS Quick Reference:** Daily commands and shortcuts
 - **AWS Implementation:** Technical implementation details
-- **AWS Config Status (2025-11-06):** Historical validation snapshot
 
 ### AI Development Documentation (claudedocs/guides/)
 

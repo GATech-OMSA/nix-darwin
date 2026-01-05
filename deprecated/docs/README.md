@@ -12,15 +12,15 @@ These files are kept for historical reference but should not be used as the prim
 
 ### quick-reference/QUICK-REFERENCE.md
 - **Deprecated:** November 2025
-- **Superseded by:** `docs/AWS-AND-SECRETS-WORKFLOW.md`
-- **Reason:** AWS-AND-SECRETS-WORKFLOW.md (766 lines) provides comprehensive coverage of all topics that were in QUICK-REFERENCE.md (114 lines), plus much more detail including:
+- **Superseded by:** `docs/aws-and-secrets-workflow.md`
+- **Reason:** aws-and-secrets-workflow.md (766 lines) provides comprehensive coverage of all topics that were in QUICK-REFERENCE.md (114 lines), plus much more detail including:
   - Complete AWS SSO workflow for work profile
   - Complete IAM workflow for personal profile
   - Hot reload mechanisms (including new reload-secrets)
   - Secrets management with SOPS
   - Configuration matrix (Nix vs local)
   - Troubleshooting guide
-- **Use instead:** See `docs/AWS-AND-SECRETS-WORKFLOW.md` for all secrets, environment, and AWS configuration
+- **Use instead:** See `docs/aws-and-secrets-workflow.md` for all secrets, environment, and AWS configuration
 
 ### learning/
 - **Deprecated:** November 2025
@@ -46,23 +46,13 @@ These files are kept for historical reference but should not be used as the prim
 - **Historical Value:** Shows the thinking and design decisions during the username-agnostic machine ID refactoring
 - **Use instead:** See `docs/installation.md` for current installation instructions
 
-### doc-consolidation-plan.md
-- **Deprecated:** December 2025
-- **Reason:** Process artifact describing the plan for the November 2025 documentation cleanup. The work is complete.
-- **Status:** Archived for historical record of the consolidation strategy.
-
-### docs-review-nov-2025.md
-- **Deprecated:** December 2025
-- **Reason:** Process artifact containing the detailed inventory and audit results of the November 2025 documentation review.
-- **Status:** Archived for historical record.
-
 ---
 
 ## For Current Documentation
 
 Please refer to:
 - **Main docs:** `docs/` directory
-- **User guides:** `docs/installation.md`, `docs/troubleshooting.md`, `docs/AWS-AND-SECRETS-WORKFLOW.md`
+- **User guides:** `docs/installation.md`, `docs/troubleshooting.md`, `docs/aws-and-secrets-workflow.md`
 - **AI assistant guides:** `claudedocs/guides/`
 - **Architecture decisions:** `docs/architecture/decisions/` (ADRs)
 

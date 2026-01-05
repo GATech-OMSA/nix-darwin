@@ -1093,9 +1093,9 @@ backup-age-key       # Backup age key to clipboard
 
 ## Links
 
-- **[Installation Guide](INSTALLATION.md)** - Complete v2.0.0 setup
+- **[Installation Guide](installation.md)** - Complete v2.0.0 setup
 - **[Backup & Recovery](backup-and-recovery.md)** - Age key backup procedures
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Secret-related issues
+- **[Troubleshooting](troubleshooting.md)** - Secret-related issues
 - **[SOPS Documentation](https://github.com/getsops/sops)** - SOPS project
 - **[age Encryption](https://github.com/FiloSottile/age)** - age project
 

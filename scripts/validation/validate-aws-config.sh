@@ -289,7 +289,7 @@ validate_accounts_json() {
     else
         log_warn "accounts.json not found: $accounts_file"
         log_info "This file is required for multi-role AWS helper functions"
-        log_info "See: claudedocs/AWS-MULTI-ROLE.md for setup"
+        log_info "See: docs/work/aws/aws-multi-role.md for setup"
     fi
 }
 
@@ -546,8 +546,8 @@ print_recommendations() {
         echo "   4. Keep corporate CA bundle updated"
         echo ""
         echo "📖 Documentation:"
-        echo "   - AWS Multi-Role Guide: claudedocs/AWS-MULTI-ROLE.md"
-        echo "   - AWS Quick Reference: claudedocs/AWS-QUICK-REF.md"
+        echo "   - AWS Multi-Role Guide: docs/work/aws/aws-multi-role.md"
+        echo "   - AWS Quick Reference: docs/work/aws/aws-quick-ref.md"
     else
         echo "📋 Personal Machine Recommendations:"
         echo "   1. Configure personal profile with IAM credentials"
