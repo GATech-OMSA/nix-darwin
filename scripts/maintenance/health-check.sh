@@ -275,6 +275,26 @@ check_shell_config() {
     check_warn "Starship prompt not installed"
   fi
 
+  # Check startup time (Target: <0.3s)
+  if command -v zsh &> /dev/null; then
+    # Measure time to start interactive shell and exit immediately
+    # /usr/bin/time -p outputs POSIX format: real X.XX
+    startup_output=$(/usr/bin/time -p zsh -i -c exit 2>&1)
+    startup_time=$(echo "$startup_output" | grep real | awk '{print $2}')
+    
+    # Use awk for float comparison
+    is_slow=$(echo "$startup_time" | awk '{if ($1 > 0.3) print 1; else print 0}')
+    
+    if [[ "$is_slow" -eq 0 ]]; then
+      check_pass "Shell startup optimized" "${startup_time}s (target: <0.3s)"
+    else
+      check_warn "Shell startup slow" "${startup_time}s (target: <0.3s)"
+      if [[ $VERBOSE -eq 1 ]]; then
+        verbose_output "Tip: Run 'zsh -i -c zprof' to debug bottlenecks"
+      fi
+    fi
+  fi
+
   # Check Oh-My-Zsh if configured
   if [[ -d "$HOME/.oh-my-zsh" ]]; then
     check_pass "Oh-My-Zsh installed"

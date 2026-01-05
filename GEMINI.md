@@ -112,6 +112,17 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 
 ---
 
+## Optimization Strategies
+
+### Zsh Startup Speed (Lock & Monitor)
+**Status:** ✅ Optimized (<0.1s)
+- **Strategy:** Pre-compile static init scripts (starship, zoxide, etc.) to `.zwc` at build time.
+- **Safety:** Pin `zcompile` to the same Zsh binary used at runtime.
+- **Monitoring:** `nix-health` checks startup time (warns if > 0.3s).
+- **Technique:** `pkgs.runCommand` generates and compiles scripts; `initExtra` sources them.
+
+---
+
 ## Documentation
 
 **Status:** ✅ Consolidation complete (November 2025) - 18 active guides

@@ -20,6 +20,13 @@ let
     ${pkgs.zoxide}/bin/zoxide init zsh > $out/zoxide.zsh
     ${pkgs.atuin}/bin/atuin init zsh > $out/atuin.zsh
     ${pkgs.direnv}/bin/direnv hook zsh > $out/direnv.zsh
+
+    # Compile to .zwc for faster loading (using same zsh version)
+    # This prevents parsing overhead at runtime
+    ${pkgs.zsh}/bin/zsh -c "zcompile $out/starship.zsh"
+    ${pkgs.zsh}/bin/zsh -c "zcompile $out/zoxide.zsh"
+    ${pkgs.zsh}/bin/zsh -c "zcompile $out/atuin.zsh"
+    ${pkgs.zsh}/bin/zsh -c "zcompile $out/direnv.zsh"
   '';
 in
 {
