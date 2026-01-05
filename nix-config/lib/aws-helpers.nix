@@ -124,6 +124,11 @@ rec {
         # Resolve alias to project name
         local resolved_project=$(jq -r --arg input "$project" 'to_entries[] | select(.key == $input or .value.alias == $input) | .key' ~/.aws/accounts.json)
 
+        if [[ -z "$resolved_project" ]]; then
+          echo "❌ Project not found: $project"
+          return 1
+        fi
+
         # Expand role abbreviations to full names
         case "$role" in
           dev) role="developer" ;;
@@ -133,16 +138,53 @@ rec {
         esac
 
         # Determine role
+        local default_role=$(jq -r --arg proj "$resolved_project" '.[$proj].default_role // "developer"' ~/.aws/accounts.json)
         if [[ -z "$role" ]]; then
-          role=$(jq -r --arg proj "$resolved_project" '.[$proj].default_role // "support"' ~/.aws/accounts.json)
+          role="$default_role"
         fi
 
-        # Construct profile name
+        # Construct profile name (default role doesn't add suffix)
         local profile
-        if [[ "$role" == "support" ]]; then
-          profile="''${resolved_project}-''${env}"
+        if [[ "$role" == "$default_role" ]]; then
+          profile="''${resolved_project}-''${env}-''${role}"
         else
           profile="''${resolved_project}-''${env}-''${role}"
+        fi
+
+        # Check if profile exists, if not create it dynamically
+        if ! grep -q "^\[profile $profile\]" ~/.aws/config 2>/dev/null; then
+          echo "📝 Profile not found, creating dynamically..."
+
+          # Get account info from accounts.json
+          local account_data=$(jq -r --arg proj "$resolved_project" --arg env "$env" '.[$proj].accounts[$env]' ~/.aws/accounts.json)
+          if [[ -z "$account_data" || "$account_data" == "null" ]]; then
+            echo "❌ Environment not found: $resolved_project/$env"
+            return 1
+          fi
+
+          # Extract account ID (works for both string and object format)
+          local account_id=$(echo "$account_data" | jq -r 'if type == "string" then . else .id end')
+          local region=$(echo "$account_data" | jq -r 'if type == "object" and .region then .region else "us-east-1" end')
+
+          # Get SSO session name from existing config
+          local sso_session=$(grep -m1 "^\[sso-session" ~/.aws/config 2>/dev/null | sed 's/\[sso-session \(.*\)\]/\1/')
+          if [[ -z "$sso_session" ]]; then
+            echo "❌ No SSO session found in ~/.aws/config"
+            echo "💡 Run: nix-rebuild --impure (to set up SSO session first)"
+            return 1
+          fi
+
+          # Append new profile to config
+          cat >> ~/.aws/config <<EOF
+
+[profile $profile]
+sso_session = $sso_session
+sso_account_id = $account_id
+sso_role_name = $role
+region = $region
+output = json
+EOF
+          echo "✅ Created profile: $profile"
         fi
 
         echo "🔐 Logging into: $profile"
@@ -274,7 +316,7 @@ rec {
 
       if [[ -z "$account_id" ]]; then
         echo "Usage: awswhere <account-id>"
-        echo "Example: awswhere 779846812095"
+        echo "Example: awswhere 123456789012"
         return 1
       fi
 
@@ -286,40 +328,39 @@ rec {
       echo "🔍 Searching for account: $account_id"
       echo ""
 
-      local result=$(jq -r --arg id "$account_id" '
+      local found=0
+      while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+          echo "$line"
+          found=1
+        fi
+      done < <(jq -r --arg id "$account_id" '
         to_entries[] |
+        .key as $project |
+        .value.alias as $alias |
+        .value.default_role as $default_role |
+        .value.accounts | to_entries[] |
         select(
-          .value.accounts | to_entries[] |
-          (.value == $id or .value.id == $id)
+          (.value | type) == "string" and .value == $id or
+          (.value | type) == "object" and .value.id == $id
         ) |
-        {
-          project: .key,
-          alias: .value.alias,
-          env: (
-            .value.accounts | to_entries[] |
-            select(.value == $id or .value.id == $id) |
-            .key
-          ),
-          roles: (
-            .value.accounts | to_entries[] |
-            select(.value == $id or .value.id == $id) |
-            if .value.additional_roles then
-              ["support"] + .value.additional_roles
-            else
-              ["support"]
-            end
-          )
-        } |
-        "📍 Project: \(.project) (\(.alias))\n   Environment: \(.env)\n   Profiles:\n" +
-        (.roles[] | "     • \(.project)-\(.env)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)")
-      ' ~/.aws/accounts.json)
+        .key as $env |
+        (if (.value | type) == "object" and .value.additional_roles then
+          [$default_role] + .value.additional_roles
+        else
+          [$default_role]
+        end) as $roles |
+        "📍 Project: \($project) (\($alias))",
+        "   Environment: \($env)",
+        "   Profiles:",
+        ($roles[] | "     • \($project)-\($env)" + (if . != $default_role then "-\(.)" else "" end) + " (\(.) role)")
+      ' ~/.aws/accounts.json 2>/dev/null)
 
-      if [[ -z "$result" ]]; then
+      if [[ $found -eq 0 ]]; then
         echo "❌ Account ID not found: $account_id"
         return 1
       fi
 
-      echo "$result"
       echo ""
       echo "💡 Switch: awsuse <alias> <env> [role]"
     }
@@ -385,12 +426,13 @@ rec {
       if [[ -z "$query" ]]; then
         echo "Usage: awsfind <search-term>"
         echo ""
-        echo "Search profiles by project name, environment, or role"
+        echo "Search profiles by project name, alias, environment, or role"
         echo ""
         echo "Examples:"
-        echo "  awsfind ti          # Find all Tririga profiles"
-        echo "  awsfind prod        # Find all production profiles"
-        echo "  awsfind developer   # Find all developer role profiles"
+        echo "  awsfind hft         # Find by project name"
+        echo "  awsfind gen         # Find by alias"
+        echo "  awsfind dev         # Find by environment"
+        echo "  awsfind admin       # Find by role"
         return 1
       fi
 
@@ -402,107 +444,41 @@ rec {
       echo "🔍 Searching for: $query"
       echo ""
 
-      # Search across projects, environments, and roles (case-insensitive)
       local found=0
-      jq -r --arg q "$(echo $query | tr '[:upper:]' '[:lower:]')" '
-        to_entries[] |
-        . as $proj |
-        (
-          # Check if project name or alias matches
-          if (($proj.key | ascii_downcase | contains($q)) or
-              ($proj.value.alias | ascii_downcase | contains($q))) then
-            {
-              type: "project",
-              project: $proj.key,
-              alias: $proj.value.alias,
-              matches: (
-                $proj.value.accounts | to_entries[] |
-                {
-                  env: .key,
-                  id: (.value.id // .value | tostring),
-                  roles: (
-                    if .value.additional_roles then
-                      ["support"] + .value.additional_roles
-                    else
-                      ["support"]
-                    end
-                  )
-                }
-              )
-            }
-          # Check if environment matches
-          elif ($proj.value.accounts | to_entries[] | .key | ascii_downcase | contains($q)) then
-            {
-              type: "env",
-              project: $proj.key,
-              alias: $proj.value.alias,
-              matches: [
-                $proj.value.accounts | to_entries[] |
-                select(.key | ascii_downcase | contains($q)) |
-                {
-                  env: .key,
-                  id: (.value.id // .value | tostring),
-                  roles: (
-                    if .value.additional_roles then
-                      ["support"] + .value.additional_roles
-                    else
-                      ["support"]
-                    end
-                  )
-                }
-              ]
-            }
-          # Check if any role matches
-          elif (
-            $proj.value.accounts | to_entries[] |
-            (.value.additional_roles // []) | .[] | ascii_downcase | contains($q)
-          ) then
-            {
-              type: "role",
-              project: $proj.key,
-              alias: $proj.value.alias,
-              matches: [
-                $proj.value.accounts | to_entries[] |
-                select(
-                  (.value.additional_roles // []) | .[] | ascii_downcase | contains($q)
-                ) |
-                {
-                  env: .key,
-                  id: (.value.id // .value | tostring),
-                  roles: (
-                    (.value.additional_roles // []) | map(select(ascii_downcase | contains($q)))
-                  )
-                }
-              ]
-            }
-          else
-            empty
-          end
-        ) |
-        if . then
-          "📍 \(.project) (\(.alias))" +
-          "\n" +
-          (
-            if (.matches | type == "array") then
-              .matches[] |
-              "   • \(.env) (Account: \(.id))\n" +
-              (.roles[] | "     → \($proj.key)-\(.env)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)")
-            else
-              .matches |
-              "   • \(.env) (Account: \(.id))\n" +
-              (.roles[] | "     → \($proj.key)-\(.env)" + (if . != "support" then "-\(.)" else "" end) + " (\(.) role)")
-            end
-          ) +
-          "\n"
-        else
-          empty
-        end
-      ' ~/.aws/accounts.json 2>/dev/null | while IFS= read -r line; do
+      local q_lower=$(echo "$query" | tr '[:upper:]' '[:lower:]')
+
+      # Simple search: check if query matches project, alias, env, or role
+      while IFS= read -r line; do
         if [[ -n "$line" ]]; then
           echo "$line"
           found=1
         fi
-      done
+      done < <(jq -r --arg q "$q_lower" '
+        to_entries[] |
+        .key as $project |
+        .value.alias as $alias |
+        .value.default_role as $default_role |
+        .value.description as $desc |
+        .value.accounts | to_entries[] |
+        .key as $env |
+        (if (.value | type) == "object" then .value.id else .value end) as $account_id |
+        (if (.value | type) == "object" and .value.additional_roles then
+          [$default_role] + .value.additional_roles
+        else
+          [$default_role]
+        end) as $roles |
+        # Check if query matches project, alias, env, or any role
+        select(
+          ($project | ascii_downcase | contains($q)) or
+          ($alias | ascii_downcase | contains($q)) or
+          ($env | ascii_downcase | contains($q)) or
+          ($roles | map(ascii_downcase) | any(contains($q)))
+        ) |
+        "📍 \($project) (\($alias)) - \($desc // "No description")",
+        "   • \($env) (Account: \($account_id))",
+        ($roles[] | "     → \($project)-\($env)" + (if . != $default_role then "-\(.)" else "" end) + " (\(.) role)"),
+        ""
+      ' ~/.aws/accounts.json 2>/dev/null)
 
       if [[ $found -eq 0 ]]; then
         echo "❌ No profiles found matching: $query"
@@ -511,7 +487,6 @@ rec {
         return 1
       fi
 
-      echo ""
       echo "💡 Switch: awsuse <alias> <env> [role]"
     }
 

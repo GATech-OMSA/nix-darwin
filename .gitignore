@@ -122,9 +122,9 @@ Temporary Items
 # Claude
 .claude/
 
-# AWS directory (protect credentials, allow accounts.json for profile generation)
-.aws/*
-!.aws/accounts.json
+# AWS directory (all files including accounts.json)
+# accounts.json lives in ~/.aws/ and is read at runtime by shell functions
+.aws/
 
 # Cursor
 .cursor/

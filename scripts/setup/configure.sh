@@ -531,6 +531,35 @@ gather_user_info() {
         read -p "SSO Region [us-east-1]: " sso_region
         AWS_SSO_REGION="${sso_region:-us-east-1}"
         success "AWS SSO configured: $AWS_SSO_URL"
+
+        # Set up accounts.json template for multi-account access
+        echo ""
+        info "Setting up AWS accounts configuration..."
+        mkdir -p "$HOME/.aws"
+
+        if [ ! -f "$HOME/.aws/accounts.json" ]; then
+          # Select template based on profile type
+          local template_path=""
+          if [ "$MACHINE_TYPE" = "work" ]; then
+            template_path="$REPO_ROOT/nix-config/home/_profiles/work/accounts.json.template"
+          else
+            template_path="$REPO_ROOT/nix-config/home/_profiles/personal/accounts.json.template"
+          fi
+
+          if [ -f "$template_path" ]; then
+            cp "$template_path" "$HOME/.aws/accounts.json"
+            chmod 600 "$HOME/.aws/accounts.json"
+            success "Created ~/.aws/accounts.json from template"
+            echo ""
+            warning "ACTION REQUIRED: Edit ~/.aws/accounts.json with your real account IDs"
+            echo "   The file contains placeholder accounts - replace with your AWS account info"
+            echo "   After editing, AWS commands (awslogin, awslist, etc.) will work immediately"
+          else
+            warning "Template not found: $template_path"
+          fi
+        else
+          info "~/.aws/accounts.json already exists - skipping"
+        fi
       else
         warning "No URL provided - SSO will be disabled"
       fi
