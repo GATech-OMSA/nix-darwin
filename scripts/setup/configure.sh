@@ -42,6 +42,9 @@ MACHINE_TYPE=""
 MACHINE_DESCRIPTION=""
 SYSTEM_ARCH=""
 HOMEBREW_ENABLED=""
+AWS_SSO_ENABLED="false"
+AWS_SSO_URL=""
+AWS_SSO_REGION="us-east-1"
 
 # Track created files for rollback
 CREATED_FILES=()
@@ -505,6 +508,37 @@ gather_user_info() {
       ;;
   esac
 
+  # AWS SSO configuration (only for personal/work profiles)
+  if [ "$MACHINE_TYPE" != "minimal" ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "AWS SSO Configuration (Optional)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    info "AWS SSO enables multi-account access via IAM Identity Center"
+    echo "   You can skip this and configure later in config/user-config.nix"
+    echo ""
+    read -p "Configure AWS SSO now? [y/N]: " configure_sso
+
+    if [[ "$configure_sso" =~ ^[Yy]$ ]]; then
+      echo ""
+      echo "Enter your AWS SSO start URL"
+      echo "   Example: https://d-xxxxxxxxxx.awsapps.com/start/"
+      read -p "SSO Start URL: " AWS_SSO_URL
+
+      if [ -n "$AWS_SSO_URL" ]; then
+        AWS_SSO_ENABLED="true"
+        read -p "SSO Region [us-east-1]: " sso_region
+        AWS_SSO_REGION="${sso_region:-us-east-1}"
+        success "AWS SSO configured: $AWS_SSO_URL"
+      else
+        warning "No URL provided - SSO will be disabled"
+      fi
+    else
+      info "Skipping AWS SSO - can be configured later"
+    fi
+  fi
+
   # Homebrew configuration (ask user preference)
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -779,6 +813,9 @@ create_config_files() {
   if ! sed -e "s/REPLACE_USERNAME/$USERNAME/g" \
            -e "s/REPLACE_FULLNAME/$FULL_NAME/g" \
            -e "s/REPLACE_EMAIL/$EMAIL/g" \
+           -e "s/REPLACE_AWS_SSO_ENABLED/$AWS_SSO_ENABLED/g" \
+           -e "s|REPLACE_AWS_SSO_URL|$AWS_SSO_URL|g" \
+           -e "s/REPLACE_AWS_SSO_REGION/$AWS_SSO_REGION/g" \
            "$REPO_ROOT/config/user-config.nix.template" \
            > "$REPO_ROOT/config/user-config.nix"
   then

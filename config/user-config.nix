@@ -3,6 +3,13 @@
   fullName = "Jim";
   email = "13123674+jimmy-jain@users.noreply.github.com";
 
+  # AWS SSO configuration
+  awsSso = {
+    enabled = true;
+    startUrl = "https://d-90661be104.awsapps.com/start";
+    region = "us-east-1";
+  };
+
   # Proxy configuration for corporate environments
   proxies = {
     # Go module proxy (for sops-nix and other Go-based tools)

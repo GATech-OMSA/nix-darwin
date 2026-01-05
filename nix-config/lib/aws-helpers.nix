@@ -62,7 +62,6 @@ rec {
           ds) role="data-scientist" ;;
           de) role="data-engineer" ;;
           da) role="data-analyst" ;;
-          admin) role="administrator" ;;
         esac
 
         # Resolve alias to project name
@@ -131,7 +130,6 @@ rec {
           ds) role="data-scientist" ;;
           de) role="data-engineer" ;;
           da) role="data-analyst" ;;
-          admin) role="administrator" ;;
         esac
 
         # Determine role

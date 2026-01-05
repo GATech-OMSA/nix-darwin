@@ -12,6 +12,7 @@
     ../../_template/development # Development configs (Python, Node, AI/ML)
     ./packages.nix              # Personal packages
     ./aliases.nix               # Personal aliases
+    ./aws.nix                   # AWS SSO configuration
     ./programs                  # Personal program overrides
   ];
 
