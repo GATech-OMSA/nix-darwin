@@ -40,6 +40,7 @@
       "google-chrome"
 
       # Development
+      "orbstack"            # Docker & Linux VMs (fast, lightweight)
       "antigravity"
       "visual-studio-code"
       "claude-code"

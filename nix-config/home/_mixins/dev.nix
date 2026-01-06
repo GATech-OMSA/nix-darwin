@@ -11,16 +11,10 @@
     # ============================================
     # ACTIVE DEVELOPMENT TOOLS
     # ============================================
-
-    # Version control
-    git
-    gh
+    # Note: git, gh, tldr, lazydocker, docker-compose, xh are in shared/packages.nix
 
     # Build tools
     gnumake
-
-    # Documentation
-    tldr
 
     # ============================================
     # DATABASE TOOLS (Uncomment as needed)
@@ -53,8 +47,8 @@
     # ============================================
     # API & WEB TESTING TOOLS (Uncomment as needed)
     # ============================================
+    # Note: xh already in shared/packages.nix
     # httpie         # User-friendly HTTP client
-    # xh             # Fast HTTP client (httpie alternative)
     # curlie         # curl with httpie syntax
     # grpcurl        # gRPC curl-like tool
     # grpcui         # Interactive gRPC UI
@@ -69,8 +63,8 @@
     # ============================================
     # INFRASTRUCTURE AS CODE (Uncomment as needed)
     # ============================================
+    # Note: terraform, awscli2 already in shared/packages.nix
     # Terraform ecosystem
-    # terraform      # Infrastructure as code
     # terraform-docs # Generate Terraform docs
     # tflint         # Terraform linter
     # tfsec          # Terraform security scanner
@@ -84,19 +78,17 @@
     # vagrant        # Development environments
 
     # Cloud-specific
-    # awscli2        # AWS CLI (already in shared packages)
     # azure-cli      # Azure CLI
     # google-cloud-sdk  # Google Cloud CLI
 
     # ============================================
     # CONTAINER TOOLS (Uncomment as needed)
     # ============================================
+    # Note: lazydocker, docker-compose already in shared/packages.nix
     # podman         # Docker alternative
     # buildah        # Container builder
     # skopeo         # Container image operations
     # dive           # Docker image layer explorer
-    # lazydocker     # Terminal UI for Docker
-    # docker-compose # Already in shared packages
     # ctop           # Container metrics viewer
     # hadolint       # Dockerfile linter (see Code Quality)
 
@@ -111,11 +103,11 @@
     # jsonlint       # JSON linter
 
     # Security scanners
+    # Note: gitleaks already in shared/packages.nix
     # trivy          # Container/IaC security scanner
     # grype          # Vulnerability scanner
     # syft           # SBOM generator
     # cosign         # Container signing/verification
-    # gitleaks       # Secret scanner for git
     # trufflehog     # Secret scanner
 
     # Code analysis
