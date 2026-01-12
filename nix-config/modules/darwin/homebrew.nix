@@ -23,6 +23,7 @@
 
     taps = [
       "buo/cask-upgrade"
+      "anomalyco/tap"     # OpenCode AI coding agent
     ];
 
     # Only brew formulae that MUST be from Homebrew
@@ -31,6 +32,7 @@
       "micromamba"  # Conda replacement
       "gemini-cli"  # Google Gemini CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
+      "opencode"    # Open source AI coding agent (anomalyco/tap)
     ];
 
     # GUI applications only
