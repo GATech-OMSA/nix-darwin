@@ -61,6 +61,7 @@
       # AI/LLM
       "chatgpt"
       "claude"
+      "codex"
       "ollama-app"
 
       # Utilities
