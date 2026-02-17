@@ -17,41 +17,9 @@ $git_branch\
 $git_status\
 $git_state\
 $git_metrics\
-[](fg:yellow bg:blue)\
-$aws\
-$nix_shell\
-[](fg:blue bg:green)\
-$c\
-$rust\
-$golang\
-$nodejs\
-$php\
-$java\
-$kotlin\
-$haskell\
-$python\
-$terraform\
-$direnv\
-[](fg:green bg:sapphire)\
-$conda\
-[](fg:sapphire bg:lavender)\
-$time\
-[ ](fg:lavender)\
-$cmd_duration\
+[](fg:yellow)\
 $line_break\
 $character"""
-
-# # RIGHT PROMPT - System monitoring (powerline style)
-# right_format = """
-# [](red)\
-# [ $memory_usage$jobs ](bg:yellow fg:crust)\
-# [](fg:yellow bg:green)\
-# [ $battery ](bg:green fg:crust)\
-# [](fg:green bg:blue)\
-# [ $cmd_duration ](bg:blue fg:crust)\
-# [](fg:blue bg:lavender)\
-# [ $time ](bg:lavender fg:crust)\
-# [ ](fg:lavender)"""
 
 palette = 'catppuccin_mocha'
 
@@ -133,164 +101,15 @@ style = "bg:yellow"
 
 [git_metrics]
 disabled = false
-format = '([[+$added]($added_style)[-$deleted]($deleted_style)](fg:crust bg:yellow) )'
+format = '([[+$added]($added_style)[-$deleted]($deleted_style) ](fg:crust bg:yellow))'
 added_style = 'fg:black bg:yellow'
 deleted_style = 'fg:black bg:yellow'
 only_nonzero_diffs = true
-
-[nix_shell]
-disabled = false
-symbol = "❄️ "
-style = "bg:blue fg:crust"
-format = '[[ $symbol$state ](fg:crust bg:blue)]($style)'
-impure_msg = "impure"
-pure_msg = "pure"
-heuristic = false
-
-[aws]
-symbol = "  "
-style = "bg:blue fg:crust"
-format = '[[$symbol$profile@$region$expiration_symbol ](fg:crust bg:blue)]($style)'
-expiration_symbol = "X"
-disabled = false
-
-# Region aliases - Shorten AWS region codes
-[aws.region_aliases]
-us-east-1 = "use1"
-us-east-2 = "use2"
-us-west-1 = "usw1"
-us-west-2 = "usw2"
-eu-west-1 = "euw1"
-eu-west-2 = "euw2"
-eu-west-3 = "euw3"
-eu-central-1 = "euc1"
-eu-central-2 = "euc2"
-eu-north-1 = "eun1"
-ap-southeast-1 = "apse1"
-ap-southeast-2 = "apse2"
-ap-northeast-1 = "apne1"
-ap-northeast-2 = "apne2"
-ap-northeast-3 = "apne3"
-ap-south-1 = "aps1"
-ap-south-2 = "aps2"
-ca-central-1 = "cac1"
-sa-east-1 = "sae1"
-
-# Profile aliases - Transform verbose profile names to compact format
-# Note: These will be dynamically generated from accounts.json in future
-# For now, add manually as needed for your accounts
-# Example: tririga-integrations-dev = "ti:dev"
-[aws.profile_aliases]
-
-[kubernetes]
-format = '[[ ☸ $context($namespace) ](fg:crust bg:sky)]($style)'
-style = "bg:sky"
-disabled = false
-detect_files = ['k8s', 'kubernetes', 'Dockerfile', 'docker-compose.yml']
-
-[nodejs]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[c]
-symbol = " "
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[rust]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[golang]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[php]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[java]
-symbol = " "
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[kotlin]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[haskell]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
-
-[python]
-symbol = ""
-style = "bg:green"
-format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:crust bg:green)]($style)'
-
-[terraform]
-symbol = "󱁢 "
-style = "bg:green"
-format = '[[ $symbol$workspace ](fg:crust bg:green)]($style)'
-
-[direnv]
-format = '[[ direnv ](fg:crust bg:green)]($style)'
-style = "bg:green"
-disabled = false
-
-[docker_context]
-symbol = " "
-style = "bg:sapphire"
-format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
-
-[conda]
-symbol = "󰺕 "
-style = "fg:crust bg:sapphire"
-format = '[$symbol$environment ]($style)'
-ignore_base = false
 
 [container]
 symbol = "⬢ "
 style = "bold red dimmed"
 format = '[$symbol\[$name\]]($style) '
-
-[memory_usage]
-disabled = false
-threshold = 75
-symbol = "󰍛 "
-style = "bold yellow"
-format = '[$symbol$ram_pct]($style) '
-
-[jobs]
-symbol = "✦"
-style = "bold yellow"
-format = '[$symbol$number]($style) '
-number_threshold = 1
-
-[battery]
-format = '[$symbol$percentage]($style) '
-disabled = false
-
-[[battery.display]]
-threshold = 20
-style = "bold red"
-charging_symbol = "󰂄 "
-discharging_symbol = "󰂃 "
-
-[[battery.display]]
-threshold = 50
-style = "bold yellow"
-
-[time]
-disabled = false
-time_format = "%R"
-style = "bg:lavender"
-format = '[[  $time ](fg:crust bg:lavender)]($style)'
 
 [line_break]
 disabled = false
@@ -303,19 +122,6 @@ vimcmd_symbol = '[❮](bold fg:green)'
 vimcmd_replace_one_symbol = '[❮](bold fg:lavender)'
 vimcmd_replace_symbol = '[❮](bold fg:lavender)'
 vimcmd_visual_symbol = '[❮](bold fg:yellow)'
-
-[cmd_duration]
-show_milliseconds = true
-format = " in $duration "
-style = "bold dimmed white"
-disabled = false
-show_notifications = true
-min_time_to_notify = 45000
-
-[status]
-style = "bold red"
-format = '[\[$int$common_meaning\]]($style) '
-disabled = false
 
 [palettes.catppuccin_mocha]
 rosewater = "#f5e0dc"
