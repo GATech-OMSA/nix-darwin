@@ -72,6 +72,7 @@
       "obsidian"
 
       # Communication
+      "slack"
       "whatsapp"
       "zoom"
 
