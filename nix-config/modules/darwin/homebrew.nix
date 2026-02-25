@@ -62,7 +62,7 @@
       "chatgpt"
       "claude"
       "codex"
-      "ollama-app"
+      "ollama"
 
       # Utilities
       "appcleaner"
