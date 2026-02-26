@@ -43,12 +43,12 @@
 
       # Development
       "orbstack"            # Docker & Linux VMs (fast, lightweight)
-      "antigravity"
+      # "antigravity"
       "visual-studio-code"
       "claude-code"
       "iterm2"
       "ghostty"         # Modern terminal emulator (alongside iTerm2)
-      "dash"
+      # "dash"
       "warp"
       "fork"
       "microsoft-word"
@@ -56,13 +56,13 @@
       # Productivity
       "alfred"
       "raycast"
-      "karabiner-elements"
+      # "karabiner-elements"
 
       # AI/LLM
       "chatgpt"
       "claude"
       "codex"
-      "ollama"
+      "ollama-app"
 
       # Utilities
       "appcleaner"

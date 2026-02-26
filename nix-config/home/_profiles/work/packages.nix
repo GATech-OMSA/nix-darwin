@@ -19,7 +19,7 @@
     # micromamba       # BROKEN in nixpkgs 1.5.8 (fmt formatter issue) - using Homebrew instead
 
     # Node.js (required for VS Code extensions like Amazon Q)
-    nodejs_20          # Node.js 20 LTS
+    nodejs_22          # Node.js 22 LTS
 
 
     # ODBC drivers and database clients
