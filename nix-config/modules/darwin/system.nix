@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, machineType, ... }:
+{ config, pkgs, lib, hostname, myLib, profileName, ... }:
 
 # macOS System Configuration
 #
@@ -34,9 +34,10 @@ let
   ];
 
   # Select apps based on machine type
-  persistentApps = myLib.selectByMachineType machineType {
+  persistentApps = myLib.selectByProfile profileName {
     work = workDockApps;
     personal = personalDockApps;
+    default = personalDockApps;
   };
 in
 {

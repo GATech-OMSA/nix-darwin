@@ -7,28 +7,32 @@
 # ============================================
 
 function uv-new() {
-  uv init $1
-  cd $1
+  if [ -z "$1" ]; then
+    echo "Usage: uv-new <project-name>"
+    return 1
+  fi
+  uv init "$1" || return 1
+  cd "$1" || { echo "✗ Failed to cd into $1"; return 1; }
   uv venv
   source .venv/bin/activate
-  echo "✅ UV project created and activated: $1"
+  echo "✓ UV project created and activated: $1"
 }
 
 function uv-venv() {
   uv venv
   source .venv/bin/activate
-  echo "✅ UV virtual environment created and activated"
+  echo "✓ UV virtual environment created and activated"
 }
 
 function activate() {
   if [ -f .venv/bin/activate ]; then
     source .venv/bin/activate
-    echo "✅ Activated .venv"
+    echo "✓ Activated .venv"
   elif [ -f venv/bin/activate ]; then
     source venv/bin/activate
-    echo "✅ Activated venv"
+    echo "✓ Activated venv"
   else
-    echo "❌ No virtual environment found in current directory"
+    echo "✗ No virtual environment found in current directory"
   fi
 }
 
@@ -87,7 +91,7 @@ function m-mkenv() {
   echo "Creating environment '$name' with Python $python_version..."
   if [ -n "$packages" ]; then
     echo "Installing packages: $packages"
-    micromamba create -n "$name" python="$python_version" $packages -y
+    micromamba create -n "$name" python="$python_version" ${=packages} -y
   else
     micromamba create -n "$name" python="$python_version" -y
   fi
@@ -111,7 +115,7 @@ function m-rmenv() {
 # ============================================
 
 function pyenv-info() {
-  echo "🐍 Python Environment Information"
+  echo "→ Python Environment Information"
   echo "=================================="
 
   if [ -n "$VIRTUAL_ENV" ]; then

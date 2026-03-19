@@ -8,12 +8,10 @@
 {
   imports = [
     ../_template/programs       # Profile-shared program configs
-    ../_template/shell          # Profile-shared shell configs
+    ../_template/shell/zsh.nix  # Profile-shared shell config
     ../../_template/development # Development configs (Python, Node, AI/ML)
     ./packages.nix              # Personal packages
     ./aliases.nix               # Personal aliases
-    ./aws.nix                   # AWS SSO configuration
-    ./programs                  # Personal program overrides
   ];
 
   # Personal-specific session variables

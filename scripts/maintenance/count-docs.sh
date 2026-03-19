@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 MODE="${1:---warn}"
 
-echo -e "${BLUE}📊 Counting documentation files...${NC}"
+echo -e "${BLUE}Counting documentation files...${NC}"
 
 # Count actual markdown files in docs/
 ACTUAL_COUNT=$(find docs -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
@@ -31,24 +31,24 @@ if [[ -f "CLAUDE.md" ]]; then
         echo -e "  CLAUDE.md claims: ${YELLOW}$CLAIMED_COUNT${NC} files"
 
         if [[ "$ACTUAL_COUNT" -eq "$CLAIMED_COUNT" ]]; then
-            echo -e "${GREEN}✅ File count matches!${NC}"
+            echo -e "${GREEN}File count matches!${NC}"
             exit 0
         else
-            echo -e "${RED}❌ Mismatch: $ACTUAL_COUNT actual vs $CLAIMED_COUNT claimed${NC}"
+            echo -e "${RED}error: mismatch: $ACTUAL_COUNT actual vs $CLAIMED_COUNT claimed${NC}"
             echo -e "${YELLOW}   Update CLAUDE.md file count references${NC}"
 
             if [[ "$MODE" == "--strict" ]]; then
                 exit 1
             else
-                echo -e "${YELLOW}   ⚠️  Warning only (use --strict to fail)${NC}"
+                echo -e "${YELLOW}   warning: warning only (use --strict to fail)${NC}"
                 exit 0
             fi
         fi
     else
-        echo -e "${YELLOW}⚠️  Could not find file count claim in CLAUDE.md${NC}"
+        echo -e "${YELLOW}warning: could not find file count claim in CLAUDE.md${NC}"
         exit 0
     fi
 else
-    echo -e "${RED}❌ CLAUDE.md not found${NC}"
+    echo -e "${RED}error: cLAUDE.md not found${NC}"
     exit 1
 fi

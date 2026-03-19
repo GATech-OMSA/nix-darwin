@@ -2,7 +2,7 @@
 #
 # Essential aliases only
 
-{ ... }:
+_:
 
 {
   programs.zsh.shellAliases = {

@@ -44,36 +44,36 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo ""
-echo "🔍 Validating Secret Registry"
+echo "Validating Secret Registry"
 echo "=============================="
 echo ""
 
 # Check if Nix is available
 if ! command -v nix &> /dev/null; then
-  echo -e "${RED}❌ Nix not found${NC}"
+  echo -e "${RED}error: nix not found${NC}"
   echo "   This script requires Nix to be installed"
   exit 1
 fi
 
 # Check if flake exists
 if [ ! -f "$REPO_ROOT/flake.nix" ]; then
-  echo -e "${RED}❌ flake.nix not found${NC}"
+  echo -e "${RED}error: flake.nix not found${NC}"
   echo "   Expected at: $REPO_ROOT/flake.nix"
   exit 1
 fi
 
 # Load secret paths from registry
-echo "📥 Loading paths from registry..."
+echo "Loading paths from registry..."
 mapfile -t SECRET_PATHS < <(
   nix eval "$REPO_ROOT#secretPaths" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
 )
 
 if [ ${#SECRET_PATHS[@]} -eq 0 ]; then
-  echo -e "${RED}❌ Failed to load secret paths from registry${NC}"
+  echo -e "${RED}error: failed to load secret paths from registry${NC}"
   exit 1
 fi
 
-echo "   ✅ Loaded ${#SECRET_PATHS[@]} paths from registry"
+echo "   Loaded ${#SECRET_PATHS[@]} paths from registry"
 echo ""
 
 # Load paths by type
@@ -89,7 +89,7 @@ for type in aws database tokens ssh credentials general; do
   PATHS_BY_TYPE[$type]=$count
 
   if [ "$VERBOSE" = true ]; then
-    echo -e "${BLUE}📂 $type:${NC} $count paths"
+    echo -e "${BLUE}$type:${NC} $count paths"
   fi
 done
 
@@ -102,7 +102,7 @@ found_count=0
 missing_count=0
 missing_paths=()
 
-echo "🔎 Checking path existence..."
+echo "Checking path existence..."
 echo ""
 
 for path in "${SECRET_PATHS[@]}"; do
@@ -114,19 +114,19 @@ for path in "${SECRET_PATHS[@]}"; do
   if [ -e "$path" ] || [ -L "$path" ]; then
     found_count=$((found_count + 1))
     if [ "$VERBOSE" = true ]; then
-      echo -e "  ${GREEN}✅${NC} $path"
+      echo -e "  ${GREEN}$path${NC}"
     fi
   else
     missing_count=$((missing_count + 1))
     missing_paths+=("$path")
     if [ "$VERBOSE" = true ]; then
-      echo -e "  ${YELLOW}⚠️${NC}  $path (may exist on other machines)"
+      echo -e "  ${YELLOW}warning:${NC} $path (may exist on other machines)"
     fi
   fi
 done
 
 echo ""
-echo "📊 Summary"
+echo "Summary"
 echo "=========="
 echo ""
 echo "Total paths in registry: ${#SECRET_PATHS[@]}"
@@ -135,7 +135,7 @@ echo -e "${YELLOW}Missing (machine-specific):${NC} $missing_count"
 echo ""
 
 # Show breakdown by type
-echo "📋 Breakdown by Type"
+echo "Breakdown by Type"
 echo "===================="
 echo ""
 for type in "${!PATHS_BY_TYPE[@]}"; do
@@ -146,7 +146,7 @@ echo ""
 
 # List missing paths if any
 if [ $missing_count -gt 0 ]; then
-  echo "⚠️  Missing Paths (machine-specific)"
+  echo "warning: missing Paths (machine-specific)"
   echo "===================================="
   echo ""
   echo "These paths are registered but don't exist on this machine."
@@ -159,13 +159,13 @@ if [ $missing_count -gt 0 ]; then
 fi
 
 # Validate glob patterns
-echo "🔍 Validating glob patterns..."
+echo "Validating glob patterns..."
 mapfile -t GLOB_PATTERNS < <(
   nix eval "$REPO_ROOT#secretGlobPatterns" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
 )
 
 pattern_count=${#GLOB_PATTERNS[@]}
-echo "   ✅ $pattern_count glob patterns registered"
+echo "   $pattern_count glob patterns registered"
 echo ""
 
 if [ "$VERBOSE" = true ]; then
@@ -177,25 +177,25 @@ if [ "$VERBOSE" = true ]; then
 fi
 
 # Validate registry metadata
-echo "🔍 Validating registry metadata..."
+echo "Validating registry metadata..."
 nix eval "$REPO_ROOT#lib.secrets.meta" --json 2>/dev/null | jq '.'
 echo ""
 
 # Validate no duplicates
-echo "🔍 Checking for duplicates..."
+echo "Checking for duplicates..."
 duplicates=$(printf '%s\n' "${SECRET_PATHS[@]}" | sort | uniq -d)
 if [ -n "$duplicates" ]; then
-  echo -e "${RED}❌ Duplicate paths found:${NC}"
+  echo -e "${RED}error: duplicate paths found:${NC}"
   echo "$duplicates"
   exit 1
 else
-  echo "   ✅ No duplicates found"
+  echo "   No duplicates found"
 fi
 echo ""
 
 # Final status
 echo "=============================="
-echo -e "${GREEN}✅ Secret registry validation complete${NC}"
+echo -e "${GREEN}Secret registry validation complete${NC}"
 echo "=============================="
 echo ""
 

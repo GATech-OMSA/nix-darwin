@@ -70,19 +70,19 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 info() {
-  echo -e "${BLUE}ℹ${NC}  $*"
+  echo -e "${BLUE}→${NC} $*"
 }
 
 success() {
-  echo -e "${GREEN}✅${NC} $*"
+  echo -e "${GREEN}$*${NC}"
 }
 
 warning() {
-  echo -e "${YELLOW}⚠️${NC}  $*"
+  echo -e "${YELLOW}warning:${NC} $*"
 }
 
 error() {
-  echo -e "${RED}❌${NC} $*" >&2
+  echo -e "${RED}error:${NC} $*" >&2
 }
 
 step() {
@@ -227,12 +227,12 @@ categorize_packages() {
 
   echo ""
   echo "┌─────────────────────────────────────────────┐"
-  echo "│  📊 Package Categorization                  │"
+  echo "│  Package Categorization                  │"
   echo "└─────────────────────────────────────────────┘"
   echo ""
 
   # CLI tools available in Nix (recommended for migration)
-  echo -e "${GREEN}${BOLD}✅ CLI Tools Available in Nix${NC} (recommended to migrate):"
+  echo -e "${GREEN}${BOLD}CLI Tools Available in Nix${NC} (recommended to migrate):"
   while IFS='|' read -r package type availability; do
     if [ "$type" = "formula" ] && [[ "$availability" == "available"* ]]; then
       echo "   • $package"
@@ -246,7 +246,7 @@ categorize_packages() {
   echo ""
 
   # CLI tools NOT available in Nix
-  echo -e "${YELLOW}${BOLD}⚠️  CLI Tools NOT in Nix${NC} (keep in Homebrew):"
+  echo -e "${YELLOW}${BOLD}warning: cLI Tools NOT in Nix${NC} (keep in Homebrew):"
   while IFS='|' read -r package type availability; do
     if [ "$type" = "formula" ] && [ "$availability" = "unavailable" ]; then
       echo "   • $package"
@@ -260,7 +260,7 @@ categorize_packages() {
   echo ""
 
   # GUI apps (stay in Homebrew)
-  echo -e "${CYAN}${BOLD}🖥️  GUI Apps${NC} (keep in Homebrew - casks):"
+  echo -e "${CYAN}${BOLD} GUI Apps${NC} (keep in Homebrew - casks):"
   while IFS='|' read -r package type availability; do
     if [ "$type" = "cask" ]; then
       echo "   • $package"
@@ -522,7 +522,7 @@ main() {
   # Header
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "  🍺 → ❄️  Homebrew → Nix Migration Tool"
+  echo "  →  Homebrew → Nix Migration Tool"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   if [ "$DRY_RUN" = true ]; then

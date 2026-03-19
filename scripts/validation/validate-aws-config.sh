@@ -41,22 +41,22 @@ log_section() {
 }
 
 log_pass() {
-    echo -e "${GREEN}✅ PASS:${NC} $1"
+    echo -e "${GREEN}PASS:${NC} $1"
     PASSED=$((PASSED + 1))
 }
 
 log_fail() {
-    echo -e "${RED}❌ FAIL:${NC} $1"
+    echo -e "${RED}error: fAIL:${NC} $1"
     FAILED=$((FAILED + 1))
 }
 
 log_warn() {
-    echo -e "${YELLOW}⚠️  WARN:${NC} $1"
+    echo -e "${YELLOW}warning: wARN:${NC} $1"
     WARNINGS=$((WARNINGS + 1))
 }
 
 log_info() {
-    echo -e "   ℹ️  $1"
+    echo -e "   $1"
 }
 
 check_exists() {
@@ -412,7 +412,7 @@ validate_git_email() {
 
         if echo "$hostname" | grep -qi "work"; then
             # Work machine - should have work email
-            if echo "$git_email" | grep -q "@.*\\.com"; then
+            if echo "$git_email" | grep -q "@.*\\."; then
                 log_pass "Work email detected on work machine"
             else
                 log_warn "Personal email on work machine: $git_email"
@@ -469,9 +469,9 @@ validate_profile_functions() {
         echo "   Available functions:"
         for func in "${functions[@]}"; do
             if type "$func" &>/dev/null; then
-                echo "     ✅ $func"
+                echo "     $func"
             else
-                echo "     ❌ $func"
+                echo "     error: $func"
             fi
         done
     fi
@@ -515,19 +515,19 @@ validate_current_session() {
 print_summary() {
     log_header "Validation Summary"
 
-    echo -e "${GREEN}✅ Passed:${NC}   $PASSED checks"
-    echo -e "${YELLOW}⚠️  Warnings:${NC} $WARNINGS issues"
-    echo -e "${RED}❌ Failed:${NC}   $FAILED checks"
+    echo -e "${GREEN}Passed:${NC}   $PASSED checks"
+    echo -e "${YELLOW}warning: warnings:${NC} $WARNINGS issues"
+    echo -e "${RED}error: failed:${NC}   $FAILED checks"
     echo ""
 
     if [[ $FAILED -eq 0 ]] && [[ $WARNINGS -eq 0 ]]; then
-        echo -e "${GREEN}🎉 All checks passed! AWS configuration looks good.${NC}"
+        echo -e "${GREEN}All checks passed! AWS configuration looks good.${NC}"
         return 0
     elif [[ $FAILED -eq 0 ]]; then
-        echo -e "${YELLOW}⚠️  Configuration has warnings but no critical failures.${NC}"
+        echo -e "${YELLOW}warning: configuration has warnings but no critical failures.${NC}"
         return 0
     else
-        echo -e "${RED}❌ Configuration has critical failures. Please review above.${NC}"
+        echo -e "${RED}error: configuration has critical failures. Please review above.${NC}"
         return 1
     fi
 }
@@ -539,27 +539,27 @@ print_recommendations() {
     hostname=$(hostname)
 
     if echo "$hostname" | grep -qi "work"; then
-        echo "📋 Work Machine Recommendations:"
+        echo "Work Machine Recommendations:"
         echo "   1. Ensure accounts.json is configured with your work projects"
         echo "   2. Configure SSO profiles for each environment"
         echo "   3. Use awslogin function for SSO authentication"
         echo "   4. Keep corporate CA bundle updated"
         echo ""
-        echo "📖 Documentation:"
+        echo "Documentation:"
         echo "   - AWS Multi-Role Guide: docs/work/aws/aws-multi-role.md"
         echo "   - AWS Quick Reference: docs/work/aws/aws-quick-ref.md"
     else
-        echo "📋 Personal Machine Recommendations:"
+        echo "Personal Machine Recommendations:"
         echo "   1. Configure personal profile with IAM credentials"
         echo "   2. Keep credentials in SOPS-encrypted secrets"
         echo "   3. Use minimal AWS configuration for personal projects"
         echo ""
-        echo "📖 Documentation:"
+        echo "Documentation:"
         echo "   - Infrastructure Reference: docs/reference/infrastructure.md"
     fi
 
     echo ""
-    echo "🔧 Common Commands:"
+    echo "Common Commands:"
     echo "   - Check current profile: awswho (or: aws sts get-caller-identity)"
     echo "   - List profiles: awslist (or: aws configure list-profiles)"
     echo "   - Switch profile: export AWS_PROFILE=<name>"

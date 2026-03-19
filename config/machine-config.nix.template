@@ -4,8 +4,8 @@
 # Copy to machine-config.nix and customize
 
 {
-  # Machine identity (choose unique ID)
-  machineId = "CHANGE-ME";  # Example: "mbp-2021" or  "macbook-pro-m1";
+  # Machine identity (hardware + profile suffix, e.g., "macbook-pro-m1-personal")
+  machineId = "CHANGE-ME";  # Example: "macbook-pro-m1-personal" or "macbook-pro-m3-work";
 
   # Profile selection
   profileName = "personal";  # Options: "personal" | "work" | "minimal"
@@ -16,6 +16,12 @@
 
   # System architecture
   system = "aarch64-darwin";  # Or "x86_64-darwin" for Intel Macs
+
+  # Optional: disable Home Manager if it causes issues
+  # enableHomeManager = false;
+
+  # Optional: skip Go packages if corporate proxy blocks Go module downloads
+  # skipGoPackages = true;
 
   # Profile-specific overrides
   profileOverrides = {};

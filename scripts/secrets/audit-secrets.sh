@@ -17,7 +17,6 @@
 #   ./audit-secrets.sh                    # Scan with depth=3
 #   ./audit-secrets.sh --depth 5          # Custom depth
 #   ./audit-secrets.sh --quick            # Fast scan (depth=2)
-#   ./audit-secrets.sh --comprehensive    # Deep scan (depth=5)
 #   ./audit-secrets.sh --dry-run          # Show what would be scanned
 #
 
@@ -50,21 +49,13 @@ while [[ $# -gt 0 ]]; do
       SCAN_DEPTH=2
       shift
       ;;
-    --comprehensive)
-      SCAN_DEPTH=5
-      shift
-      ;;
     --dry-run)
       DRY_RUN=true
       shift
       ;;
-    --output)
-      OUTPUT_FILE="$2"
-      shift 2
-      ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--depth N] [--quick] [--comprehensive] [--dry-run] [--output FILE]"
+      echo "Usage: $0 [--depth N] [--quick] [--dry-run]"
       exit 1
       ;;
   esac
@@ -96,7 +87,7 @@ warning() {
 }
 
 critical() {
-  echo -e "${RED}🚨${NC} $*"
+  echo -e "${RED}✗${NC} $*"
 }
 
 banner() {
@@ -311,7 +302,7 @@ scan_directory() {
   local suspicious_files=0
   local findings=()
 
-  print_step "🔍 Scanning: $scan_root (depth: $depth)"
+  print_step "Scanning: $scan_root (depth: $depth)"
 
   if [[ "$DRY_RUN" == true ]]; then
     info "DRY RUN - Would scan with these settings:"
@@ -324,7 +315,7 @@ scan_directory() {
 
   # Find all files up to specified depth
   while IFS= read -r -d '' file; do
-    ((total_files++))
+    total_files=$(( total_files + 1 ))
 
     # Progress indicator every 100 files
     if (( total_files % 100 == 0 )); then
@@ -352,7 +343,7 @@ scan_directory() {
       continue
     fi
 
-    ((scanned_files++))
+    scanned_files=$(( scanned_files + 1 ))
 
     # Check filename patterns
     local filename_match=false
@@ -368,7 +359,7 @@ scan_directory() {
 
     # Report findings
     if [[ "$filename_match" == true ]] || [[ "$content_match" == true ]]; then
-      ((suspicious_files++))
+      suspicious_files=$(( suspicious_files + 1 ))
 
       local severity="MEDIUM"
       if [[ "$content_match" == true ]]; then
@@ -412,36 +403,6 @@ scan_directory() {
 }
 
 # ============================================================================
-# OUTPUT GENERATION
-# ============================================================================
-
-generate_output() {
-  if [[ -n "$OUTPUT_FILE" ]]; then
-    info "Generating report: $OUTPUT_FILE"
-
-    # Ensure output file is secure
-    touch "$OUTPUT_FILE"
-    chmod 600 "$OUTPUT_FILE"
-
-    {
-      echo "# Secret Audit Report"
-      echo "# Generated: $(date)"
-      echo "# Scan depth: $SCAN_DEPTH"
-      echo ""
-      echo "# Findings from scan"
-      echo ""
-      printf '%s\n' "${findings[@]}" | sort -t'|' -k1,1r | while IFS='|' read -r severity file fingerprint; do
-        echo "[$severity] $file"
-        echo "  Fingerprint: $fingerprint"
-        echo ""
-      done
-    } > "$OUTPUT_FILE"
-
-    success "Report saved to: $OUTPUT_FILE"
-  fi
-}
-
-# ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
@@ -474,19 +435,15 @@ main() {
     fi
   done
 
-  # Scan home directory (excluding already scanned locations)
-  if [[ "$SCAN_DEPTH" -ge 3 ]]; then
-    print_step "🔍 Scanning Home Directory (excluding common locations)"
-    # Note: This would need additional logic to exclude already-scanned paths
-    info "Skipping general home scan (enable with --comprehensive for full home directory scan)"
+  # Output report to file if requested
+  if [[ -n "$OUTPUT_FILE" ]]; then
+    info "Note: Use shell redirection for reports (e.g., secrets-audit > report.txt)"
   fi
-
-  generate_output
 
   local end_time=$(date +%s)
   local duration=$((end_time - START_TIME))
 
-  print_step "✅ Audit Complete"
+  print_step "Audit Complete"
   echo ""
   success "Total time: ${duration}s"
   echo ""

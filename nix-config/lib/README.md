@@ -26,40 +26,31 @@ All functions are available through `myLib` parameter in your modules:
 
 ## Function Reference
 
-### Machine Type Helpers
+### Profile Helpers
 
-Detect and respond to machine type (personal vs work).
+Select values based on profile (personal/work/minimal).
 
-#### `machineType`
+#### `isPersonalProfile` / `isWorkProfile`
 
-Determine machine type from hostname.
+Boolean checks for profile.
 
 ```nix
-myLib.machineType "mbp-jimmy"  # => "personal"
-myLib.machineType "mbp-work"   # => "work"
+if myLib.isPersonalProfile profileName then "personal-config" else "work-config"
 ```
 
-#### `isPersonal` / `isWork`
+#### `selectByProfile`
 
-Boolean checks for machine type.
-
-```nix
-if myLib.isPersonal hostname then "personal-config" else "work-config"
-```
-
-#### `selectByMachine`
-
-Select value based on machine type (most useful!).
+Select value based on profile (most useful!).
 
 ```nix
-gitEmail = myLib.selectByMachine hostname {
+gitEmail = myLib.selectByProfile profileName {
   personal = "jimmy-jain@users.noreply.github.com";
   work = "user@example.com";
   default = "fallback@email.com";  # optional
 };
 ```
 
-**Real usage:** See `home/jimmy/programs/git.nix:5` and `aws.nix:82`
+**Real usage:** See `_template/programs/aws.nix` and `modules/darwin/system.nix`
 
 #### `importIf` / `importIfPersonal` / `importIfWork`
 

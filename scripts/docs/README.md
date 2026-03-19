@@ -1,198 +1,112 @@
 # Scripts Directory
 
-Utility scripts for nix-darwin system maintenance, validation, and testing.
+Utility scripts for nix-darwin system maintenance, setup, validation, and testing.
 
-## System Management
+## Directory Structure
 
-### pre-flight-checks.sh
-**Purpose**: Validates system health before darwin-rebuild to prevent common failures
-
-**Usage**:
-```bash
-./scripts/pre-flight-checks.sh              # Run all checks
-./scripts/pre-flight-checks.sh --quiet      # Minimal output
-./scripts/pre-flight-checks.sh --warnings-only  # Only warnings/errors
+```
+scripts/
+├── app-catalog/      # Homebrew app management
+├── docs/             # This README
+├── maintenance/      # System maintenance and diagnostics
+├── profiles/         # Profile switching
+├── secrets/          # SOPS secrets management
+├── setup/            # Initial machine setup (3-script workflow)
+├── testing/          # Test suites
+├── validation/       # Configuration validation
+└── workspace/        # User data backup/restore
 ```
 
-**Integrated Aliases**:
-- `nix-rebuild` - Runs with pre-flight checks (default)
-- `nix-rebuild-skip-checks` - Skip checks (emergency use)
-- `nix-preflight` - Run checks without rebuilding
+---
 
-**Checks**:
-1. Disk space (>5GB free)
-2. Git status (uncommitted changes warning)
-3. Nix daemon running
-4. No active rebuild processes
-5. Valid flake.nix syntax
-6. Nix store integrity
-7. Network connectivity
-8. System load
-9. Required files present
-10. Secrets encryption (SOPS binary format)
+## Setup (`scripts/setup/`)
 
-**Exit Codes**:
-- `0` - All checks passed
-- `1` - Critical failures (rebuild blocked)
-- `2` - Warnings only (proceed with caution)
+Three-script installation workflow (see `docs/installation.md`):
 
-### health-check.sh
-**Purpose**: Comprehensive system health diagnostics
+| Script | Purpose | Step |
+|--------|---------|------|
+| `bootstrap.sh` | Install Nix, Homebrew, prerequisites | 1 |
+| `configure.sh` | Generate machine config, scan secrets | 2 |
+| `activate.sh` | Build and activate nix-darwin | 3 |
 
-**Usage**:
-```bash
-./scripts/health-check.sh
-```
+Additional:
+- `scaffold-new-machine.sh` — Create new host config from template
+- `migrate-homebrew-to-nix.sh` — Audit and migrate Homebrew packages to Nix
 
-## Security & Secrets
+---
 
-### check-secrets-encrypted.sh
-**Purpose**: Validates that secrets files are SOPS encrypted (binary format)
+## Maintenance (`scripts/maintenance/`)
 
-**Usage**:
-```bash
-./scripts/check-secrets-encrypted.sh
-```
+| Script | Purpose | Alias |
+|--------|---------|-------|
+| `rebuild.sh` | Smart rebuild with pre-flight checks and rollback | `nix-rebuild` |
+| `pre-flight-checks.sh` | Validate system health before rebuilds | `nix-preflight` |
+| `health-check.sh` | Comprehensive system diagnostics | `nix-health` |
+| `config-diff.sh` | Compare generations (packages, configs) | `nix-config-diff` |
+| `system-cleanup.sh` | Interactive guided cleanup (Nix, Brew, Docker) | `just cleanup` |
+| `verify-backups.sh` | Validate backup completeness and freshness | `nix-verify-backups` |
+| `brew-nix-audit.sh` | Check Homebrew apps for Nix alternatives | `nix-brew-audit` |
+| `count-docs.sh` | Documentation file statistics | — |
 
-**Called by**: Git pre-commit and pre-push hooks
+---
 
-### validate-secret-registry.sh
-**Purpose**: Validates secret registry configuration and SOPS setup
+## Secrets (`scripts/secrets/`)
 
-**Usage**:
-```bash
-./scripts/validate-secret-registry.sh
-```
+| Script | Purpose | Alias |
+|--------|---------|-------|
+| `edit-secrets.sh` | Safe SOPS editing with auto-backup | `secrets-edit` |
+| `view-secrets.sh` | Read-only decrypted secrets view | `secrets-view` |
+| `rescan-secrets.sh` | Scan for new secrets, add to SOPS | `secrets-rescan` |
+| `backup-secrets.sh` | Timestamped secrets.yaml backup | `secrets-backup` |
+| `audit-secrets.sh` | System-wide secret scanning | `secrets-audit` |
 
-## Documentation
+---
 
-### check-doc-links.py
-**Purpose**: Validates markdown links in documentation files
+## Validation (`scripts/validation/`)
 
-**Usage**:
-```bash
-python3 scripts/check-doc-links.py
-```
+| Script | Purpose |
+|--------|---------|
+| `audit-permissions.sh` | Check credential file permissions (600) |
+| `check-secrets-encrypted.sh` | Verify SOPS encryption (used by git hooks) |
+| `validate-aws-config.sh` | Validate AWS multi-role configuration |
+| `validate-docs.sh` | Documentation link validation |
+| `validate-machine-config.sh` | Check machine-config.nix syntax |
+| `validate-secret-registry.sh` | Validate secret registry and SOPS setup |
 
-### count-docs.sh
-**Purpose**: Count documentation files and generate statistics
+---
 
-**Usage**:
-```bash
-./scripts/count-docs.sh
-```
+## Testing (`scripts/testing/`)
 
-### validate-docs.sh
-**Purpose**: Comprehensive documentation validation
+| Script | Purpose |
+|--------|---------|
+| `test-aws-helpers.sh` | Test AWS helper functions and aliases |
+| `test-git-hooks.sh` | Test git hooks for credential protection |
 
-**Usage**:
-```bash
-./scripts/validate-docs.sh
-```
+---
 
-## Configuration Validation
+## Workspace (`scripts/workspace/`)
 
-### validate-aws-config.sh
-**Purpose**: Validates AWS configuration for multi-role setup
+| Script | Purpose |
+|--------|---------|
+| `backup.sh` | Back up app configs and user content |
+| `restore.sh` | Restore from workspace backup |
 
-**Usage**:
-```bash
-./scripts/validate-aws-config.sh
-```
+---
 
-### validate-package-separation.sh
-**Purpose**: Ensures packages are properly separated between Nix and Homebrew
+## Other
 
-**Usage**:
-```bash
-./scripts/validate-package-separation.sh
-```
+| Script | Purpose |
+|--------|---------|
+| `app-catalog/install-apps.sh` | Manage Homebrew apps from catalog |
+| `profiles/switch-profile.sh` | Switch between personal/work/minimal profiles |
 
-## Testing
-
-### test-aws-helpers.sh
-**Purpose**: Tests AWS helper functions from lib/aws.nix
-
-**Usage**:
-```bash
-./scripts/test-aws-helpers.sh
-```
-
-### test-git-hooks.sh
-**Purpose**: Tests git hooks for credential protection and secrets validation
-
-**Usage**:
-```bash
-./scripts/test-git-hooks.sh
-```
-
-## Setup & Installation
-
-### install-zsh-plugins.sh
-**Purpose**: Installs custom Oh-My-Zsh plugins
-
-**Usage**:
-```bash
-./scripts/install-zsh-plugins.sh
-```
-
-**Installs**:
-- zsh-autosuggestions
-- zsh-syntax-highlighting
-- zsh-completions
-- you-should-use
-- zsh-history-substring-search
+---
 
 ## Script Development Guidelines
 
-When creating new scripts:
-
-1. **Shebang**: Use `#!/usr/bin/env bash`
-2. **Strict Mode**: Include `set -euo pipefail`
-3. **Documentation**: Add comprehensive header comments
-4. **Exit Codes**: Follow standard conventions (0=success, 1=error)
-5. **Colors**: Use color codes for visual feedback
-6. **Permissions**: Make executable with `chmod +x`
-7. **Testing**: Test all modes and edge cases
-
-## Common Patterns
-
-### Color Codes
-```bash
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'  # No Color
-```
-
-### Exit Code Handling
-```bash
-exit_code=0
-# Run checks
-if ! some_check; then
-  exit_code=1
-fi
-exit $exit_code
-```
-
-### Quiet Mode
-```bash
-QUIET_MODE=false
-if [[ "$QUIET_MODE" == "false" ]]; then
-  echo "Verbose output"
-fi
-```
-
-## Maintenance
-
-- All scripts should be kept in sync with system changes
-- Update documentation when adding new scripts
-- Remove deprecated scripts and update references
-- Test scripts after major system changes
-
-## See Also
-
-- [Architecture Reference](../docs/architecture/reference.md) - File structure
-- [Troubleshooting Guide](../docs/guides/troubleshooting.md) - Common issues
-- [Usage Guide](../docs/guides/usage.md) - Daily workflows
+1. **Shebang**: `#!/usr/bin/env bash`
+2. **Strict mode**: `set -euo pipefail`
+3. **Repo root**: `REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"`
+4. **Exit codes**: 0 = success, 1 = error, 2 = warnings only
+5. **Colors**: Use standard ANSI codes (RED, GREEN, YELLOW, BLUE, NC)
+6. **Permissions**: `chmod +x` all scripts

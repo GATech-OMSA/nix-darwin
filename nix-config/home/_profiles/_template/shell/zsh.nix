@@ -1,13 +1,15 @@
 { config, pkgs, lib, hostname, myLib, username, machineId, ... }:
 
 let
-  # Configuration flag for Oh-My-Zsh
-  enableOhMyZsh = false;  # Set to false to disable Oh-My-Zsh plugins
-
   # Derive paths dynamically
   nixDarwinDir = "${config.home.homeDirectory}/nix-darwin";
   homeDir = config.home.homeDirectory;
-  machineBackupsDir = "${nixDarwinDir}/workspace/${machineId}";
+
+  # Lazy-loaded function files (sourced on first use, not at startup)
+  # Saves ~50-80ms by deferring 933 lines of rarely-used function parsing
+  lazyCleanup = pkgs.writeText "cleanup.zsh" (builtins.readFile ./functions/cleanup.zsh);
+  lazyUpdate = pkgs.writeText "update.zsh" (builtins.readFile ./functions/update.zsh);
+  lazyCredentials = pkgs.writeText "credentials-mgmt.zsh" (builtins.readFile ./functions/credentials-mgmt.zsh);
 
   # Static generation of shell init scripts to improve startup time
   # This moves ~15-30ms of processing from shell-start to build-time
@@ -20,6 +22,7 @@ let
     ${pkgs.zoxide}/bin/zoxide init zsh > $out/zoxide.zsh
     ${pkgs.atuin}/bin/atuin init zsh > $out/atuin.zsh
     ${pkgs.direnv}/bin/direnv hook zsh > $out/direnv.zsh
+    ${pkgs.fzf}/bin/fzf --zsh > $out/fzf.zsh
 
     # Compile to .zwc for faster loading (using same zsh version)
     # This prevents parsing overhead at runtime
@@ -27,6 +30,7 @@ let
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/zoxide.zsh"
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/atuin.zsh"
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/direnv.zsh"
+    ${pkgs.zsh}/bin/zsh -c "zcompile $out/fzf.zsh"
   '';
 in
 {
@@ -64,56 +68,13 @@ in
       NH_DARWIN_HOSTNAME = machineId;
     };
 
-    # Oh My Zsh integration - Controlled by enableOhMyZsh flag
-    # Theme is empty to allow Starship prompt to take over
-    oh-my-zsh = {
-      enable = enableOhMyZsh;
-      theme = "";  # Empty theme = use Starship prompt
-      plugins = lib.optionals enableOhMyZsh [
-        # Version Control
-        "git"
-
-        # Development Tools
-        "docker"
-        "docker-compose"
-        "terraform"
-        "kubectl"
-
-        # Cloud & AWS
-        "aws"
-
-        # NOTE: Python plugins (python, pip, virtualenv) removed - using UV instead
-
-        # Productivity & Navigation
-        # NOTE: fzf is handled by Nix (programs.fzf.enable) - removed from oh-my-zsh
-        # NOTE: Directory jumping is provided by zoxide (configured in base.nix)
-        # Removed oh-my-zsh "z" plugin to avoid conflict with zoxide (2025-11-06)
-        "dirhistory"  # Navigate dirs with Alt+Left/Right
-        "sudo"  # Press ESC twice to add sudo
-
-        # File Operations
-        "extract"  # Extract any archive with 'extract filename'
-        "copypath"  # Copy current path to clipboard
-        "copyfile"  # Copy file contents to clipboard
-
-        # Utilities
-        "colored-man-pages"
-        "safe-paste"  # Prevents accidental execution when pasting
-        # NOTE: Removed low-value plugins: command-not-found, web-search, jsontools, encode64
-
-        # Note: zsh-autosuggestions and zsh-syntax-highlighting
-        # are sourced manually below since they're installed in ~/.oh-my-zsh/custom
-        # To add: zsh-completions, you-should-use, zsh-history-substring-search
-      ];
-    };
-
     # COMPLETE Shell aliases - merged from all sources
-    shellAliases = myLib.aws.mkAwsAliasesFromJson // {
+    shellAliases = {
       # ============================================
       # SYSTEM & CONFIGURATION
       # ============================================
       c = "clear";
-      reload = "source ~/.zshrc && echo '✅ .zshrc reloaded'";
+      reload = "source ~/.zshrc && printf '\\033[90m zshrc reloaded\\033[0m\\n'";
       restart = "exec zsh";
 
       # Quick open shortcuts
@@ -186,6 +147,8 @@ in
       secrets-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
       secrets-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
       secrets-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
+      secrets-status = "${nixDarwinDir}/scripts/secrets/status-secrets.sh";
+      secrets-deploy = "${nixDarwinDir}/scripts/secrets/deploy-secrets.sh";
 
       # Maintenance & validation
       nix-verify-backups = "${nixDarwinDir}/scripts/maintenance/verify-backups.sh";
@@ -240,14 +203,6 @@ in
       fdown = "open ~/Downloads";
       fdesk = "open ~/Desktop";
       fdocs = "open ~/Documents";
-
-      # Personal projects
-      learning = "cd ~/Dev/learning";
-      aiml = "cd ~/Dev/ai-ml";
-      algo = "cd ~/Dev/algorithms";
-      courses = "cd ~/Dev/courses";
-      experiments = "cd ~/Dev/experiments";
-      oss = "cd ~/Dev/open-source";
 
       # ============================================
       # MODERN CLI TOOLS (eza, bat, ripgrep, etc.)
@@ -313,7 +268,7 @@ in
       # ============================================
       awsp = "export AWS_PROFILE=";
       awsprofile = "echo $AWS_PROFILE";
-      awswho = "aws sts get-caller-identity";
+      # awswho defined as function in aws-helpers.nix (richer output than simple alias)
 
       # ============================================
       # DOCKER & KUBERNETES
@@ -351,12 +306,6 @@ in
       tff = "terraform fmt";
 
       # ============================================
-      # FILE OPERATIONS
-      # ============================================
-      # NOTE: extract is provided by oh-my-zsh extract plugin (line 57)
-      # Don't define alias here as it conflicts with the plugin function
-
-      # ============================================
       # NETWORK UTILITIES
       # ============================================
       myip = "curl -s https://api.ipify.org && echo";
@@ -373,14 +322,6 @@ in
       week = "date +%V";
 
       # ============================================
-      # OLLAMA SHORTCUTS
-      # ============================================
-      "ollama-start" = "ollama serve";
-      models = "ollama list";
-      llama3 = "ollama run llama3";
-      codellama = "ollama run codellama";
-
-      # ============================================
       # CLEANUP & MAINTENANCE
       # ============================================
       # Main cleanup command (Standard Tier)
@@ -395,7 +336,6 @@ in
       
       # Script-based maintenance
       cleanup-system = "${nixDarwinDir}/scripts/maintenance/system-cleanup.sh";  # External script
-      repo-reset = "${nixDarwinDir}/scripts/maintenance/repo-reset.sh";           # Reset repo config
     };
 
 
@@ -404,11 +344,54 @@ in
       # PERFORMANCE OPTIMIZATIONS (The <0.5s Goal)
       # Hybrid Approach: Static generation of init scripts
       # Moves ~20ms of processing from shell-start to build-time
+      (lib.mkOrder 40 ''
+        # DARK/LIGHT MODE DETECTION FOR STARSHIP
+        # Detection waterfall:
+        #   1. COLORFGBG env var (iTerm2 — instant)
+        #   2. macOS appearance (Ghostty/Warp/Terminal — follows system)
+        _nix_starship=$(readlink -f "$HOME/.config/starship.toml" 2>/dev/null)
+        if [[ "$_nix_starship" == /nix/store/* ]]; then
+          _writable_starship="$HOME/.cache/starship/starship.toml"
+          mkdir -p "$(dirname "$_writable_starship")"
+
+          # Detect dark/light mode
+          _palette=""
+          if [[ -n "$COLORFGBG" ]]; then
+            # iTerm2 sets COLORFGBG="fg;bg" — bg < 8 means dark
+            _bg="''${COLORFGBG##*;}"
+            if (( _bg < 8 )); then
+              _palette="catppuccin_mocha"
+            else
+              _palette="catppuccin_latte"
+            fi
+            unset _bg
+          fi
+          # Fallback: macOS system appearance (covers Ghostty, Warp, Terminal.app)
+          if [[ -z "$_palette" ]]; then
+            if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
+              _palette="catppuccin_mocha"
+            else
+              _palette="catppuccin_latte"
+            fi
+          fi
+
+          # Only rewrite if nix config changed or palette differs
+          if [[ ! -f "$_writable_starship" ]] || \
+             ! diff -q "$_nix_starship" "$_writable_starship" &>/dev/null || \
+             ! grep -q "palette = '$_palette'" "$_writable_starship" 2>/dev/null; then
+            sed "s/^palette = .*/palette = '$_palette'/" "$_nix_starship" > "$_writable_starship"
+          fi
+          export STARSHIP_CONFIG="$_writable_starship"
+          unset _writable_starship _palette
+        fi
+        unset _nix_starship
+      '')
+
       (lib.mkOrder 50 ''
         # STATICALLY GENERATED INTEGRATIONS
         # Replaces "eval $(tool init zsh)" to save runtime overhead.
         # Generated at build time via pkgs.runCommand.
-        
+
         source ${shellInitCache}/starship.zsh
         source ${shellInitCache}/zoxide.zsh
         source ${shellInitCache}/atuin.zsh
@@ -435,7 +418,7 @@ in
         fi
 
         # Helper to refresh completions manually (run after adding new packages)
-        alias refresh-completions="rm -f $ZCOMPDUMP*; compinit -u -d $ZCOMPDUMP; zcompile $ZCOMPDUMP; echo '✅ Completions refreshed'"
+        alias refresh-completions="rm -f $ZCOMPDUMP*; compinit -u -d $ZCOMPDUMP; zcompile $ZCOMPDUMP; echo 'Completions refreshed'"
 
         # 2. REPLACEMENTS FOR OMZ PLUGINS
         # sudo (double ESC)
@@ -472,37 +455,22 @@ in
           fi
         }
 
-        # 3. LAZY LOADERS (Heavy completions)
-        # AWS CLI
-        function aws() {
-          if [[ ! -f "$HOME/.cache/zsh/aws_completion" ]]; then
-            echo "Generating aws completion..."
-            ${pkgs.awscli2}/bin/aws_completer > "$HOME/.cache/zsh/aws_completion"
-          fi
-          unfunction aws
-          source "$HOME/.cache/zsh/aws_completion"
-          command aws "$@"
-        }
-        
-        # Kubectl
-        function kubectl() {
-          unfunction "$0"
-          if [[ ! -f "$HOME/.cache/zsh/kubectl_completion" ]]; then
-             ${pkgs.kubectl}/bin/kubectl completion zsh > "$HOME/.cache/zsh/kubectl_completion"
-          fi
-          source "$HOME/.cache/zsh/kubectl_completion"
-          $0 "$@"
-        }
-        
-        # Docker
-        function docker() {
-          unfunction "$0"
-          if [[ ! -f "$HOME/.cache/zsh/docker_completion" ]]; then
-             ${pkgs.docker}/bin/docker completion zsh > "$HOME/.cache/zsh/docker_completion"
-          fi
-          source "$HOME/.cache/zsh/docker_completion"
-          $0 "$@"
-        }
+        # 3. LAZY LOADERS (Heavy completions — generated by myLib.mkLazyCompletion)
+        ${myLib.mkLazyCompletion {
+          name = "aws";
+          binary = "${pkgs.awscli2}/bin/aws";
+          completionCommand = "${pkgs.awscli2}/bin/aws_completer";
+        }}
+        ${myLib.mkLazyCompletion {
+          name = "kubectl";
+          binary = "${pkgs.kubectl}/bin/kubectl";
+          completionCommand = "${pkgs.kubectl}/bin/kubectl completion zsh";
+        }}
+        ${myLib.mkLazyCompletion {
+          name = "docker";
+          binary = "${pkgs.docker}/bin/docker";
+          completionCommand = "${pkgs.docker}/bin/docker completion zsh";
+        }}
       '')
 
       # Micromamba LAZY initialization - only runs when first used
@@ -525,73 +493,17 @@ in
       # Main shell configuration (runs after oh-my-zsh)
       ''
       # ============================================
-      # FZF INTEGRATION (manual - suppresses zle warnings)
+      # FZF INTEGRATION (pre-generated at build-time)
       # ============================================
-      # Nix's enableZshIntegration is disabled because fzf's init script
-      # tries to restore options including 'zle on', which warns in subshells
-      # We wrap the entire source in stderr suppression
-      if [[ $options[zle] = on ]] && command -v fzf &>/dev/null; then
-        eval "$(fzf --zsh)" 2>/dev/null
+      # Only load in interactive shells with zle (avoids warnings in subshells)
+      if [[ $options[zle] = on ]]; then
+        source ${shellInitCache}/fzf.zsh 2>/dev/null
       fi
-
-      # ============================================
-      # ENVIRONMENT SETUP
-      # ============================================
-      # SOPS configuration (also set in sessionVariables, but ensure early availability)
-      export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
-
-      # NOTE: History options are set declaratively in programs.zsh.history above
-      # Do NOT duplicate setopt commands here - they conflict with Nix-managed options
 
       # ============================================
       # SOURCE SECRETS
       # ============================================
       [ -f ~/.zsh_secrets ] && source ~/.zsh_secrets
-
-      # ============================================
-      # LOAD CREDENTIALS (Environment Variables)
-      # ============================================
-      # [OPTIMIZATION] Disabled on-start decryption (saves ~200ms)
-      # Use sops-nix to provision secrets to /run/secrets or static files instead.
-      # if [ -f "$HOME/.secrets/credentials.env.enc" ]; then ... fi
-
-      if [ -f "$HOME/.secrets/credentials.env" ]; then
-        # If unencrypted file exists (shouldn't happen in prod), warn and load
-        echo "⚠️  Warning: Unencrypted credentials file found"
-        set -a
-        source "$HOME/.secrets/credentials.env"
-        set +a
-      fi
-
-      # ============================================
-      # AWS HELPER FUNCTIONS
-      # ============================================
-      # Work machine: AWS functions loaded from work.nix
-      # Personal machine: Uses simple AWS config from aws.nix
-
-      # ============================================
-      # OPTIONAL OH-MY-ZSH CUSTOM PLUGINS
-      # ============================================
-      # NOTE: autosuggestions and syntax-highlighting are handled by Nix
-      # (autosuggestion.enable = true, syntaxHighlighting.enable = true)
-      # Only load plugins NOT managed by Nix here
-
-      # Additional completions (if manually installed)
-      if [ -d ~/.oh-my-zsh/custom/plugins/zsh-completions ]; then
-        fpath+=(~/.oh-my-zsh/custom/plugins/zsh-completions/src)
-      fi
-
-      # You-should-use - reminds you to use aliases (if manually installed)
-      if [ -f ~/.oh-my-zsh/custom/plugins/you-should-use/you-should-use.plugin.zsh ]; then
-        source ~/.oh-my-zsh/custom/plugins/you-should-use/you-should-use.plugin.zsh
-      fi
-
-      # History substring search (if manually installed)
-      if [ -f ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh ]; then
-        source ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
-        bindkey '^[[A' history-substring-search-up
-        bindkey '^[[B' history-substring-search-down
-      fi
 
       # ============================================
       # OPTION+ARROW WORD NAVIGATION
@@ -605,21 +517,17 @@ in
       # ============================================
       # TERRAFORM PLUGIN CACHE
       # ============================================
-      mkdir -p "$TF_PLUGIN_CACHE_DIR"
+      [[ -n "$TF_PLUGIN_CACHE_DIR" ]] && mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # ============================================
       # WELCOME MESSAGE
       # ============================================
       if [ "$TERM_PROGRAM" != "vscode" ]; then
-        echo "$MACHINE_MODE"
+        _nix_ver=$(nix --version 2>/dev/null | awk '{print $NF}')
+        _os_ver=$(sw_vers -productVersion 2>/dev/null)
+        printf '\033[90m %s · macOS %s · nix %s\033[0m\n' "$MACHINE_MODE" "$_os_ver" "$_nix_ver"
+        unset _nix_ver _os_ver
       fi
-
-      # ============================================
-      # PYTHON VENV ACTIVATION
-      # ============================================
-      # NOTE: Auto-activation is handled by direnv (see direnv.nix)
-      # Use .envrc with "use uv" or "use venv" in project directories
-      # Manual activation still available via activate() function
 
       # ============================================
       # LOAD MODULAR FUNCTION FILES
@@ -628,15 +536,58 @@ in
       # See: functions/README.md for documentation
 
       ${builtins.readFile ./functions/core.zsh}
-      ${builtins.readFile ./functions/update.zsh}
       ${builtins.readFile ./functions/python.zsh}
-      ${builtins.readFile ./functions/cleanup.zsh}
-      ${builtins.readFile ./functions/credentials-mgmt.zsh}
       ${builtins.readFile ./functions/aws-completion.zsh}
 
-      # ============================================
-      # INLINE FUNCTIONS BELOW (duplicates of above, to be removed)
-      # (Removed - functions now loaded from external files)
+      # Lazy-load: cleanup functions (377 lines, used occasionally)
+      __lazy_load_cleanup() {
+        unfunction cleanup-safe cleanup-quick cleanup-standard cleanup-dev \
+          cleanup-aggressive cleanup-all cleanup-nix cleanup-docker cleanup-python \
+          __lazy_load_cleanup 2>/dev/null
+        source ${lazyCleanup}
+      }
+      cleanup-safe() { __lazy_load_cleanup; cleanup-safe "$@"; }
+      cleanup-quick() { __lazy_load_cleanup; cleanup-quick "$@"; }
+      cleanup-standard() { __lazy_load_cleanup; cleanup-standard "$@"; }
+      # cleanup() stub omitted — alias `cleanup = "cleanup-standard"` handles it
+      cleanup-dev() { __lazy_load_cleanup; cleanup-dev "$@"; }
+      cleanup-aggressive() { __lazy_load_cleanup; cleanup-aggressive "$@"; }
+      cleanup-all() { __lazy_load_cleanup; cleanup-all "$@"; }
+      cleanup-nix() { __lazy_load_cleanup; cleanup-nix "$@"; }
+      cleanup-docker() { __lazy_load_cleanup; cleanup-docker "$@"; }
+      cleanup-python() { __lazy_load_cleanup; cleanup-python "$@"; }
+
+      # Lazy-load: update functions (315 lines, used weekly)
+      __lazy_load_update() {
+        unfunction update-nix update-brew update-mamba update-vscode update-mas \
+          update-dev update-system update-all __lazy_load_update 2>/dev/null
+        source ${lazyUpdate}
+      }
+      update-nix() { __lazy_load_update; update-nix "$@"; }
+      update-brew() { __lazy_load_update; update-brew "$@"; }
+      update-mamba() { __lazy_load_update; update-mamba "$@"; }
+      update-vscode() { __lazy_load_update; update-vscode "$@"; }
+      update-mas() { __lazy_load_update; update-mas "$@"; }
+      update-dev() { __lazy_load_update; update-dev "$@"; }
+      update-system() { __lazy_load_update; update-system "$@"; }
+      update-all() { __lazy_load_update; update-all "$@"; }
+
+      # Lazy-load: credentials management (241 lines, used occasionally)
+      __lazy_load_credentials() {
+        unfunction edit-secrets edit-credentials secrets-status secrets-check \
+          backup-workspace restore-workspace sync-workspace nix-rebuild-confirm \
+          __lazy_load_credentials 2>/dev/null
+        source ${lazyCredentials}
+      }
+      edit-secrets() { __lazy_load_credentials; edit-secrets "$@"; }
+      edit-credentials() { __lazy_load_credentials; edit-credentials "$@"; }
+      secrets-status() { __lazy_load_credentials; secrets-status "$@"; }
+      secrets-check() { __lazy_load_credentials; secrets-check "$@"; }
+      backup-workspace() { __lazy_load_credentials; backup-workspace "$@"; }
+      restore-workspace() { __lazy_load_credentials; restore-workspace "$@"; }
+      sync-workspace() { __lazy_load_credentials; sync-workspace "$@"; }
+      nix-rebuild-confirm() { __lazy_load_credentials; nix-rebuild-confirm "$@"; }
+      # nix-health() stub omitted — alias `nix-health` points to health-check.sh script
 
       # ============================================
       # HOT RELOAD FUNCTIONS
@@ -646,9 +597,6 @@ in
 
       ${myLib.reload.mkAllHotReloadFunctions}
 
-      # NOTE: Zoxide is initialized by Nix (programs.zoxide.enable = true in base.nix)
-      # The 'z' command is automatically available - no manual init needed
-      # Alias 'zz' for jumping back is kept for convenience
       alias zz="z -"
       ''
       
@@ -657,6 +605,16 @@ in
         # Replaces standard zsh-syntax-highlighting (saves ~700ms)
         # Sourced at the end to ensure it wraps all widgets correctly
         source ${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+      '')
+
+      (lib.mkOrder 950 ''
+        # BACKGROUND COMPILATION (runs after prompt, non-blocking)
+        # Compiles zcompdump and function files to .zwc bytecode for faster loading
+        {
+          if [[ -s "$ZCOMPDUMP" && (! -s "$ZCOMPDUMP.zwc" || "$ZCOMPDUMP" -nt "$ZCOMPDUMP.zwc") ]]; then
+            zcompile "$ZCOMPDUMP"
+          fi
+        } &!
       '')
     ];
 
@@ -684,6 +642,4 @@ in
   programs.zoxide.enableZshIntegration = lib.mkForce false;
   programs.atuin.enableZshIntegration = lib.mkForce false;
   programs.direnv.enableZshIntegration = lib.mkForce false;
-
-  # Note: starship.toml is provided by base.nix mixin
 }

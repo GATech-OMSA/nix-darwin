@@ -52,7 +52,7 @@ banner() {
 }
 
 create_test_credentials() {
-  print_step "🔐 Creating Test Credential Files"
+  print_step "Creating Test Credential Files"
 
   # Create directories
   info "Creating test directories..."
@@ -110,27 +110,26 @@ EOF
 }
 
 show_summary() {
-  print_step "✅ Test Credentials Created"
+  print_step "Test Credentials Created"
 
   echo ""
   echo -e "${BOLD}Test credential files created:${NC}"
   echo ""
-  echo "  🗄️  Database:"
+  echo "   Database:"
   echo "     ~/.db/production"
   echo ""
-  echo "  🔑 API Tokens:"
+  echo "  API Tokens:"
   echo "     ~/.tokens/github"
   echo ""
-  echo "  💳 API Keys:"
+  echo "  API Keys:"
   echo "     ~/.credentials/stripe"
   echo ""
-  echo "  🌍 Environment:"
+  echo "  Environment:"
   echo "     ~/.env.test"
   echo ""
   echo -e "${CYAN}Next steps:${NC}"
   echo "  1. Run configure script to test secret scanning:"
-  echo "     ${BOLD}./configure.sh${NC}"
-  echo "     ${BOLD}./configure-v3.sh${NC}"
+  echo "     ${BOLD}./scripts/setup/configure.sh${NC}"
   echo ""
   echo "  2. Or test scanning in isolation:"
   echo "     ${BOLD}./test-secret-scan.sh${NC}"

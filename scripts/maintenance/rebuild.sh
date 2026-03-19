@@ -66,30 +66,30 @@ done
 # ============================================
 if [[ "$ROLLBACK" == "false" ]] && [[ "$SKIP_CHECKS" == "false" ]]; then
   if [[ -f "$PRE_FLIGHT_SCRIPT" ]]; then
-    echo "🔍 Running pre-flight checks..."
+    echo "Running pre-flight checks..."
     if ! "$PRE_FLIGHT_SCRIPT"; then
-      echo "❌ Pre-flight checks failed."
-      echo "💡 Use --skip-checks to force rebuild (use with caution)."
+      echo "error: pre-flight checks failed."
+      echo "   Use --skip-checks to force rebuild (use with caution)."
       exit 1
     fi
   else
-    echo "⚠️  Pre-flight script not found: $PRE_FLIGHT_SCRIPT"
+    echo "warning: pre-flight script not found: $PRE_FLIGHT_SCRIPT"
   fi
 fi
 
 # ============================================
 # EXECUTE REBUILD
 # ============================================
-echo "🚀 Starting system rebuild for machine: ${MACHINE_ID}..."
+echo "Starting system rebuild for machine: ${MACHINE_ID}..."
 
 if [[ "$ROLLBACK" == "true" ]]; then
-  echo "🔙 Rolling back to previous generation..."
+  echo "Rolling back to previous generation..."
   if sudo darwin-rebuild --rollback; then
-    echo "✅ Rollback successful"
-    echo "🔄 Restarting shell..."
+    echo "Rollback successful"
+    echo "Restarting shell..."
     exec zsh
   else
-    echo "❌ Rollback failed"
+    echo "error: rollback failed"
     exit 1
   fi
 fi
@@ -98,9 +98,9 @@ fi
 if [[ "$USE_LEGACY" == "true" ]] || ! command -v nh &>/dev/null; then
   # Legacy mode: use darwin-rebuild directly
   if [[ "$USE_LEGACY" == "true" ]]; then
-    echo "📦 Using legacy darwin-rebuild (--legacy flag)"
+    echo "Using legacy darwin-rebuild (--legacy flag)"
   else
-    echo "⚠️  nh not found, falling back to darwin-rebuild"
+    echo "warning: nh not found, falling back to darwin-rebuild"
   fi
 
   # Export FLAKE_ROOT for gitignored config imports in flake.nix (legacy only)
@@ -119,11 +119,11 @@ if [[ "$USE_LEGACY" == "true" ]] || ! command -v nh &>/dev/null; then
   echo "Running: sudo $CMD"
 
   if sudo FLAKE_ROOT="$FLAKE_ROOT" $CMD; then
-    echo "✅ Rebuild successful"
-    echo "🔄 Restarting shell..."
+    echo "Rebuild successful"
+    echo "Restarting shell..."
     exec zsh
   else
-    echo "❌ Rebuild failed"
+    echo "error: rebuild failed"
     exit 1
   fi
 else
@@ -142,15 +142,15 @@ else
 
   echo "Running: $CMD"
 
-  # nh works from within the flake directory (cd done above)
-  # Don't set FLAKE_ROOT - it causes nh flake resolution to fail
-  # The flake.nix getEnv "FLAKE_ROOT" defaults to pwd when unset
+  # nh resolves the flake from CWD (cd done above), so FLAKE_ROOT is not needed.
+  # Setting FLAKE_ROOT with nh causes double-resolution and build failures.
+  # In legacy mode, FLAKE_ROOT is explicitly exported for flake.nix's getEnv call.
   if $CMD; then
-    echo "✅ Rebuild successful"
-    echo "🔄 Restarting shell..."
+    echo "Rebuild successful"
+    echo "Restarting shell..."
     exec zsh
   else
-    echo "❌ Rebuild failed"
+    echo "error: rebuild failed"
     exit 1
   fi
 fi

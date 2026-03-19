@@ -1,4 +1,4 @@
-{ config, pkgs, lib, userConfig ? {}, ... }:
+{ config, pkgs, lib, username, userConfig ? {}, ... }:
 
 # Darwin Modules - Module Imports
 #
@@ -15,6 +15,7 @@ in
     ./homebrew.nix
     ./fonts.nix
     ./security.nix
+    ./packages.nix
   ];
 
   # Disable Nix management - Determinate Nix handles daemon and installation
@@ -24,6 +25,8 @@ in
     experimental-features = "nix-command flakes";
     # Optimize builds
     max-jobs = "auto";
+    # Allow user to accept extra substituters (e.g., sops-nix cache)
+    trusted-users = [ "root" username ];
     # Keep Determinate Nix cache settings
     trusted-substituters = [ "https://cache.flakehub.com" ];
 
@@ -51,9 +54,6 @@ in
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
-  # nix-daemon is now managed automatically by Determinate Nix
-  # services.nix-daemon.enable = true;  # REMOVED - no longer needed
 
   # Fix Home Manager permissions issue - ensure user owns .local/state
   # This prevents "Permission denied" errors during Home Manager activation

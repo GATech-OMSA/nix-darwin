@@ -20,10 +20,9 @@ __cleanup_log() {
   mkdir -p "$(dirname "$log_file")"
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$tier] $message" >> "$log_file"
 
-  # Rotate log (keep last 500 lines)
+  # Rotate log (keep last 500 lines) — atomic via temp file
   if [[ -f "$log_file" && $(wc -l < "$log_file") -gt 1000 ]]; then
-    tail -500 "$log_file" > "$log_file.tmp"
-    mv "$log_file.tmp" "$log_file"
+    tail -500 "$log_file" > "$log_file.tmp" && /bin/mv "$log_file.tmp" "$log_file"
   fi
 }
 
@@ -62,7 +61,7 @@ function cleanup-safe() {
   done
 
   echo ""
-  echo -e "\033[1m\033[36m🛡️  SAFE CLEANUP\033[0m"
+  echo -e "\033[1m\033[36m:: SAFE CLEANUP\033[0m"
   echo "============================================"
   [[ "$dry_run" == "true" ]] && echo -e "\033[33mDRY RUN MODE\033[0m"
 
@@ -78,12 +77,12 @@ function cleanup-safe() {
     sudo nix-env --delete-generations +5 2>/dev/null || true
     nix-collect-garbage -d &>/dev/null
     command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
-    echo "✅ Safe cleanup completed"
+    echo "Safe cleanup completed"
   fi
 
   local disk_after=$(__cleanup_get_disk_space)
   local duration=$(($(date +%s) - start_time))
-  echo -e "\n✅ Done! Disk: $disk_before → $disk_after (${duration}s)"
+  echo -e "\nDone. Disk: $disk_before → $disk_after (${duration}s)"
   __cleanup_log "safe" "Completed in ${duration}s"
 }
 
@@ -105,7 +104,7 @@ function cleanup-quick() {
   done
 
   echo ""
-  echo -e "\033[1m\033[36m⚡ QUICK CLEANUP\033[0m"
+  echo -e "\033[1m\033[36m:: QUICK CLEANUP\033[0m"
   echo "============================================"
   [[ "$dry_run" == "true" ]] && echo -e "\033[33mDRY RUN MODE\033[0m"
 
@@ -128,12 +127,12 @@ function cleanup-quick() {
     command -v docker &>/dev/null && docker info &>/dev/null && docker image prune -af &>/dev/null
     rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
     command -v npm &>/dev/null && npm cache clean --force &>/dev/null
-    echo "✅ Quick cleanup completed"
+    echo "Quick cleanup completed"
   fi
 
   local disk_after=$(__cleanup_get_disk_space)
   local duration=$(($(date +%s) - start_time))
-  echo -e "\n✅ Done! Disk: $disk_before → $disk_after (${duration}s)"
+  echo -e "\nDone. Disk: $disk_before → $disk_after (${duration}s)"
   __cleanup_log "quick" "Completed in ${duration}s"
 }
 
@@ -156,7 +155,7 @@ function cleanup-standard() {
   done
 
   echo ""
-  echo -e "\033[1m\033[36m🚀 STANDARD CLEANUP\033[0m"
+  echo -e "\033[1m\033[36m:: STANDARD CLEANUP\033[0m"
   echo "============================================"
   [[ "$dry_run" == "true" ]] && echo -e "\033[33mDRY RUN MODE\033[0m"
 
@@ -178,21 +177,21 @@ function cleanup-standard() {
     rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
     command -v npm &>/dev/null && npm cache clean --force &>/dev/null
 
-    # Standard additions - Git GC on all repos
+    # Standard additions - Git GC on all repos (-prune avoids descending into .git)
     if [[ -d "$HOME/Dev" ]]; then
-      find "$HOME/Dev" -name ".git" -type d -print0 2>/dev/null | while IFS= read -r -d '' gitdir; do
+      find "$HOME/Dev" -name ".git" -type d -prune -print0 2>/dev/null | while IFS= read -r -d '' gitdir; do
         git -C "$(dirname "$gitdir")" gc --quiet 2>/dev/null || true
       done
     fi
     [[ -d "$HOME/.aws/cli/cache" ]] && rm -rf "$HOME/.aws/cli/cache"/* 2>/dev/null
     rm -rf ~/Library/Application\ Support/Code/Cache/* ~/Library/Application\ Support/Code/CachedData/* ~/Library/Application\ Support/Code/logs/* 2>/dev/null
     rm -rf ~/Library/Logs/* 2>/dev/null
-    echo "✅ Standard cleanup completed"
+    echo "Standard cleanup completed"
   fi
 
   local disk_after=$(__cleanup_get_disk_space)
   local duration=$(($(date +%s) - start_time))
-  echo -e "\n✅ Done! Disk: $disk_before → $disk_after (${duration}s)"
+  echo -e "\nDone. Disk: $disk_before → $disk_after (${duration}s)"
   __cleanup_log "standard" "Completed in ${duration}s"
 }
 
@@ -218,7 +217,7 @@ function cleanup-dev() {
   done
 
   echo ""
-  echo -e "\033[1m\033[36m🔧 DEV CLEANUP\033[0m"
+  echo -e "\033[1m\033[36m:: DEV CLEANUP\033[0m"
   echo "============================================"
   [[ "$dry_run" == "true" ]] && echo -e "\033[33mDRY RUN MODE\033[0m"
 
@@ -241,20 +240,20 @@ function cleanup-dev() {
     rm -rf ~/Library/Application\ Support/Code/Cache/* ~/Library/Application\ Support/Code/CachedData/* 2>/dev/null
     [[ -d "$HOME/.aws/cli/cache" ]] && rm -rf "$HOME/.aws/cli/cache"/* 2>/dev/null
 
-    # Dev additions
+    # Dev additions (-prune prevents descending into matched dirs)
     [[ -d "$HOME/Dev" ]] && {
-      find "$HOME/Dev" -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null
-      find "$HOME/Dev" -name ".ipynb_checkpoints" -type d -exec rm -rf {} + 2>/dev/null
-      find "$HOME/Dev" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+      find "$HOME/Dev" -name ".terraform" -type d -prune -exec rm -rf {} + 2>/dev/null
+      find "$HOME/Dev" -name ".ipynb_checkpoints" -type d -prune -exec rm -rf {} + 2>/dev/null
+      find "$HOME/Dev" -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null
       find "$HOME/Dev" -name "*.pyc" -type f -delete 2>/dev/null
     }
     command -v docker &>/dev/null && docker info &>/dev/null && docker builder prune -af &>/dev/null
-    echo "✅ Dev cleanup completed"
+    echo "Dev cleanup completed"
   fi
 
   local disk_after=$(__cleanup_get_disk_space)
   local duration=$(($(date +%s) - start_time))
-  echo -e "\n✅ Done! Disk: $disk_before → $disk_after (${duration}s)"
+  echo -e "\nDone. Disk: $disk_before → $disk_after (${duration}s)"
   __cleanup_log "dev" "Completed in ${duration}s"
 }
 
@@ -274,7 +273,7 @@ function cleanup-aggressive() {
         echo "Maximum cleanup (WITH CONFIRMATIONS)"
         echo "Includes: Ollama models, HuggingFace, old downloads, Docker volumes"
         echo "Options: --dry-run, --yes, --help"
-        echo "⚠️  WARNING: Destructive operation!"
+        echo "warning: destructive operation!"
         return 0 ;;
     esac
   done
@@ -282,16 +281,16 @@ function cleanup-aggressive() {
   # Critical warning
   if [[ "$yes_flag" != "true" ]]; then
     echo ""
-    echo "🚨 AGGRESSIVE CLEANUP - DESTRUCTIVE OPERATION"
+    echo "AGGRESSIVE CLEANUP - DESTRUCTIVE OPERATION"
     echo "Will permanently delete: tool caches, models, old downloads, Docker volumes"
-    echo "💡 Run with --dry-run first to preview"
+    echo "   Run with --dry-run first to preview"
     echo ""
     read -r "confirmation?Type 'DELETE' to confirm: "
     [[ "$confirmation" != "DELETE" ]] && { echo "Cancelled"; return 1; }
   fi
 
   echo ""
-  echo -e "\033[1m\033[31m🔥 AGGRESSIVE CLEANUP\033[0m"
+  echo -e "\033[1m\033[31m:: AGGRESSIVE CLEANUP\033[0m"
   echo "============================================"
   [[ "$dry_run" == "true" ]] && echo -e "\033[33mDRY RUN MODE\033[0m"
 
@@ -308,8 +307,8 @@ function cleanup-aggressive() {
     command -v micromamba &>/dev/null && micromamba clean --all --yes &>/dev/null
     rm -rf ~/.cache/* 2>/dev/null
     [[ -d "$HOME/Dev" ]] && {
-      find "$HOME/Dev" -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null
-      find "$HOME/Dev" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+      find "$HOME/Dev" -name ".terraform" -type d -prune -exec rm -rf {} + 2>/dev/null
+      find "$HOME/Dev" -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null
     }
 
     # Aggressive additions
@@ -326,12 +325,12 @@ function cleanup-aggressive() {
     nix-collect-garbage -d &>/dev/null
     sudo nix-collect-garbage -d &>/dev/null
     nix-store --optimize &>/dev/null
-    echo "✅ Aggressive cleanup completed"
+    echo "Aggressive cleanup completed"
   fi
 
   local disk_after=$(__cleanup_get_disk_space)
   local duration=$(($(date +%s) - start_time))
-  echo -e "\n✅ Done! Disk: $disk_before → $disk_after (${duration}s)"
+  echo -e "\nDone. Disk: $disk_before → $disk_after (${duration}s)"
   __cleanup_log "aggressive" "Completed in ${duration}s"
 }
 
@@ -344,12 +343,12 @@ function cleanup-all() { cleanup-aggressive "$@"; }
 
 function cleanup-nix() {
   local keep="${1:-5}"
-  echo "❄️  Nix cleanup (keeping last $keep generations)..."
+  echo "Nix cleanup (keeping last $keep generations)..."
   nix-env --delete-generations +$keep 2>/dev/null || true
   sudo nix-env --delete-generations +$keep 2>/dev/null || true
   nix-collect-garbage -d &>/dev/null
   nix-store --optimize &>/dev/null
-  echo "✅ Nix cleanup complete"
+  echo "Nix cleanup complete"
 }
 
 function cleanup-docker() {
@@ -358,21 +357,21 @@ function cleanup-docker() {
     echo "Docker not available"
     return 1
   fi
-  echo "🐳 Docker cleanup..."
+  echo "Docker cleanup..."
   if [[ "$volumes" == "--volumes" ]]; then
     docker system prune -af --volumes
   else
     docker system prune -af
   fi
-  echo "✅ Docker cleanup complete"
+  echo "Docker cleanup complete"
 }
 
 function cleanup-python() {
-  echo "🐍 Python cleanup..."
+  echo "Python cleanup..."
   rm -rf ~/.cache/uv/* ~/.cache/pip/* 2>/dev/null
   [[ -d "$HOME/Dev" ]] && {
-    find "$HOME/Dev" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null
+    find "$HOME/Dev" -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null
     find "$HOME/Dev" -name "*.pyc" -type f -delete 2>/dev/null
   }
-  echo "✅ Python cleanup complete"
+  echo "Python cleanup complete"
 }

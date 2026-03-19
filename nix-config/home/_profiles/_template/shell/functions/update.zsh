@@ -12,7 +12,7 @@
 # Only call this after all cleanup, logging, and state updates are complete.
 __update_restart_shell() {
   if [[ -o interactive ]]; then
-    echo "🔄 Restarting shell..."
+    echo "Restarting shell..."
     exec zsh
   fi
 }
@@ -22,7 +22,7 @@ __update_restart_shell() {
 # ============================================
 
 function update-nix() {
-  echo "❄️  Updating Nix Darwin..."
+  echo "Updating Nix Darwin..."
   local errors=0
   local nix_dir="$HOME/nix-darwin"
 
@@ -30,116 +30,116 @@ function update-nix() {
   local machine_id
   machine_id=$(nix eval --raw --file "$nix_dir/config/machine-config.nix" machineId 2>/dev/null)
   if [ -z "$machine_id" ]; then
-    echo "  ❌ Failed to read machineId from config/machine-config.nix" >&2
+    echo "  error: failed to read machineId from config/machine-config.nix" >&2
     return 1
   fi
 
-  echo "  📦 Updating flake inputs..."
+  echo "  Updating flake inputs..."
   cd "$nix_dir" || return 1
 
   # Stash uncommitted changes if any
   local had_changes=false
   if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
     had_changes=true
-    echo "  📋 Stashing uncommitted changes..."
+    echo "  Stashing uncommitted changes..."
     git stash push -m "update-nix auto-stash $(date +%Y%m%d-%H%M%S)" --quiet
   fi
 
   if nix flake update; then
-    echo "  ✅ Flake inputs updated"
+    echo "  Flake inputs updated"
   else
-    echo "  ❌ Flake update failed" >&2
+    echo "  error: flake update failed" >&2
     ((errors++))
   fi
 
   # Restore stashed changes
   if [[ "$had_changes" == "true" ]]; then
-    echo "  📋 Restoring stashed changes..."
+    echo "  Restoring stashed changes..."
     git stash pop --quiet
   fi
 
-  echo "  📦 Rebuilding darwin configuration..."
+  echo "  Rebuilding darwin configuration..."
   if sudo FLAKE_ROOT="$nix_dir" darwin-rebuild switch --flake "$nix_dir#$machine_id" --impure; then
-    echo "  ✅ Darwin rebuild completed"
+    echo "  Darwin rebuild completed"
   else
-    echo "  ❌ Darwin rebuild failed" >&2
+    echo "  error: darwin rebuild failed" >&2
     ((errors++))
   fi
 
   cd - > /dev/null
 
   if [ $errors -eq 0 ]; then
-    echo "✅ Nix update completed successfully"
+    echo "Nix update completed successfully"
     __update_restart_shell
   else
-    echo "⚠️  Nix update completed with $errors error(s)"
+    echo "warning: nix update completed with $errors error(s)"
     return 1
   fi
 }
 
 function update-brew() {
-  echo "🍺 Updating Homebrew..."
+  echo "Updating Homebrew..."
   local errors=0
 
   if command -v brew &> /dev/null; then
-    echo "  📦 Updating Homebrew..."
+    echo "  Updating Homebrew..."
     if brew update; then
-      echo "  ✅ Homebrew updated"
+      echo "  Homebrew updated"
     else
-      echo "  ❌ Homebrew update failed" >&2
+      echo "  error: homebrew update failed" >&2
       ((errors++))
     fi
 
-    echo "  📦 Upgrading packages..."
+    echo "  Upgrading packages..."
     if brew upgrade; then
-      echo "  ✅ Packages upgraded"
+      echo "  Packages upgraded"
     else
-      echo "  ❌ Package upgrade failed" >&2
+      echo "  error: package upgrade failed" >&2
       ((errors++))
     fi
 
-    echo "  📦 Upgrading all casks (including auto-update apps)..."
+    echo "  Upgrading all casks (including auto-update apps)..."
     if brew commands | grep -q "^cu$"; then
       if brew cu -afy; then
-        echo "  ✅ All casks upgraded"
+        echo "  All casks upgraded"
       else
-        echo "  ❌ Cask upgrade failed" >&2
+        echo "  error: cask upgrade failed" >&2
         ((errors++))
       fi
     else
-      echo "  ⚠️  brew-cask-upgrade not installed, skipping"
+      echo "  warning: brew-cask-upgrade not installed, skipping"
       echo "     Install: brew tap buo/cask-upgrade && brew install brew-cask-upgrade"
     fi
 
-    echo "  🧹 Cleaning up..."
+    echo "  Cleaning up..."
     if brew cleanup --prune=all; then
-      echo "  ✅ Cleanup completed"
+      echo "  Cleanup completed"
     else
-      echo "  ❌ Cleanup failed" >&2
+      echo "  error: cleanup failed" >&2
       ((errors++))
     fi
 
-    echo "  🩺 Running diagnostics..."
+    echo "  Running diagnostics..."
     brew doctor
   else
-    echo "  ⚠️  Homebrew not found"
+    echo "  warning: homebrew not found"
     return 1
   fi
 
   if [ $errors -eq 0 ]; then
-    echo "✅ Homebrew update completed successfully"
+    echo "✓ Homebrew update completed successfully"
   else
-    echo "⚠️  Homebrew update completed with $errors error(s)"
+    echo "▸ Homebrew update completed with $errors error(s)"
     return 1
   fi
 }
 
 function update-mamba() {
-  echo "🐍 Updating Micromamba..."
+  echo "→ Updating Micromamba..."
   local errors=0
 
   if command -v micromamba &> /dev/null; then
-    echo "  📦 Updating micromamba environments..."
+    echo "  → Updating micromamba environments..."
     # Update all environments dynamically using JSON for robust parsing
     local env_list=""
     if command -v jq &>/dev/null; then
@@ -158,31 +158,31 @@ function update-mamba() {
         if [ "$env" != "base" ]; then  # Skip the base installation
           echo "    • Updating $env..."
           if micromamba update -n "$env" --all -y 2>/dev/null; then
-            echo "    ✅ $env updated"
+            echo "    ✓ $env updated"
           else
-            echo "    ⚠️  $env skipped or failed" >&2
+            echo "    ▸ $env skipped or failed" >&2
             ((errors++))
           fi
         fi
       done
     else
-      echo "    ℹ️  No environments to update"
+      echo "    → No environments to update"
     fi
   else
-    echo "  ⚠️  Micromamba not found"
+    echo "  ▸ Micromamba not found"
     return 1
   fi
 
   if [ $errors -eq 0 ]; then
-    echo "✅ Micromamba update completed successfully"
+    echo "✓ Micromamba update completed successfully"
   else
-    echo "⚠️  Micromamba update completed with $errors error(s)"
+    echo "▸ Micromamba update completed with $errors error(s)"
     return 1
   fi
 }
 
 function update-vscode() {
-  echo "💻 Updating VS Code extensions..."
+  echo "→ Updating VS Code extensions..."
   local errors=0
 
   if command -v code &> /dev/null; then
@@ -197,34 +197,34 @@ function update-vscode() {
     fi
 
     if [ $errors -eq 0 ]; then
-      echo "✅ VS Code extensions updated"
+      echo "✓ VS Code extensions updated"
     else
-      echo "⚠️  VS Code extensions updated ($errors failed)"
+      echo "▸ VS Code extensions updated ($errors failed)"
     fi
   else
-    echo "⚠️  VS Code not found"
+    echo "▸ VS Code not found"
     return 1
   fi
 }
 
 function update-mas() {
-  echo "🍎 Updating Mac App Store apps..."
+  echo "→ Updating Mac App Store apps..."
 
   if command -v mas &> /dev/null; then
     if mas upgrade; then
-      echo "✅ Mac App Store apps updated"
+      echo "✓ Mac App Store apps updated"
     else
-      echo "❌ Mac App Store update failed" >&2
+      echo "✗ Mac App Store update failed" >&2
       return 1
     fi
   else
-    echo "⚠️  mas not found (install with: brew install mas)"
+    echo "▸ mas not found (install with: brew install mas)"
     return 1
   fi
 }
 
 function update-dev() {
-  echo "⚡ Quick development update..."
+  echo "→ Quick development update..."
   local start_time=$(date +%s)
   local errors=0
 
@@ -238,19 +238,19 @@ function update-dev() {
   local duration=$((end_time - start_time))
 
   echo ""
-  echo "⏱️  Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
+  echo "→ Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
 
   if [ $errors -eq 0 ]; then
-    echo "✅ Development update completed!"
+    echo "✓ Development update completed!"
     __update_restart_shell
   else
-    echo "⚠️  Completed with $errors error(s)"
+    echo "▸ Completed with $errors error(s)"
     return 1
   fi
 }
 
 function update-system() {
-  echo "💻 System update..."
+  echo "→ System update..."
   local start_time=$(date +%s)
   local errors=0
 
@@ -262,19 +262,19 @@ function update-system() {
   local duration=$((end_time - start_time))
 
   echo ""
-  echo "⏱️  Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
+  echo "→ Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
 
   if [ $errors -eq 0 ]; then
-    echo "✅ System update completed!"
+    echo "✓ System update completed!"
     __update_restart_shell
   else
-    echo "⚠️  Completed with $errors error(s)"
+    echo "▸ Completed with $errors error(s)"
     return 1
   fi
 }
 
 function update-all() {
-  echo "🚀 Complete system update..."
+  echo "✓ Complete system update..."
   echo "================================================"
 
   local start_time=$(date +%s)
@@ -291,7 +291,7 @@ function update-all() {
   update-mas || ((total_errors++))
   echo ""
 
-  echo "🍎 Checking for macOS updates..."
+  echo "→ Checking for macOS updates..."
   softwareupdate --list
   echo ""
 
@@ -299,17 +299,17 @@ function update-all() {
   local duration=$((end_time - start_time))
 
   echo "================================================"
-  echo "📊 Update Summary:"
-  echo "⏱️  Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
-  echo "❌ Errors: $total_errors"
+  echo "→ Update Summary:"
+  echo "→ Duration: $((duration / 60)) minutes and $((duration % 60)) seconds"
+  echo "✗ Errors: $total_errors"
 
   if [ $total_errors -eq 0 ]; then
     echo ""
-    echo "✅ All updates completed successfully!"
+    echo "✓ All updates completed successfully!"
     __update_restart_shell
   else
     echo ""
-    echo "⚠️  Completed with $total_errors error(s)"
+    echo "▸ Completed with $total_errors error(s)"
     return 1
   fi
 }

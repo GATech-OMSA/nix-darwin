@@ -55,7 +55,7 @@ PALETTE_RED="#FF5555"
 # ============================================================================
 
 info() {
-  echo -e "${BLUE}ℹ${NC}  $*"
+  echo -e "${BLUE}→${NC} $*"
 }
 
 success() {
@@ -696,6 +696,6 @@ main() {
 # CLEANUP & EXECUTION
 # ============================================================================
 
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 main

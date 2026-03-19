@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, machineType, userConfig, ... }:
+{ config, pkgs, lib, hostname, myLib, profileName, userConfig, ... }:
 
 {
   # NPM Configuration - Declarative setup

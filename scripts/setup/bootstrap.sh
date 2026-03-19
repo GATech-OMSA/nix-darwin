@@ -55,7 +55,7 @@ error() {
 }
 
 warning() {
-  echo -e "${YELLOW}⚠ $1${NC}"
+  echo -e "${YELLOW}▸ $1${NC}"
 }
 
 info() {
@@ -144,26 +144,14 @@ EOF
   info "Nix experimental features enabled (flakes)"
   echo ""
 
-  # Build and activate initial nix-darwin configuration
-  info "Running initial nix-darwin build..."
+  # Note: We don't build the flake here because config files
+  # don't exist yet (configure.sh creates them).
+  # The first flake build happens in activate.sh.
+  info "nix-darwin will be installed during activation (activate.sh)"
+  info "Skipping build — config files not yet created"
   echo ""
 
-  warning "This will perform the first system build"
-  info "Location: $(pwd)"
-  echo ""
-
-  read -p "Continue with nix-darwin installation? [Y/n]: " confirm
-  if [[ $confirm =~ ^[Nn]$ ]]; then
-    error "nix-darwin installation cancelled"
-    exit 1
-  fi
-
-  echo ""
-
-  # Run nix-darwin installer
-  nix run nix-darwin -- switch --flake .
-
-  success "nix-darwin installed successfully"
+  success "nix-darwin prerequisites ready"
   echo ""
 }
 
@@ -357,15 +345,15 @@ setup_age_key() {
 
   # Display critical backup information
   echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  echo -e "${BOLD}${RED}             🔒 CRITICAL: BACKUP YOUR KEY NOW 🔒${NC}"
+  echo -e "${BOLD}${RED}             CRITICAL: BACKUP YOUR KEY NOW ${NC}"
   echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo ""
   echo -e "${BOLD}Key location:${NC} $AGE_KEY_FILE"
   echo -e "${BOLD}Public key:${NC}   $AGE_PUBLIC_KEY"
   echo ""
-  echo -e "${YELLOW}⚠ WITHOUT THIS KEY, YOU CANNOT DECRYPT YOUR SECRETS!${NC}"
+  echo -e "${YELLOW}▸ WITHOUT THIS KEY, YOU CANNOT DECRYPT YOUR SECRETS!${NC}"
   echo ""
-  echo "📦 Automatic backup will be created in configure.sh"
+  echo "Automatic backup will be created in configure.sh"
   echo "   Location: user-data-{username}/backups/age-keys/"
   echo ""
   echo "Additional recommended backup methods:"
@@ -523,6 +511,6 @@ echo ""
 
 print_step "▶ Next Step"
 echo "Run the configuration script:"
-echo -e "  ${BOLD}${GREEN}./scripts/configure${NC}"
+echo -e "  ${BOLD}${GREEN}./scripts/setup/configure.sh${NC}"
 echo ""
 

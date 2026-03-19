@@ -119,7 +119,7 @@ error() {
 }
 
 warning() {
-  echo -e "${YELLOW}⚠ $1${NC}"
+  echo -e "${YELLOW}▸ $1${NC}"
 }
 
 info() {
@@ -127,7 +127,7 @@ info() {
 }
 
 prompt() {
-  echo -e "${MAGENTA}❓ $1${NC}"
+  echo -e "${MAGENTA}$1${NC}"
 }
 
 # ============================================================================
@@ -239,7 +239,7 @@ check_prerequisites() {
     warning "These tools are required for nix-darwin configuration"
     echo ""
     echo "To install missing prerequisites, run:"
-    echo -e "  ${BOLD}./scripts/setup/./scripts/setup/bootstrap.sh${NC}"
+    echo -e "  ${BOLD}./scripts/setup/bootstrap.sh${NC}"
     echo ""
     exit 1
   fi
@@ -276,8 +276,9 @@ detect_mac_model() {
 }
 
 generate_machine_id() {
-  # Generate username-agnostic machine ID from model and chip
-  # Format: {model}-{chip} (e.g., "macbook-pro-m1")
+  # Generate username-agnostic machine ID from model, chip, and profile
+  # Format: {model}-{chip}-{profile} (e.g., "macbook-pro-m1-personal")
+  # Profile suffix ensures .sops.yaml rules match by convention
   local model_name="$1"
   local chip="$2"
 
@@ -288,7 +289,7 @@ generate_machine_id() {
   # "Apple M1 Pro" → "m1", "Apple M2 Max" → "m2"
   local chip_version=$(echo "$chip" | grep -o 'M[0-9]' | tr '[:upper:]' '[:lower:]')
 
-  # Combine: macbook-pro-m1
+  # Combine: macbook-pro-m1 (profile suffix added after profile selection)
   echo "${model}-${chip_version}"
 }
 
@@ -311,11 +312,11 @@ gather_user_info() {
   local suggested_machine_id=$(generate_machine_id "$detected_model" "$detected_chip")
 
   # Display detected values
-  echo "📋 Detected from your system:"
+  echo "Detected from your system:"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   printf "%s %-15s %s\n" "✓" "Username:" "$detected_user"
-  printf "%s %-15s %s\n" "$([ -n "$detected_email" ] && echo "✓" || echo "⚠")" "Email:" "${detected_email:-(not set)}"
-  printf "%s %-15s %s\n" "$([ -n "$detected_name" ] && echo "✓" || echo "⚠")" "Full name:" "${detected_name:-(not set)}"
+  printf "%s %-15s %s\n" "$([ -n "$detected_email" ] && echo "✓" || echo "▸")" "Email:" "${detected_email:-(not set)}"
+  printf "%s %-15s %s\n" "$([ -n "$detected_name" ] && echo "✓" || echo "▸")" "Full name:" "${detected_name:-(not set)}"
   printf "%s %-15s %s\n" "✓" "Machine ID:" "$suggested_machine_id"
   printf "%s %-15s %s\n" "✓" "Hostname:" "$detected_hostname"
   printf "%s %-15s %s\n" "✓" "Model:" "$detected_model"
@@ -329,8 +330,8 @@ gather_user_info() {
   echo ""
 
   # Educational note about Machine ID
-  info "💡 About Machine ID:"
-  echo "   Username-agnostic identifier for hardware (e.g., macbook-pro-m1)"
+  info "   About Machine ID:"
+  echo "   Hardware identifier + profile suffix (e.g., macbook-pro-m1-personal)"
   echo "   Controls: host directory, secrets location, workspace, build target"
   echo ""
 
@@ -426,7 +427,7 @@ gather_user_info() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
     info "What is a Machine ID?"
-    echo "   A username-agnostic identifier for this Mac's hardware"
+    echo "   Hardware identifier (profile suffix added automatically after profile selection)"
     echo ""
     info "What it controls:"
     echo "   • Host directory: hosts/\${machineId}/"
@@ -434,10 +435,9 @@ gather_user_info() {
     echo "   • Workspace directory: workspace/\${machineId}/"
     echo "   • Build target: darwin-rebuild switch --flake .#\${machineId}"
     echo ""
-    info "Good examples:"
-    echo "   ✓ macbook-pro-m1 (describes hardware)"
-    echo "   ✓ macbook-air-2024 (includes year)"
-    echo "   ✓ personal-laptop (describes purpose)"
+    info "Good examples (profile suffix added later):"
+    echo "   ✓ macbook-pro-m1 → macbook-pro-m1-personal"
+    echo "   ✓ macbook-air-m3 → macbook-air-m3-work"
     echo ""
     warning "Avoid personal identifiers:"
     echo "   ✗ mbp-jimmy (contains username)"
@@ -471,19 +471,19 @@ gather_user_info() {
   echo ""
   info "Profiles control which tools, configs, and settings are loaded"
   echo ""
-  echo "📱 1) Personal Mac (Recommended for home use)"
+  echo "1) Personal Mac (Recommended for home use)"
   echo "   • All development tools and languages"
   echo "   • Personal AWS profile by default"
   echo "   • Personal email in git config"
   echo "   • Full shell customizations"
   echo ""
-  echo "💼 2) Work Mac (For company laptops)"
+  echo "2) Work Mac (For company laptops)"
   echo "   • Work-specific AWS profiles"
   echo "   • Work email in git config"
   echo "   • Corporate security tools"
   echo "   • Work-appropriate aliases"
   echo ""
-  echo "🛠️  3) Minimal (Troubleshooting/Testing)"
+  echo " 3) Minimal (Troubleshooting/Testing)"
   echo "   • Base system only, no extras"
   echo "   • Fastest builds and rebuilds"
   echo "   • Good for debugging issues"
@@ -507,6 +507,12 @@ gather_user_info() {
       exit 1
       ;;
   esac
+
+  # Append profile suffix to machineId (e.g., macbook-pro-m1 -> macbook-pro-m1-personal)
+  # This convention ensures .sops.yaml rules match secrets to the correct age key
+  MACHINE_ID="${MACHINE_ID}-${MACHINE_TYPE}"
+  success "Machine ID: $MACHINE_ID (includes profile suffix)"
+  echo ""
 
   # AWS SSO configuration (only for personal/work profiles)
   if [ "$MACHINE_TYPE" != "minimal" ]; then
@@ -538,16 +544,10 @@ gather_user_info() {
         mkdir -p "$HOME/.aws"
 
         if [ ! -f "$HOME/.aws/accounts.json" ]; then
-          # Select template based on profile type
-          local template_path=""
-          if [ "$MACHINE_TYPE" = "work" ]; then
-            template_path="$REPO_ROOT/nix-config/home/_profiles/work/accounts.json.template"
-          else
-            template_path="$REPO_ROOT/nix-config/home/_profiles/personal/accounts.json.template"
-          fi
+          local template_path="$REPO_ROOT/nix-config/home/_profiles/_template/accounts.json.template"
 
           if [ -f "$template_path" ]; then
-            cp "$template_path" "$HOME/.aws/accounts.json"
+            /bin/cp "$template_path" "$HOME/.aws/accounts.json"
             chmod 600 "$HOME/.aws/accounts.json"
             success "Created ~/.aws/accounts.json from template"
             echo ""
@@ -759,7 +759,7 @@ create_config_files() {
   # Preview what will be created (non-dry-run)
   if [ "$DRY_RUN" != true ]; then
     echo ""
-    info "📋 Preview of files to be created:"
+    info "Preview of files to be created:"
     echo ""
     echo "  ✓ config/user-config.nix"
     echo "     Location: $REPO_ROOT/config/user-config.nix"
@@ -799,7 +799,7 @@ create_config_files() {
     echo "  cat > \"$REPO_ROOT/config/machine-config.nix\" <<'EOF'"
     echo "  {"
     echo "    machineId = \"$MACHINE_ID\";"
-    echo "    machineType = \"$MACHINE_TYPE\";"
+    echo "    profileName = \"$MACHINE_TYPE\";"
     echo "    description = \"$MACHINE_DESCRIPTION\";"
     echo "    expectedHostname = \"$(hostname)\";"
     echo "    system = \"$SYSTEM_ARCH\";"
@@ -873,7 +873,7 @@ create_config_files() {
   if ! cat > "$REPO_ROOT/config/machine-config.nix" <<EOF
 {
   machineId = "$MACHINE_ID";
-  machineType = "$MACHINE_TYPE";
+  profileName = "$MACHINE_TYPE";
   description = "$MACHINE_DESCRIPTION";
   expectedHostname = "$(hostname)";
   system = "$SYSTEM_ARCH";
@@ -972,7 +972,7 @@ create_hosts_directory() {
 }
 
 create_home_directory() {
-  print_step "🏡 Home Configuration"
+  print_step "Home Configuration"
 
   # With profile system, home/jimmy is tracked in git and shared
   # User-specific overrides go in profiles, not per-user directories
@@ -991,7 +991,7 @@ create_home_directory() {
 }
 
 create_workspace_directory() {
-  print_step "📁 Creating Workspace Directory"
+  print_step "Creating Workspace Directory"
 
   local WORKSPACE_DIR="$REPO_ROOT/workspace/$MACHINE_ID"
   local BACKUP_DIR="$WORKSPACE_DIR/backups"
@@ -1087,245 +1087,6 @@ EOF
 
   success ".sops.yaml updated with your age public key"
   echo ""
-}
-
-scan_existing_secrets() {
-  print_step "◆ Scanning for Existing Secrets"
-
-  info "Detecting secrets in your home directory..."
-  echo ""
-
-  local found_secrets=()
-  local secret_count=0
-  local scan_depth="${SECRET_SCAN_DEPTH:-4}"  # Default: 4 levels deep
-
-  info "Scan depth: $scan_depth directory levels"
-  echo ""
-
-  # ==== Known Secret Directories ====
-
-  # Scan ~/.db/ directory (database credentials)
-  if [ -d "$HOME/.db" ]; then
-    while IFS= read -r -d '' file; do
-      found_secrets+=("Database credential: $file")
-      ((secret_count++)) || true
-    done < <(find "$HOME/.db" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
-  fi
-
-  # Scan ~/.tokens/ directory (API tokens)
-  if [ -d "$HOME/.tokens" ]; then
-    while IFS= read -r -d '' file; do
-      found_secrets+=("API token: $file")
-      ((secret_count++)) || true
-    done < <(find "$HOME/.tokens" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
-  fi
-
-  # Scan ~/.credentials/ directory
-  if [ -d "$HOME/.credentials" ]; then
-    while IFS= read -r -d '' file; do
-      found_secrets+=("Credential: $file")
-      ((secret_count++)) || true
-    done < <(find "$HOME/.credentials" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
-  fi
-
-  # Check AWS credentials
-  if [ -f "$HOME/.aws/credentials" ]; then
-    found_secrets+=("AWS credentials: ~/.aws/credentials")
-    ((secret_count++)) || true
-  fi
-
-  # Scan SSH keys (private keys only, exclude .pub)
-  if [ -d "$HOME/.ssh" ]; then
-    while IFS= read -r -d '' file; do
-      if [[ ! "$file" =~ \.pub$ ]] && [[ -f "$file" ]]; then
-        found_secrets+=("SSH key: $file")
-        ((secret_count++)) || true
-      fi
-    done < <(find "$HOME/.ssh" -name "id_*" -type f -print0 2>/dev/null)
-  fi
-
-  # Scan ~/.gnupg/ directory (GPG keys)
-  if [ -d "$HOME/.gnupg" ]; then
-    while IFS= read -r -d '' file; do
-      if [[ "$file" =~ (secring\.gpg|private-keys-v1\.d) ]]; then
-        found_secrets+=("GPG private key: $file")
-        ((secret_count++)) || true
-      fi
-    done < <(find "$HOME/.gnupg" -maxdepth 2 -type f -print0 2>/dev/null)
-  fi
-
-  # Check Docker config
-  if [ -f "$HOME/.docker/config.json" ]; then
-    found_secrets+=("Docker config: ~/.docker/config.json")
-    ((secret_count++)) || true
-  fi
-
-  # Scan ~/.vpn/ directory
-  if [ -d "$HOME/.vpn" ]; then
-    while IFS= read -r -d '' file; do
-      found_secrets+=("VPN credential: $file")
-      ((secret_count++)) || true
-    done < <(find "$HOME/.vpn" -maxdepth "$scan_depth" -type f -print0 2>/dev/null)
-  fi
-
-  # ==== CLI Config Files ====
-
-  # Kubernetes config
-  if [ -f "$HOME/.kube/config" ]; then
-    found_secrets+=("Kubernetes config: ~/.kube/config")
-    ((secret_count++)) || true
-  fi
-
-  # Scan application-specific config files
-  local app_configs=(
-    "$HOME/.npmrc:npm config"
-    "$HOME/.netrc:Network credentials"
-    "$HOME/.pgpass:PostgreSQL password"
-    "$HOME/.my.cnf:MySQL credentials"
-    "$HOME/.pypirc:PyPI credentials"
-    "$HOME/.gem/credentials:Ruby gem credentials"
-    "$HOME/.wakatime.cfg:WakaTime API key"
-  )
-  for app_config in "${app_configs[@]}"; do
-    local file_path="${app_config%%:*}"
-    local description="${app_config##*:}"
-    if [ -f "$file_path" ]; then
-      found_secrets+=("$description: $file_path")
-      ((secret_count++)) || true
-    fi
-  done
-
-  # ==== Environment Files (Deep Scan) ====
-
-  # Scan for .env* files (all variations, up to scan_depth)
-  while IFS= read -r -d '' env_file; do
-    found_secrets+=("Environment file: $env_file")
-    ((secret_count++)) || true
-  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
-    \( -name ".env" -o -name ".env.*" -o -name ".envrc" \) \
-    ! -path "*/node_modules/*" \
-    ! -path "*/.git/*" \
-    ! -path "*/dist/*" \
-    ! -path "*/build/*" \
-    ! -name "*.swp" \
-    ! -name "*.bak" \
-    ! -name "*.backup" \
-    ! -name "*~" \
-    -print0 2>/dev/null)
-
-  # ==== Wildcard Pattern Scanning ====
-
-  # Files with *secret* in name
-  while IFS= read -r -d '' file; do
-    found_secrets+=("Secret file: $file")
-    ((secret_count++)) || true
-  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
-    -iname "*secret*" \
-    ! -path "*/node_modules/*" \
-    ! -path "*/.git/*" \
-    ! -path "*/dist/*" \
-    ! -path "*/build/*" \
-    ! -name "*.md" \
-    ! -name "*.txt" \
-    -print0 2>/dev/null | head -z -n 20)  # Limit to first 20 matches
-
-  # Files with *credential* in name
-  while IFS= read -r -d '' file; do
-    found_secrets+=("Credential file: $file")
-    ((secret_count++)) || true
-  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
-    -iname "*credential*" \
-    ! -path "*/node_modules/*" \
-    ! -path "*/.git/*" \
-    ! -path "*/dist/*" \
-    ! -path "*/build/*" \
-    ! -name "*.md" \
-    ! -name "*.txt" \
-    -print0 2>/dev/null | head -z -n 20)
-
-  # Certificate files (.pem, .p12, .pfx)
-  while IFS= read -r -d '' file; do
-    found_secrets+=("Certificate: $file")
-    ((secret_count++)) || true
-  done < <(find "$HOME" -maxdepth "$scan_depth" -type f \
-    \( -name "*.pem" -o -name "*.p12" -o -name "*.pfx" -o -name "*.key" \) \
-    ! -path "*/node_modules/*" \
-    ! -path "*/.git/*" \
-    -print0 2>/dev/null | head -z -n 20)
-
-  # ==== Shell Config Scanning ====
-
-  # Scan shell configuration files for exported secrets
-  local shell_configs=("$HOME/.zshrc" "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.config/fish/config.fish")
-  for config_file in "${shell_configs[@]}"; do
-    if [ -f "$config_file" ]; then
-      # Search for export statements with secret-like patterns
-      if grep -qE 'export.*(API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY).*=' "$config_file" 2>/dev/null; then
-        found_secrets+=("Shell config with secrets: $config_file")
-        ((secret_count++)) || true
-      fi
-    fi
-  done
-
-  # Scan generated alias files (from previous Nix configs or manual setups)
-  while IFS= read -r -d '' alias_file; do
-    # Check if file contains secrets (connection strings, API keys, tokens)
-    if grep -qE '(API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY|mysql.*-p|psql.*postgresql://|curl.*token)' "$alias_file" 2>/dev/null; then
-      found_secrets+=("Alias file with potential secrets: $alias_file")
-      ((secret_count++)) || true
-    fi
-  done < <(find "$HOME/.config" -maxdepth 3 -type f \
-    \( -name "*alias*" -o -name "*aliases*" \) \
-    ! -path "*/.git/*" \
-    -print0 2>/dev/null)
-
-  # Scan shell history files (can leak secrets from pasted commands)
-  local history_files=("$HOME/.zsh_history" "$HOME/.bash_history" "$HOME/.history")
-  for history_file in "${history_files[@]}"; do
-    if [ -f "$history_file" ]; then
-      # Check for secrets in command history (sample check to avoid full scan)
-      if grep -qE '(export.*SECRET|API_KEY.*=|TOKEN.*=|PASSWORD.*=|-p.*[A-Za-z0-9]{8,})' "$history_file" 2>/dev/null | head -n 1; then
-        found_secrets+=("Shell history with potential secrets: $history_file")
-        ((secret_count++)) || true
-      fi
-    fi
-  done
-
-  # ==== Age Key Detection ====
-
-  # Check for SOPS_AGE_KEY_FILE environment variable
-  if [ -n "$SOPS_AGE_KEY_FILE" ] && [ -f "$SOPS_AGE_KEY_FILE" ]; then
-    found_secrets+=("SOPS age key: $SOPS_AGE_KEY_FILE")
-    ((secret_count++)) || true
-  fi
-
-  # Check default age key location
-  if [ -f "$HOME/.config/sops/age/keys.txt" ]; then
-    found_secrets+=("SOPS age key: ~/.config/sops/age/keys.txt")
-    ((secret_count++)) || true
-  fi
-
-  # Display results
-  if [ $secret_count -eq 0 ]; then
-    info "No existing secrets detected in common locations"
-    echo "   You'll need to create them manually or via SOPS encryption"
-  else
-    success "Found $secret_count existing secret(s):"
-    echo ""
-    for secret in "${found_secrets[@]}"; do
-      echo "   ✓ $secret"
-    done
-    echo ""
-    warning "These secrets should be encrypted in nix-config/hosts/$MACHINE_ID/secrets.yaml"
-    info "See docs/secrets.md for SOPS setup instructions"
-    echo ""
-    info "To change scan depth: export SECRET_SCAN_DEPTH=3  # Default: 4"
-  fi
-
-  echo ""
-
-  # Always return success - we're just displaying results
-  return 0
 }
 
 validate_secret_structure() {
@@ -1439,7 +1200,7 @@ create_secrets_file() {
 
   # Create comprehensive plaintext template matching secrets-personal.nix structure
   cat > "$SECRETS_FILE" <<'EOF'
-# Edit with: sops hosts/mbp-jimmy/secrets.yaml
+# Edit with: edit-secrets
 # or use the helper: edit-secrets
 # Environment variables and API keys
 # These will be placed in ~/.zsh_secrets and sourced automatically
@@ -1592,9 +1353,9 @@ EOF
   # Validate structure
   validate_secret_structure "$SECRETS_FILE"
 
-  warning "⚠ IMPORTANT: This file contains UNENCRYPTED secrets!"
+  warning "IMPORTANT: This file contains UNENCRYPTED secrets!"
   echo ""
-  echo "📝 Review and edit secrets.yaml:"
+  echo "Review and edit secrets.yaml:"
   echo ""
   echo "  1. Fill in required keys (zsh_secrets, ssh_private_key, ssh_public_key)"
   echo "  2. Review discovered secrets section at bottom"
@@ -1613,13 +1374,13 @@ EOF
   echo "  • View:          SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops -d $SECRETS_FILE"
   echo "  • Edit:          SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops $SECRETS_FILE"
   echo ""
-  info "💡 Tip: Uncomment test_secret to verify encryption chain works"
+  info "   Tip: Uncomment test_secret to verify encryption chain works"
   echo ""
 
   # Interactive secrets workflow checklist
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "📋 Secrets Review Checklist"
+  echo "Secrets Review Checklist"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "Before running ./scripts/setup/activate.sh, you should:"
@@ -1649,7 +1410,7 @@ EOF
 
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "🔐 Secrets Management Commands"
+  echo "Secrets Management Commands"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "After activation, use these commands to manage encrypted secrets:"
@@ -1670,7 +1431,7 @@ EOF
 # ============================================================================
 
 show_verification_checklist() {
-  print_header "📋 Comprehensive Pre-Activation Review"
+  print_header "Comprehensive Pre-Activation Review"
 
   # Handle dry-run mode
   if [ "$DRY_RUN" = true ]; then
@@ -1709,12 +1470,12 @@ show_verification_checklist() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "Host directory:"
-  echo "  📁 nix-config/hosts/$MACHINE_ID/"
+  echo "  nix-config/hosts/$MACHINE_ID/"
   echo "     Location: $REPO_ROOT/nix-config/hosts/$MACHINE_ID/"
   ls -1 "$REPO_ROOT/nix-config/hosts/$MACHINE_ID/" | sed 's/^/     ├─ /'
   echo ""
   echo "Home directory:"
-  echo "  📁 home/$USERNAME/"
+  echo "  home/$USERNAME/"
   echo "     Location: $REPO_ROOT/home/$USERNAME/"
   echo "     ├─ (complete template structure copied)"
   echo ""
@@ -1819,7 +1580,7 @@ What this script does:
 
 Prerequisites:
   Run ./scripts/setup/bootstrap.sh first to install required tools:
-    ././scripts/setup/bootstrap.sh
+    ./scripts/setup/bootstrap.sh
 
 After configuration:
   Review the generated files, then run:
@@ -1882,11 +1643,11 @@ echo ""
 echo ""
 
 if [[ "$scan_choice" =~ ^[Yy]$ ]]; then
-  scan_existing_secrets
+  "$REPO_ROOT/scripts/secrets/rescan-secrets.sh" --depth 4
 else
   info "Skipping automatic secret scan"
   echo ""
-  echo "📝 secrets.yaml will be created with template structure"
+  echo "secrets.yaml will be created with template structure"
   echo ""
   echo "To manually add your existing secrets:"
   echo ""
@@ -1920,7 +1681,7 @@ echo ""
 # Show proxy configuration reminder for work profiles
 if [[ "$MACHINE_TYPE" == "work" ]]; then
   echo ""
-  print_step "⚠️  Corporate Proxy Configuration"
+  print_step "warning: corporate Proxy Configuration"
   echo ""
   echo "If you're behind a corporate proxy, update ${CYAN}config/user-config.nix${NC} with your proxy settings:"
   echo ""
@@ -1941,5 +1702,5 @@ fi
 
 print_step "▶ Next Step"
 echo "Review the checklist above, then run the activation script:"
-echo -e "  ${BOLD}${GREEN}./scripts/activate.sh${NC}"
+echo -e "  ${BOLD}${GREEN}./scripts/setup/activate.sh${NC}"
 echo ""

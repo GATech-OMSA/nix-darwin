@@ -11,7 +11,7 @@ set -e
 MACHINE_ID="${1:-${MACHINE_ID}}"
 
 if [ -z "$MACHINE_ID" ]; then
-  echo "❌ Error: machineId required"
+  echo "error: error: machineId required"
   echo "Usage: $0 <machineId>"
   echo "   or: MACHINE_ID=<machineId> $0"
   exit 1
@@ -24,7 +24,7 @@ BACKUP_DIR="${NIX_DARWIN_DIR}/workspace/${MACHINE_ID}"
 
 mkdir -p "$BACKUP_DIR"
 
-echo "📦 Backing up user data to $BACKUP_DIR"
+echo "Backing up user data to $BACKUP_DIR"
 echo ""
 
 # Copy backup script itself for self-contained backup
@@ -32,13 +32,13 @@ cp "$0" "$BACKUP_DIR/"
 chmod +x "$BACKUP_DIR/backup.sh"
 
 # App Configs
-echo "🔧 Backing up application configs..."
+echo "Backing up application configs..."
 mkdir -p "$BACKUP_DIR/app-configs"
 
 # Claude Code
 if [ -f ~/.claude.json ]; then
   cp ~/.claude.json "$BACKUP_DIR/app-configs/claude.json"
-  echo "  ✅ Claude config"
+  echo "  Claude config"
 fi
 
 # Continue.dev
@@ -46,21 +46,21 @@ if [ -d ~/.continue ]; then
   mkdir -p "$BACKUP_DIR/app-configs/continue"
   cp ~/.continue/config.json "$BACKUP_DIR/app-configs/continue/" 2>/dev/null || true
   cp ~/.continue/config.ts "$BACKUP_DIR/app-configs/continue/" 2>/dev/null || true
-  echo "  ✅ Continue.dev config"
+  echo "  Continue.dev config"
 fi
 
 # Gemini
 if [ -f ~/.gemini/settings.json ]; then
   mkdir -p "$BACKUP_DIR/app-configs/gemini"
   cp ~/.gemini/settings.json "$BACKUP_DIR/app-configs/gemini/"
-  echo "  ✅ Gemini config"
+  echo "  Gemini config"
 fi
 
 # iTerm2 preferences
 if [ -f ~/Library/Preferences/com.googlecode.iterm2.plist ]; then
   mkdir -p "$BACKUP_DIR/app-configs/iterm2"
   cp ~/Library/Preferences/com.googlecode.iterm2.plist "$BACKUP_DIR/app-configs/iterm2/"
-  echo "  ✅ iTerm2 preferences"
+  echo "  iTerm2 preferences"
 fi
 
 # Cursor configs
@@ -68,48 +68,48 @@ if [ -d ~/.cursor ]; then
   mkdir -p "$BACKUP_DIR/app-configs/cursor"
   cp ~/.cursor/argv.json "$BACKUP_DIR/app-configs/cursor/" 2>/dev/null || true
   cp ~/.cursor/cli-config.json "$BACKUP_DIR/app-configs/cursor/" 2>/dev/null || true
-  echo "  ✅ Cursor config"
+  echo "  Cursor config"
 fi
 
 # Docker configs (user preferences, NOT daemon settings)
 if [ -f ~/.docker/config.json ]; then
   mkdir -p "$BACKUP_DIR/app-configs/docker"
   cp ~/.docker/config.json "$BACKUP_DIR/app-configs/docker/"
-  echo "  ✅ Docker config"
+  echo "  Docker config"
 fi
 
 echo ""
 
 # User Content
-echo "📝 Backing up user content..."
+echo "Backing up user content..."
 mkdir -p "$BACKUP_DIR/user-content"
 
 # VS Code custom snippets
 if [ -d ~/Library/Application\ Support/Code/User/snippets ]; then
   mkdir -p "$BACKUP_DIR/user-content/vscode-snippets"
   rsync -av --exclude='.DS_Store' ~/Library/Application\ Support/Code/User/snippets/ "$BACKUP_DIR/user-content/vscode-snippets/" 2>/dev/null || true
-  echo "  ✅ VS Code snippets"
+  echo "  VS Code snippets"
 fi
 
 # VS Code settings (NOT managed by Nix)
 if [ -f ~/Library/Application\ Support/Code/User/settings.json ]; then
   mkdir -p "$BACKUP_DIR/user-content/vscode"
   cp ~/Library/Application\ Support/Code/User/settings.json "$BACKUP_DIR/user-content/vscode/"
-  echo "  ✅ VS Code settings.json"
+  echo "  VS Code settings.json"
 fi
 
 # VS Code spell dictionary
 if [ -f ~/.vscode/spell-dictionary.txt ]; then
   mkdir -p "$BACKUP_DIR/user-content/vscode"
   cp ~/.vscode/spell-dictionary.txt "$BACKUP_DIR/user-content/vscode/"
-  echo "  ✅ VS Code spell dictionary"
+  echo "  VS Code spell dictionary"
 fi
 
 # VS Code argv.json (CLI config)
 if [ -f ~/.vscode/argv.json ]; then
   mkdir -p "$BACKUP_DIR/user-content/vscode"
   cp ~/.vscode/argv.json "$BACKUP_DIR/user-content/vscode/"
-  echo "  ✅ VS Code argv.json"
+  echo "  VS Code argv.json"
 fi
 
 # VS Code extensions list + install script
@@ -133,11 +133,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 EXT_LIST="$SCRIPT_DIR/extensions-list.txt"
 
 if [ ! -f "$EXT_LIST" ]; then
-  echo "❌ Extensions list not found: $EXT_LIST"
+  echo "error: extensions list not found: $EXT_LIST"
   exit 1
 fi
 
-echo "📦 Installing VS Code extensions..."
+echo "Installing VS Code extensions..."
 echo ""
 
 installed=0
@@ -158,18 +158,18 @@ while IFS= read -r ext; do
     continue
   fi
 
-  echo "📦 Installing: $ext_id"
+  echo "Installing: $ext_id"
   if code --install-extension "$ext_id" 2>/dev/null; then
     ((installed++))
   else
-    echo "   ⚠️  Failed to install: $ext_id"
+    echo "   warning: failed to install: $ext_id"
     ((failed++))
   fi
 done < "$EXT_LIST"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ Installation complete!"
+echo "Installation complete!"
 echo "   Installed: $installed extensions"
 if [ $failed -gt 0 ]; then
   echo "   Failed: $failed extensions"
@@ -179,7 +179,7 @@ INSTALL_SCRIPT
 
   chmod +x "$BACKUP_DIR/vscode/install-extensions.sh"
 
-  echo "  ✅ VS Code extensions ($ext_count extensions + install script)"
+  echo "  VS Code extensions ($ext_count extensions + install script)"
 fi
 
 # Jupyter configs (custom only)
@@ -191,26 +191,26 @@ if [ -d ~/.jupyter ]; then
       cp ~/.jupyter/$file "$BACKUP_DIR/user-content/jupyter/"
     fi
   done
-  echo "  ✅ Jupyter configs"
+  echo "  Jupyter configs"
 fi
 
 # IPython configs
 if [ -f ~/.ipython/profile_default/ipython_config.py ]; then
   mkdir -p "$BACKUP_DIR/user-content/ipython"
   cp ~/.ipython/profile_default/ipython_config.py "$BACKUP_DIR/user-content/ipython/"
-  echo "  ✅ IPython config"
+  echo "  IPython config"
 fi
 
 # SSH known_hosts (not secret, but useful)
 if [ -f ~/.ssh/known_hosts ]; then
   cp ~/.ssh/known_hosts "$BACKUP_DIR/ssh_known_hosts"
-  echo "  ✅ SSH known_hosts"
+  echo "  SSH known_hosts"
 fi
 
 # Zoxide database (directory navigation history)
 if [ -f ~/.z ]; then
   cp ~/.z "$BACKUP_DIR/zoxide_database"
-  echo "  ✅ Zoxide database"
+  echo "  Zoxide database"
 fi
 
 # Claude configuration and data
@@ -252,14 +252,14 @@ if [ -d ~/.claude ]; then
     rsync -av --exclude='.DS_Store' ~/.claude/todos/ "$BACKUP_DIR/user-content/claude/todos/" 2>/dev/null || true
   fi
 
-  echo "  ✅ Claude config and data"
+  echo "  Claude config and data"
 fi
 
 echo ""
-echo "✅ Backup complete!"
+echo "Backup complete!"
 echo ""
-echo "📍 Location: $BACKUP_DIR"
-echo "💾 To save: Copy this directory to external drive or cloud storage"
+echo "Location: $BACKUP_DIR"
+echo "To save: Copy this directory to external drive or cloud storage"
 echo ""
 echo "Example:"
 echo "  cp -r $BACKUP_DIR /Volumes/ExternalDrive/nix-darwin-userdata-backup"

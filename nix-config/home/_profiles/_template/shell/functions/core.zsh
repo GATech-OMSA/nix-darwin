@@ -24,7 +24,7 @@ alias als="find-alias"
 # Profile zsh startup time (runs 10 iterations)
 function zsh-profile() {
   local shell=${1:-zsh}
-  echo "⏱️  Profiling $shell startup time (10 iterations)..."
+  echo "→ Profiling $shell startup time (10 iterations)..."
   for i in $(seq 1 10); do /usr/bin/time $shell -i -c exit; done
 }
 
@@ -32,9 +32,9 @@ function zsh-profile() {
 function path-add() {
   if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
     export PATH="$1:$PATH"
-    echo "✅ Added to PATH: $1"
+    echo "✓ Added to PATH: $1"
   else
-    echo "ℹ️  Path already exists or directory not found: $1"
+    echo "→ Path already exists or directory not found: $1"
   fi
 }
 
@@ -45,7 +45,7 @@ function backup() {
     return 1
   fi
   cp -r "$1" "$1.backup.$(date +%Y%m%d-%H%M%S)"
-  echo "✅ Backed up $1"
+  echo "✓ Backed up $1"
 }
 
 # Search history
@@ -59,8 +59,14 @@ function kill-port() {
     echo "Usage: kill-port <port>"
     return 1
   fi
-  lsof -ti:$1 | xargs kill -9
-  echo "✅ Killed process on port $1"
+  local pids
+  pids=$(lsof -ti:"$1" 2>/dev/null)
+  if [ -z "$pids" ]; then
+    echo "→ No process found on port $1"
+    return 0
+  fi
+  echo "$pids" | xargs kill -9
+  echo "✓ Killed process on port $1"
 }
 
 # Git clone and cd
@@ -75,7 +81,7 @@ function newproj() {
     return 1
   fi
   mkdir -p ~/Dev/"$1" && cd ~/Dev/"$1" && code .
-  echo "✅ Created and opened project: ~/Dev/$1"
+  echo "✓ Created and opened project: ~/Dev/$1"
 }
 
 # Alias for kill-port (no hyphen)
@@ -125,16 +131,16 @@ function warn() {
 
   case "$level" in
     INFO)
-      echo "ℹ️  INFO: $message"
+      echo "→ INFO: $message"
       ;;
     WARNING)
-      echo "⚠️  WARNING: $message"
+      echo "▸ WARNING: $message"
       ;;
     CRITICAL)
-      echo "🚨 CRITICAL: $message"
+      echo "▸ CRITICAL: $message"
       ;;
     *)
-      echo "⚠️  $message"
+      echo "▸ $message"
       ;;
   esac
 }
@@ -159,7 +165,7 @@ function risky() {
   if confirm "Proceed?"; then
     "$@"
   else
-    echo "❌ Operation cancelled"
+    echo "✗ Operation cancelled"
     return 1
   fi
 }
@@ -172,15 +178,15 @@ function critical() {
   shift 2
 
   echo ""
-  echo "🚨 CRITICAL OPERATION"
-  echo "⚠️  $message"
+  echo "▸ CRITICAL OPERATION"
+  echo "▸ $message"
   echo ""
   read -r "confirmation?Type '$confirm_text' to confirm: "
 
   if [[ "$confirmation" == "$confirm_text" ]]; then
     "$@"
   else
-    echo "❌ Operation cancelled (incorrect confirmation)"
+    echo "✗ Operation cancelled (incorrect confirmation)"
     return 1
   fi
 }
@@ -192,5 +198,5 @@ function note() {
     return 1
   fi
   echo "$(date '+%Y-%m-%d %H:%M:%S'): $@" >> ~/Documents/daily-notes.md
-  echo "✅ Note added to ~/Documents/daily-notes.md"
+  echo "✓ Note added to ~/Documents/daily-notes.md"
 }

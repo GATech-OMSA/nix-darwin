@@ -29,7 +29,7 @@ if [ ! -f "$REPO_ROOT/flake.nix" ]; then
 fi
 
 # Get hostname
-echo -e "${GREEN}📝 Machine Configuration${NC}"
+echo -e "${GREEN}Machine Configuration${NC}"
 echo ""
 read -p "Enter new hostname (e.g., mbp-alice): " HOSTNAME
 
@@ -127,22 +127,17 @@ if [[ ! $CONFIRM =~ ^[Yy]$ ]]; then
 fi
 
 echo ""
-echo -e "${GREEN}🚀 Creating configuration...${NC}"
+echo -e "${GREEN}Creating configuration...${NC}"
 
 # Step 1: Copy template
-echo "  📁 Copying template to hosts/$HOSTNAME/"
+echo "  Copying template to hosts/$HOSTNAME/"
 cp -r "$TEMPLATE_DIR" "$REPO_ROOT/nix-config/hosts/$HOSTNAME"
 
 # Step 2: Update default.nix
-echo "  ✏️  Customizing hosts/$HOSTNAME/default.nix"
+echo "  Customizing hosts/$HOSTNAME/default.nix"
 sed -i '' "s/REPLACE_WITH_COMPUTER_NAME/$COMPUTER_NAME/g" "$REPO_ROOT/nix-config/hosts/$HOSTNAME/default.nix"
 
-# Step 3: Update machines.nix
-echo "  ✏️  Adding to hosts/machines.nix"
-# Insert before the closing brace
-sed -i '' "s/^}$/  \"$HOSTNAME\" = \"$MACHINE_TYPE\";\n}/" "$REPO_ROOT/nix-config/hosts/machines.nix"
-
-# Step 4: Show flake.nix addition
+# Step 3: Show flake.nix addition
 echo ""
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}   Manual Steps Required${NC}"
@@ -183,7 +178,7 @@ echo "# Subsequent rebuilds"
 echo "darwin-rebuild switch --flake ~/nix-darwin"
 echo ""
 
-echo -e "${GREEN}✅ Template created successfully!${NC}"
+echo -e "${GREEN}Template created successfully!${NC}"
 echo ""
 echo "Next steps:"
 echo "  1. Edit flake.nix (add darwinConfiguration shown above)"

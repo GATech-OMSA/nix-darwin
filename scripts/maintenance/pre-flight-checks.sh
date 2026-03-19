@@ -72,27 +72,27 @@ print_header() {
 
 print_check() {
   if [[ "$QUIET_MODE" == "false" ]] && [[ "$WARNINGS_ONLY" == "false" ]]; then
-    echo -e "${BLUE}🔍 $1${NC}"
+    echo -e "${BLUE}$1${NC}"
   fi
 }
 
 print_pass() {
   ((PASS_COUNT++))
   if [[ "$QUIET_MODE" == "false" ]] && [[ "$WARNINGS_ONLY" == "false" ]]; then
-    echo -e "${GREEN}  ✅ $1${NC}"
+    echo -e "${GREEN}  $1${NC}"
   fi
 }
 
 print_warning() {
   ((WARNING_COUNT++))
   if [[ "$QUIET_MODE" == "false" ]]; then
-    echo -e "${YELLOW}  ⚠️  $1${NC}"
+    echo -e "${YELLOW}  warning: $1${NC}"
   fi
 }
 
 print_critical() {
   ((CRITICAL_COUNT++))
-  echo -e "${RED}  ❌ $1${NC}"
+  echo -e "${RED}  error: $1${NC}"
 }
 
 print_info() {
@@ -340,7 +340,7 @@ main() {
     esac
   done
 
-  print_header "🚀 Pre-Flight Checks for darwin-rebuild"
+  print_header "Pre-Flight Checks for darwin-rebuild"
 
   # Run all checks
   check_disk_space || true
@@ -356,33 +356,33 @@ main() {
 
   # Print summary
   echo ""
-  print_header "📊 Pre-Flight Summary"
+  print_header "Pre-Flight Summary"
 
-  echo -e "${GREEN}✅ Passed: $PASS_COUNT${NC}"
+  echo -e "${GREEN}Passed: $PASS_COUNT${NC}"
 
   if [[ $WARNING_COUNT -gt 0 ]]; then
-    echo -e "${YELLOW}⚠️  Warnings: $WARNING_COUNT${NC}"
+    echo -e "${YELLOW}Warnings: $WARNING_COUNT${NC}"
   fi
 
   if [[ $CRITICAL_COUNT -gt 0 ]]; then
-    echo -e "${RED}❌ Critical: $CRITICAL_COUNT${NC}"
+    echo -e "${RED}Critical: $CRITICAL_COUNT${NC}"
   fi
 
   echo ""
 
   # Determine exit code
   if [[ $CRITICAL_COUNT -gt 0 ]]; then
-    echo -e "${RED}🚨 CRITICAL ISSUES DETECTED${NC}"
+    echo -e "${RED}CRITICAL ISSUES DETECTED${NC}"
     echo -e "${RED}Fix critical issues before rebuilding${NC}"
     echo ""
     exit 1
   elif [[ $WARNING_COUNT -gt 0 ]]; then
-    echo -e "${YELLOW}⚠️  WARNINGS DETECTED${NC}"
+    echo -e "${YELLOW}WARNINGS DETECTED${NC}"
     echo -e "${YELLOW}Review warnings, rebuild may proceed with caution${NC}"
     echo ""
     exit 2
   else
-    echo -e "${GREEN}✅ ALL CHECKS PASSED${NC}"
+    echo -e "${GREEN}ALL CHECKS PASSED${NC}"
     echo -e "${GREEN}System ready for rebuild${NC}"
     echo ""
     exit 0

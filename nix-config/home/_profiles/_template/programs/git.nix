@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, myLib, machineType, userConfig, ... }:
+{ config, pkgs, lib, hostname, myLib, profileName, userConfig, ... }:
 
 {
   # Git configuration - migrated from ConfigHub

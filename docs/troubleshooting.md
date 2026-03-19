@@ -174,7 +174,7 @@ code config/machine-config.nix
 
 # 3. Change profileName field
 # {
-#   machineId = "mbp-personal-001";
+#   machineId = "macbook-pro-m1-personal";
 #   profileName = "personal";  # ← Change this: personal, work, or minimal
 #   description = "...";
 # }
@@ -252,33 +252,13 @@ darwin-rebuild switch --flake . --impure
 
 ---
 
-### Profile Switcher Script Missing
-
-**Symptom:**
-- Want to switch profiles but no convenient script exists
-- Have to manually edit config/machine-config.nix
-
-**Why it happens:**
-- Profile switcher script not yet implemented (see BACKLOG.md)
-- Manual editing required for now
-
-**Solution (Manual):**
+### Switching Profiles
 
 ```bash
-# 1. Edit machine config
-code config/machine-config.nix
-
-# 2. Change profileName
-# profileName = "work";  # or "personal" or "minimal"
-
-# 3. Rebuild
-nix-rebuild && exec zsh
-
-# 4. Verify
-echo $ACTIVE_PROFILE
+scripts/profiles/switch-profile.sh personal   # or work, minimal
 ```
 
-**Future:** Profile switcher script planned (scripts/switch-profile.sh)
+The script updates `config/machine-config.nix`, rebuilds, and prompts for shell restart.
 
 ---
 
@@ -446,7 +426,7 @@ nix-rebuild && exec zsh
 secrets-status
 
 # If secret files not encrypted:
-edit-secrets  # Encrypts secrets.yaml with SOPS
+secrets-edit  # Encrypts secrets.yaml with SOPS
 
 # If permission errors:
 chmod 600 ~/.db/*
@@ -546,7 +526,7 @@ age-keygen -o ~/.config/sops/age/keys.txt
 ### Secrets Won't Decrypt
 
 **Symptom:**
-- `edit-secrets` fails
+- `secrets-edit` fails
 - "Failed to decrypt"
 
 **Why it happens:**
@@ -644,7 +624,7 @@ darwin-rebuild --list-generations >> ~/nix-darwin-backup/backup-info.txt
 
 ```bash
 # Run system health check
-health-check
+nix-health
 
 # Shows:
 # - Nix version
@@ -721,7 +701,7 @@ ls ~/.config/sops/age/
 
 # Re-encrypt secrets if needed
 ./scripts/configure.sh  # Regenerates age keys
-edit-secrets  # Re-encrypt secrets.yaml
+secrets-edit  # Re-encrypt secrets.yaml
 ```
 
 ---
@@ -731,7 +711,7 @@ edit-secrets  # Re-encrypt secrets.yaml
 - [Installation Guide](installation.md) - Setup from scratch
 - [Secrets Management](secrets.md) - SOPS encryption details
 - [Backup & Recovery](backup-and-recovery.md) - Protect your config
-- [AWS Multi-Role Guide](work/aws/aws-multi-role.md) - AWS SSO troubleshooting
+- [AWS & Secrets Reference](aws-and-secrets-workflow.md) - AWS SSO + secrets workflow
 
 ---
 

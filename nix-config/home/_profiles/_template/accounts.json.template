@@ -1,0 +1,20 @@
+{
+  "example-project": {
+    "alias": "ep",
+    "description": "Example project (replace with your project)",
+    "default_role": "developer",
+    "default_region": "us-east-1",
+    "accounts": {
+      "dev": {
+        "id": "111111111111",
+        "region": "us-east-1",
+        "additional_roles": ["admin"]
+      },
+      "prod": {
+        "id": "222222222222",
+        "region": "us-east-1",
+        "additional_roles": ["readonly"]
+      }
+    }
+  }
+}

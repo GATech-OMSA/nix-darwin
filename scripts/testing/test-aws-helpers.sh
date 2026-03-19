@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🧪 Testing AWS Multi-Role Implementation"
+echo "Testing AWS Multi-Role Implementation"
 echo ""
 
 # Colors
@@ -13,15 +13,15 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 success() {
-  echo -e "${GREEN}✅ $1${NC}"
+  echo -e "${GREEN}$1${NC}"
 }
 
 error() {
-  echo -e "${RED}❌ $1${NC}"
+  echo -e "${RED}error: $1${NC}"
 }
 
 warn() {
-  echo -e "${YELLOW}⚠️  $1${NC}"
+  echo -e "${YELLOW}warning: $1${NC}"
 }
 
 # Test 1: Check accounts.json exists
@@ -167,7 +167,7 @@ else
 fi
 
 echo ""
-echo "🎉 All tests completed!"
+echo "All tests completed!"
 echo ""
 echo "Next steps:"
 echo "  1. Run: exec zsh (to reload shell with new aliases)"

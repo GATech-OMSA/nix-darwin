@@ -15,7 +15,7 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-info() { echo -e "${BLUE}ℹ ${NC} $*"; }
+info() { echo -e "${BLUE}→${NC} $*"; }
 success() { echo -e "${GREEN}✓${NC} $*"; }
 error() { echo -e "${RED}✗${NC} $*" >&2; }
 

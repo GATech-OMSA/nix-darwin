@@ -13,7 +13,7 @@ rec {
   # Also supports ~/.zsh_secrets.local for temporary testing
   #
   # Usage:
-  #   reload-secrets              # Reload both files
+  #   secrets-reload              # Reload both files (or: reload-secrets)
   #   secrets-local edit          # Edit local test overrides
   #   secrets-local show          # Show local overrides
   #   secrets-local rm            # Remove local overrides
@@ -30,7 +30,7 @@ rec {
   #
   mkSecretsReload = ''
     function reload-secrets() {
-      echo "🔄 Reloading secrets..."
+      echo "Reloading secrets..."
       echo ""
 
       local count=0
@@ -38,43 +38,48 @@ rec {
 
       # Reload main secrets (SOPS-managed)
       if [ -f ~/.zsh_secrets ]; then
-        source ~/.zsh_secrets
-        echo "✅ Reloaded ~/.zsh_secrets"
-        files+=("~/.zsh_secrets")
-        ((count++))
+        if source ~/.zsh_secrets 2>/dev/null; then
+          echo "Reloaded ~/.zsh_secrets"
+          files+=("~/.zsh_secrets")
+          count=$(( count + 1 ))
+        else
+          echo "error: failed to source ~/.zsh_secrets (syntax error?)"
+        fi
       else
-        echo "⚠️  No ~/.zsh_secrets found"
+        echo "warning: no ~/.zsh_secrets found"
       fi
 
       # Reload local secrets (temporary/testing overrides)
       if [ -f ~/.zsh_secrets.local ]; then
-        source ~/.zsh_secrets.local
-        echo "✅ Reloaded ~/.zsh_secrets.local (overrides)"
-        files+=("~/.zsh_secrets.local")
-        ((count++))
+        if source ~/.zsh_secrets.local 2>/dev/null; then
+          echo "Reloaded ~/.zsh_secrets.local (overrides)"
+          files+=("~/.zsh_secrets.local")
+          count=$(( count + 1 ))
+        else
+          echo "error: failed to source ~/.zsh_secrets.local (syntax error?)"
+        fi
       fi
 
       if [ $count -eq 0 ]; then
         echo ""
-        echo "❌ No secret files found"
+        echo "error: no secret files found"
         echo ""
-        echo "💡 Create secrets:"
+        echo "   Create secrets:"
         echo "   - Permanent: edit-secrets (SOPS-encrypted)"
         echo "   - Testing: secrets-local edit (temporary)"
         return 1
       fi
 
       echo ""
-      echo "📊 Summary:"
+      echo "Summary:"
       echo "   • Reloaded: $count file(s)"
       echo "   • Scope: Current shell only"
       echo ""
-      echo "💡 For permanent changes: edit-secrets + nix-rebuild"
+      echo "   For permanent changes: edit-secrets + nix-rebuild"
     }
 
-    # Aliases for convenience
+    # Aliases (domain-first convention: secrets- + TAB shows all)
     alias secrets-reload='reload-secrets'
-    alias reload-env='reload-secrets'
   '';
 
   # ==================================================
@@ -89,7 +94,7 @@ rec {
 
       case "$action" in
         edit|e)
-          echo "✏️  Opening ~/.zsh_secrets.local for editing..."
+          echo "Opening ~/.zsh_secrets.local for editing..."
           echo ""
 
           # Create file with template if it doesn't exist
@@ -107,43 +112,43 @@ rec {
 # When done testing: secrets-local rm
 
 EOF
-            echo "📝 Created ~/.zsh_secrets.local with template"
+            echo "Created ~/.zsh_secrets.local with template"
           fi
 
           ''${EDITOR:-vim} ~/.zsh_secrets.local
           echo ""
-          echo "💡 Run: reload-secrets (to apply changes)"
+          echo "   Run: reload-secrets (to apply changes)"
           ;;
 
         show|s|cat)
           if [ -f ~/.zsh_secrets.local ]; then
-            echo "📄 ~/.zsh_secrets.local contents:"
+            echo "~/.zsh_secrets.local contents:"
             echo ""
             cat ~/.zsh_secrets.local
           else
-            echo "❌ No ~/.zsh_secrets.local found"
+            echo "error: no ~/.zsh_secrets.local found"
             echo ""
-            echo "💡 Create with: secrets-local edit"
+            echo "   Create with: secrets-local edit"
           fi
           ;;
 
         delete|rm|remove)
           if [ -f ~/.zsh_secrets.local ]; then
-            rm ~/.zsh_secrets.local
-            echo "✅ Deleted ~/.zsh_secrets.local"
+            /bin/rm ~/.zsh_secrets.local
+            echo "Deleted ~/.zsh_secrets.local"
             echo ""
-            echo "💡 Run: reload-secrets (to clear overrides)"
+            echo "   Run: reload-secrets (to clear overrides)"
           else
-            echo "❌ No ~/.zsh_secrets.local found"
+            echo "error: no ~/.zsh_secrets.local found"
           fi
           ;;
 
         path|location)
           if [ -f ~/.zsh_secrets.local ]; then
-            echo "📍 ~/.zsh_secrets.local exists"
+            echo "~/.zsh_secrets.local exists"
             ls -lh ~/.zsh_secrets.local
           else
-            echo "❌ ~/.zsh_secrets.local not found"
+            echo "error: ~/.zsh_secrets.local not found"
           fi
           ;;
 
@@ -169,7 +174,7 @@ EOF
           echo ""
           echo "Workflow:"
           echo "  1. secrets-local edit      # Create test credentials"
-          echo "  2. reload-secrets          # Apply to current shell"
+          echo "  2. secrets-reload          # Apply to current shell"
           echo "  3. Test your changes"
           echo "  4. secrets-local rm        # Clean up when done"
           echo ""
@@ -180,9 +185,9 @@ EOF
           ;;
 
         *)
-          echo "❌ Unknown action: $action"
+          echo "error: unknown action: $action"
           echo ""
-          echo "💡 Run: secrets-local help"
+          echo "   Run: secrets-local help"
           return 1
           ;;
       esac

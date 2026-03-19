@@ -1,766 +1,302 @@
-# AWS & Secrets Workflow - Complete Reference
+# AWS & Secrets Reference
 
-**Complete guide to AWS configuration, secrets management, and hot reload for both work and personal profiles.**
-
----
-
-## 📋 Table of Contents
-
-1. [Quick Answers](#quick-answers)
-2. [Work Profile AWS Workflow](#work-profile-aws-workflow)
-3. [Personal Profile AWS Workflow](#personal-profile-aws-workflow)
-4. [Hot Reload Mechanisms](#hot-reload-mechanisms)
-5. [Configuration Matrix: Nix vs Local](#configuration-matrix-nix-vs-local)
-6. [AWS Config Auto-Generation](#aws-config-auto-generation)
-7. [Secrets Management](#secrets-management)
-8. [Troubleshooting](#troubleshooting)
+Daily commands and architecture for AWS multi-account SSO and secrets management.
 
 ---
 
-## 🎯 Quick Answers
+## AWS Commands
 
-### Q: Does `awslogin project-name env` work?
-**A: YES!** But syntax is: `awslogin <project|alias> <env> [role]`
+### Quick reference
 
 ```bash
-# Work profile examples:
-awslogin ti dev              # Login to tririga-integrations dev (support role)
-awslogin ps qa developer     # Login to paging-solution qa (developer role)
-tidev && aws sso login       # Alternative: use alias then manual login
-
-# Personal profile: Not applicable (uses IAM keys, not SSO)
+awslogin <project|alias> <env> [role]   # SSO login (creates profile if missing)
+awsuse   <project|alias> <env> [role]   # Switch profile (no login)
+awswho                                  # Show current profile + identity
+awslist                                 # List all accounts from accounts.json
+awsfind  <query>                        # Search by name/alias/env/role
+awswhere <account-id>                   # Reverse lookup by account ID
+awscheck                                # Check SSO session status
+awsfilter <type> <value>                # Filter by project/env/role
 ```
 
-### Q: How about on personal profile?
-**A:** Personal profile uses **IAM credentials** (no SSO), stored in:
-- `~/.aws/credentials` (encrypted via SOPS, auto-decrypted on rebuild)
-- `~/.zsh_secrets` (API keys, tokens)
+### Role abbreviations
 
-### Q: Is there AWS config auto-generation from accounts.json?
-**A: YES!** For work profile:
-- `~/.aws/accounts.json` → source of truth (project definitions)
-- `home/_profiles/_template/programs/aws.nix` → reads accounts.json, generates all SSO profiles
-- Runs on every `nix-rebuild` → updates `~/.aws/config`
+| Short | Expands to |
+|-------|-----------|
+| `dev` | `developer` |
+| `ds` | `data-scientist` |
+| `de` | `data-engineer` |
+| `da` | `data-analyst` |
 
-### Q: Do we have hot reload for AWS/credentials?
-**A: YES!** Multiple mechanisms:
+Any other string (e.g., `admin`, `support`, `readonly`) is used as-is.
+If omitted, the `default_role` from `accounts.json` is used.
 
-| Type | Hot Reload Command | Speed | What Gets Reloaded |
-|------|-------------------|-------|-------------------|
-| **AWS profile** | `awsuse ti dev` | ⚡ Instant | Sets AWS_PROFILE env var immediately |
-| **Secrets testing** | `reload-secrets` | ⚡ Instant | Re-sources ~/.zsh_secrets + local overrides |
-| **Local secrets** | `secrets-local edit` + `reload-secrets` | ⚡ Instant | Test credentials without rebuild |
-| **AWS config** | `nix-rebuild && exec zsh` | 🔄 30 sec | Regenerates ~/.aws/config from accounts.json |
-| **Permanent secrets** | `edit-secrets` + `nix-rebuild` | 🔄 30 sec | Re-encrypts and deploys SOPS secrets |
-| **Shell variables** | `exec zsh` | ⚡ 2 sec | Reloads ~/.zsh_secrets, AWS_PROFILE |
+### Examples
+
+```bash
+awslogin hft dev              # Login to hft dev (developer role — default)
+awslogin hft dev admin        # Login to hft dev (admin role)
+awsuse gen dev                # Switch to genesis dev (no login)
+awsfind hft                   # Find all hft profiles
+awswhere 072583797108         # Find project by account ID
+```
+
+### How profiles are created
+
+`awslogin` reads `~/.aws/accounts.json` at runtime. If the profile doesn't
+exist in `~/.aws/config`, it creates it dynamically from the account data
+and SSO session, then opens the browser for SSO login.
+
+No rebuild needed — edit `accounts.json`, run `awslogin`, done.
+
+### Profile naming convention
+
+```
+<project>-<env>              # default role (omits suffix)
+<project>-<env>-<role>       # non-default role
+```
+
+Example: project `hft` with `default_role: "developer"`:
+- `hft-dev` — developer role (default, no suffix)
+- `hft-dev-admin` — admin role (suffix added)
+
+### Profile auto-restore
+
+The last-used profile is saved to `~/.aws/.last_profile` and restored on
+every new shell:
+
+```
+aws: hft-dev (restored)
+```
 
 ---
 
-## 🏢 Work Profile AWS Workflow
+## accounts.json
 
-### Architecture
+**Location:** `~/.aws/accounts.json` (machine-local, not in repo)
 
-```
-.aws/accounts.json (repo)
-      ↓
-[nix-rebuild]
-      ↓
-aws.nix (reads JSON, generates profiles)
-      ↓
-~/.aws/config (SSO profiles auto-generated)
-      ↓
-awsuse/awslogin functions (shell helpers)
-      ↓
-AWS_PROFILE environment variable
-```
+**Created by:** `configure.sh` from template, or manually
 
-### 1. Define Projects in `accounts.json`
-
-**Location:** `.aws/accounts.json` (tracked in repo)
+### Schema
 
 ```json
 {
-  "tririga-integrations": {
-    "alias": "ti",
-    "description": "Tririga Integrations platform",
-    "default_role": "support",
+  "project-name": {
+    "alias": "pn",
+    "description": "Human-readable project description",
+    "default_role": "developer",
     "default_region": "us-east-1",
     "accounts": {
       "dev": {
-        "id": "779846812095",
-        "additional_roles": ["data-engineer"],
-        "region": "us-east-1"
+        "id": "111111111111",
+        "region": "us-east-1",
+        "additional_roles": ["admin", "data-engineer"]
       },
-      "sbx": "054037098480",
-      "qa": "710271912324",
-      "prod": "911167889615"
+      "prod": {
+        "id": "222222222222",
+        "region": "us-east-1"
+      }
     }
   }
 }
 ```
 
-### 2. Auto-Generated Profiles
+**Fields:**
+- `alias` — short name for CLI (optional, but enables `awsuse pn dev` shorthand)
+- `default_role` — used when role argument is omitted
+- `additional_roles` — extra roles listed by `awslist` and `awsfind`
+- Account values can be objects (with `id`, `region`, `additional_roles`) or plain strings (just the account ID)
 
-After `nix-rebuild`, these profiles appear in `~/.aws/config`:
-
-```ini
-[profile tririga-integrations-dev]
-sso_session = sso-east-1
-sso_account_id = 779846812095
-sso_role_name = support
-region = us-east-1
-
-[profile tririga-integrations-dev-data-engineer]
-sso_session = sso-east-1
-sso_account_id = 779846812095
-sso_role_name = data-engineer
-region = us-east-1
-```
-
-### 3. Auto-Generated Aliases
-
-From the JSON above, these shell aliases are created:
+### Adding a new account
 
 ```bash
-tidev           # awsuse ti dev (support role)
-tidev-data-engineer  # awsuse ti dev data-engineer
-tisbx           # awsuse ti sbx
-tiqa            # awsuse ti qa
-tiprod          # awsuse ti prod
+vim ~/.aws/accounts.json      # Add project + accounts
+awslogin new-project dev      # Creates profile + logs in
+awslist                       # Verify it shows up
 ```
 
-### 4. Daily Usage
-
-```bash
-# Method 1: Direct alias
-tidev                    # Switch to ti-dev (support)
-tidev-data-engineer      # Switch to ti-dev (data-engineer role)
-
-# Method 2: awsuse function
-awsuse ti dev            # Switch to ti-dev (support)
-awsuse ti dev data-engineer  # Switch to ti-dev (data-engineer)
-
-# Method 3: awslogin (includes SSO login)
-awslogin ti dev          # Login + switch to ti-dev
-awslogin ti dev data-engineer  # Login + switch with role
-
-# Discovery commands
-awslist                  # List all accounts by project
-awswho                   # Show current profile
-awswhere 779846812095    # Find project/env by account ID
-awscheck                 # Check SSO session status
-awsfind developer        # Search for profiles by keyword
-```
-
-### 5. Adding New Accounts Workflow
-
-```bash
-# 1. Edit accounts.json
-vim .aws/accounts.json   # Add new project/account
-
-# 2. Rebuild to generate profiles
-nix-rebuild && exec zsh
-
-# 3. Verify generation
-awslist                  # Should show new project
-
-# 4. Login to new profile
-awslogin new-project dev
-
-# 5. Test access
-aws sts get-caller-identity
-```
-
-### 6. Shell Functions Available
-
-| Function | Purpose | Example |
-|----------|---------|---------|
-| `awsuse` | Switch profile (no login) | `awsuse ti dev` |
-| `awslogin` | Login + switch profile | `awslogin ps qa` |
-| `awswho` | Show current profile details | `awswho` |
-| `awslist` | List all accounts | `awslist` |
-| `awswhere` | Reverse lookup by account ID | `awswhere 123456789` |
-| `awscheck` | Check SSO session status | `awscheck` |
-| `awsfind` | Search profiles by keyword | `awsfind developer` |
-| `awsfilter` | Filter by type | `awsfilter env prod` |
+No rebuild needed.
 
 ---
 
-## 🏠 Personal Profile AWS Workflow
+## ~/.aws/config
 
-### Architecture
+**Managed by:** `nix-config/home/_profiles/_template/programs/aws.nix`
 
-```
-secrets.yaml (encrypted)
-      ↓
-[nix-rebuild with SOPS]
-      ↓
-~/.aws/credentials (auto-decrypted)
-~/.zsh_secrets (auto-decrypted)
-      ↓
-[Shell loads on startup]
-      ↓
-AWS_PROFILE, API keys available
-```
-
-### 1. AWS Credentials Storage
-
-**Encrypted in SOPS:** `nix-config/hosts/macbook-pro-m1/secrets.yaml`
-
-```yaml
-# secrets.yaml (encrypted with age)
-aws_credentials: |
-  [default]
-  aws_access_key_id = AKIA...
-  aws_secret_access_key = ...
-  region = us-east-1
-
-  [personal]
-  aws_access_key_id = AKIA...
-  aws_secret_access_key = ...
-  region = us-east-1
-
-zsh_secrets: |
-  export OPENAI_API_KEY="sk-..."
-  export ANTHROPIC_API_KEY="sk-ant-..."
-  export GITHUB_TOKEN="github_pat_..."
-```
-
-### 2. Secret Deployment
-
-Secrets are auto-decrypted on rebuild via `secrets-personal.nix`:
-
-```nix
-secrets = {
-  aws_credentials = {
-    path = "/Users/jimmy/.aws/credentials";
-    owner = "jimmy";
-    mode = "0600";
-  };
-
-  zsh_secrets = {
-    path = "/Users/jimmy/.zsh_secrets";
-    owner = "jimmy";
-    mode = "0600";
-  };
-}
-```
-
-### 3. Daily Usage
-
-```bash
-# AWS credentials are automatically available
-aws s3 ls                       # Uses [default] profile
-AWS_PROFILE=personal aws s3 ls  # Uses [personal] profile
-
-# API keys are auto-loaded from ~/.zsh_secrets
-echo $OPENAI_API_KEY           # Available immediately
-
-# No awslogin needed (IAM keys, not SSO)
-```
-
-### 4. Editing Secrets Workflow
-
-```bash
-# 1. Edit encrypted secrets
-edit-secrets                    # Opens secrets.yaml in $EDITOR
-
-# 2. Add/update credentials
-# (Edit the file, save, exit)
-
-# 3. Rebuild to decrypt and deploy
-nix-rebuild && exec zsh
-
-# 4. Verify deployment
-cat ~/.aws/credentials          # Should show decrypted content
-echo $OPENAI_API_KEY           # Should show value from ~/.zsh_secrets
-
-# 5. Test AWS access
-aws sts get-caller-identity
-```
-
-### 5. Configuration Files
-
-| File | Purpose | Editable? | Generation |
-|------|---------|-----------|------------|
-| `~/.aws/config` | AWS profiles | ❌ No (managed by Nix) | Auto-generated on rebuild |
-| `~/.aws/credentials` | IAM keys | ❌ No (SOPS secret) | Auto-decrypted on rebuild |
-| `~/.zsh_secrets` | API keys, tokens | ❌ No (SOPS secret) | Auto-decrypted on rebuild |
-| `secrets.yaml` | Encrypted source | ✅ Yes (via edit-secrets) | Manual edit |
-
----
-
-## 🔄 Hot Reload Mechanisms
-
-### AWS Profile Switching (Instant)
-
-```bash
-# No reload needed - env var changes immediately
-awsuse ti dev           # AWS_PROFILE set instantly
-aws sts get-caller-identity  # Uses new profile immediately
-```
-
-### AWS Config Changes (Requires Rebuild)
-
-```bash
-# Scenario: Added new account to accounts.json
-
-# 1. Edit source
-vim .aws/accounts.json
-
-# 2. Rebuild (regenerates ~/.aws/config)
-nix-rebuild
-
-# 3. Reload shell (picks up new functions/aliases)
-exec zsh
-
-# 4. Verify
-awslist                 # Should show new account
-```
-
-### Secrets Changes (Requires Rebuild)
-
-```bash
-# Scenario: Updated API key
-
-# 1. Edit encrypted secrets
-edit-secrets
-
-# 2. Update the key
-# (Edit in $EDITOR, save, exit)
-
-# 3. Rebuild (re-decrypts and deploys)
-nix-rebuild
-
-# 4. Reload shell (sources ~/.zsh_secrets)
-exec zsh
-
-# 5. Verify
-echo $OPENAI_API_KEY    # Should show new value
-```
-
-### Shell Environment Only (Fast Reload)
-
-```bash
-# If you manually edited ~/.zsh_secrets (NOT recommended, use secrets.yaml)
-exec zsh                # Reloads all environment variables
-```
-
-### NEW: Secrets Hot Reload (Instant!) ⚡
-
-**Quick reload without rebuilding** - Great for testing API keys!
-
-```bash
-# Reload secrets immediately
-reload-secrets          # Re-sources ~/.zsh_secrets and ~/.zsh_secrets.local
-                       # ⚡ Instant! (~0.5 seconds)
-
-# Verify
-echo $OPENAI_API_KEY   # Should show updated value
-```
-
-**Local Testing Helper:**
-
-```bash
-# Create temporary test credentials
-secrets-local edit      # Opens ~/.zsh_secrets.local in $EDITOR
-# Add: export TEST_API_KEY="sk-test-..."
-# Save and exit
-
-# Apply instantly
-reload-secrets         # ⚡ Instant reload!
-
-# Test your changes
-echo $TEST_API_KEY
-
-# Clean up when done
-secrets-local rm       # Removes local overrides
-```
-
-**Use Cases:**
-- ✅ Testing new API keys before committing to SOPS
-- ✅ Temporary credential overrides
-- ✅ Quick debugging without rebuild
-- ✅ Local development with test credentials
-
-**Files:**
-- `~/.zsh_secrets` - SOPS-managed (permanent)
-- `~/.zsh_secrets.local` - Local testing (temporary, gitignored)
-
-**Commands:**
-```bash
-reload-secrets         # Reload both files
-secrets-local edit     # Edit local overrides
-secrets-local show     # View local secrets
-secrets-local rm       # Remove local overrides
-sec edit               # Shortcut for secrets-local edit
-```
-
-### Profile Auto-Restore
-
-**On every new shell:**
-
-```bash
-# ~/.aws/.last_profile tracks your last AWS profile
-# Shell auto-restores it on startup
-
-$ zsh
-🔄 Restored AWS Profile: tririga-integrations-dev
-💡 Run 'awswho' for details or 'awsuse' to switch
-```
-
----
-
-## 🗂️ Configuration Matrix: Nix vs Local
-
-### Work Profile
-
-| Item | Nix (Declarative) | Local (Runtime) | Hot Reload |
-|------|-------------------|-----------------|------------|
-| **AWS profiles** | ✅ `accounts.json` → `aws.nix` | → `~/.aws/config` | `nix-rebuild && exec zsh` |
-| **AWS credentials** | ❌ Never in Nix | ✅ `~/.aws/credentials` (SOPS) | `nix-rebuild && exec zsh` |
-| **Shell functions** | ✅ `lib/aws-helpers.nix` | → Loaded in zsh | `exec zsh` |
-| **Aliases** | ✅ Auto-generated from JSON | → Loaded in zsh | `exec zsh` |
-| **SSO config** | ✅ `aws.nix` (sso_start_url) | → `~/.aws/config` | `nix-rebuild && exec zsh` |
-| **Corporate proxy** | ✅ `user-config.nix` | → Env vars | `nix-rebuild && exec zsh` |
-| **API keys** | ❌ Never in Nix | ✅ `~/.zsh_secrets` (SOPS) | `edit-secrets` + rebuild |
-
-### Personal Profile
-
-| Item | Nix (Declarative) | Local (Runtime) | Hot Reload |
-|------|-------------------|-----------------|------------|
-| **AWS profiles** | ✅ `aws.nix` (static template) | → `~/.aws/config` | `nix-rebuild && exec zsh` |
-| **AWS credentials** | ❌ Never in Nix | ✅ `~/.aws/credentials` (SOPS) | `nix-rebuild && exec zsh` |
-| **API keys** | ❌ Never in Nix | ✅ `~/.zsh_secrets` (SOPS) | `edit-secrets` + rebuild |
-| **SSH keys** | ❌ Never in Nix | ✅ `~/.ssh/id_ed25519` (SOPS) | `nix-rebuild` |
-| **Shell functions** | ✅ `zsh.nix` | → Loaded in zsh | `exec zsh` |
-
----
-
-## 🤖 AWS Config Auto-Generation
-
-### How It Works
-
-```
-1. You edit:    .aws/accounts.json
-                  ↓
-2. Nix reads:   builtins.fromJSON (builtins.readFile accountsPath)
-                  ↓
-3. Nix loops:   For each project → for each env → for each role
-                  ↓
-4. Nix creates: [profile project-env-role]
-                sso_account_id = ...
-                sso_role_name = ...
-                  ↓
-5. Deploys to:  ~/.aws/config (writable file, not symlink)
-                  ↓
-6. Creates:     Shell functions (awsuse, awslogin, etc.)
-                Aliases (tidev, psqa, etc.)
-```
-
-### Parser Logic
-
-**Location:** `nix-config/home/_profiles/_template/programs/aws.nix`
-
-```nix
-# Simplified version
-generateSsoProfiles = let
-  accounts = builtins.fromJSON (builtins.readFile accountsPath);
-
-  mkProfile = project: env: accountData: role:
-    let
-      accountId = if builtins.isString accountData
-                  then accountData
-                  else accountData.id;
-      profileName = "${project}-${env}" +
-        (if role != "support" then "-${role}" else "");
-    in ''
-      [profile ${profileName}]
-      sso_account_id = ${accountId}
-      sso_role_name = ${role}
-      ...
-    '';
-in
-  # Generate all profiles by looping through JSON
-  ...
-```
-
-### Testing Generation
-
-```bash
-# 1. Check current config
-cat ~/.aws/config
-
-# 2. Edit accounts.json
-vim .aws/accounts.json
-
-# 3. Rebuild (regenerates config)
-nix-rebuild
-
-# 4. Compare
-cat ~/.aws/config       # Should show new profiles
-
-# 5. Test new functions
-awslist                 # Should list new project
-```
-
----
-
-## 🔐 Secrets Management
-
-### Encryption System: SOPS + age
-
-```
-Plain text secrets
-      ↓
-[age encryption]
-      ↓
-secrets.yaml (encrypted, safe to commit)
-      ↓
-[nix-rebuild with SOPS]
-      ↓
-Decrypted files deployed to home directory
-```
-
-### Secrets Workflow
-
-#### 1. Initial Setup (One-time)
-
-```bash
-# Age key should already exist at:
-~/.config/sops/age/keys.txt
-
-# Verify it's configured in secrets-personal.nix:
-grep keyFile nix-config/hosts/macbook-pro-m1/secrets-personal.nix
-```
-
-#### 2. Editing Secrets
-
-```bash
-# Use the edit-secrets command (handles encryption/decryption)
-edit-secrets
-
-# This opens secrets.yaml in your $EDITOR
-# Edit the secrets, save, exit
-# SOPS automatically re-encrypts on save
-```
-
-#### 3. Secret Deployment
-
-```bash
-# After editing, rebuild to deploy
-nix-rebuild && exec zsh
-
-# SOPS decrypts during rebuild
-# Secrets are placed at paths defined in secrets-personal.nix
-```
-
-### Secrets Locations
-
-#### Work Profile
-
-```nix
-# nix-config/hosts/macbook-pro-m3/secrets-work.nix
-secrets = {
-  zsh_secrets = {
-    path = "/Users/jimmy/.zsh_secrets";
-  };
-  aws_credentials = {
-    path = "/Users/jimmy/.aws/credentials";
-  };
-}
-```
-
-#### Personal Profile
-
-```nix
-# nix-config/hosts/macbook-pro-m1/secrets-personal.nix
-secrets = {
-  zsh_secrets = {
-    path = "/Users/jimmy/.zsh_secrets";
-  };
-  aws_credentials = {
-    path = "/Users/jimmy/.aws/credentials";
-  };
-  ssh_private_key = {
-    path = "/Users/jimmy/.ssh/id_ed25519";
-  };
-  ssh_public_key = {
-    path = "/Users/jimmy/.ssh/id_ed25519.pub";
-  };
-}
-```
-
-### What Goes in Each Secret File?
-
-#### `zsh_secrets`
-
-```bash
-# API Keys and Tokens
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-export GITHUB_TOKEN="github_pat_..."
-export HUGGINGFACE_TOKEN="hf_..."
-
-# MCP Keys
-export TAVILY_API_KEY="tvly-..."
-export MORPH_API_KEY="sk-..."
-export MEM0_API_KEY="m0-..."
-export LINEAR_API_KEY="lin_api_..."
-
-# Database credentials (if needed)
-export DB_PASSWORD="..."
-export REDIS_PASSWORD="..."
-```
-
-#### `aws_credentials`
+On rebuild, writes the SSO session stanza + `[default]` section only.
+Individual account profiles are created on-demand by `awslogin` at runtime.
 
 ```ini
 [default]
-aws_access_key_id = AKIA...
-aws_secret_access_key = ...
 region = us-east-1
+output = json
 
-[personal]
-aws_access_key_id = AKIA...
-aws_secret_access_key = ...
-region = us-east-1
+[sso-session sso-personal]
+sso_start_url = https://d-xxxxxxxxxx.awsapps.com/start/
+sso_region = us-east-1
+sso_registration_scopes = sso:account:access
+duration_seconds = 57600
 
-[personal-dev]
-aws_access_key_id = AKIA...
-aws_secret_access_key = ...
+# Per-account profiles created by awslogin below
+[profile hft-dev]
+sso_session = sso-personal
+sso_account_id = 072583797108
+...
 ```
+
+Work profile adds `ca-bundle = ~/.config/certs/cacert.pem` to the SSO session.
+
+A backup is created at `~/.aws/backup/config-<timestamp>` before any overwrite.
 
 ---
 
-## 🐛 Troubleshooting
-
-### AWS Profile Not Working
+## Secrets Commands
 
 ```bash
-# Check current profile
-awswho
-
-# Check if profile exists in config
-grep "profile ti-dev" ~/.aws/config
-
-# Check SSO session status
-awscheck
-
-# Re-login if expired
-awslogin ti dev
-
-# Test access
-aws sts get-caller-identity
+secrets-edit      # Edit encrypted secrets.yaml (SOPS)
+secrets-deploy    # Decrypt + deploy to target paths (no rebuild needed)
+secrets-reload    # Re-source ~/.zsh_secrets in current shell
+secrets-status    # Show age key, encryption, tools, deployed secrets
+secrets-rescan    # Discover unmanaged secrets (read-only)
+secrets-view      # View decrypted secrets (read-only)
+secrets-backup    # Create timestamped backup
+secrets-audit     # Scan system for plaintext credential exposure
+secrets-local     # Manage temporary testing overrides
 ```
 
-### Secrets Not Loading
+### Workflow
+
+```
+secrets-edit  →  secrets-deploy  →  secrets-reload
+  (edit yaml)     (decrypt+write)    (re-source shell)
+```
+
+All three steps work without `nix-rebuild`. On rebuild, `secrets-deploy`
+runs automatically via Home Manager activation hook.
+
+### Secret mappings
+
+Defined in `scripts/secrets/deploy-secrets.sh` — single source of truth.
+Both profiles use the same script. Keys not in a machine's `secrets.yaml`
+are silently skipped.
 
 ```bash
-# Check if secret file exists and is readable
-ls -la ~/.zsh_secrets
-ls -la ~/.aws/credentials
+# Shell secrets
+zsh_secrets         → ~/.zsh_secrets
 
-# Verify permissions (should be 600)
-stat -f "%A %N" ~/.zsh_secrets
+# SSH keys (personal)
+ssh_private_key     → ~/.ssh/id_ed25519
+ssh_public_key      → ~/.ssh/id_ed25519.pub
 
-# Check if secrets are sourced
-grep "zsh_secrets" ~/.zshrc
+# SSH keys (work)
+work_ssh_private_key     → ~/.ssh/id_ed25519_work
+work_ssh_public_key      → ~/.ssh/id_ed25519_work.pub
 
-# Manually source (testing only)
-source ~/.zsh_secrets
+# AWS
+aws_credentials     → ~/.aws/credentials
+aws_accounts        → ~/.aws/accounts.json
 
-# Rebuild to redeploy
-edit-secrets            # Verify content
-nix-rebuild && exec zsh
+# Database credentials
+mssql_prod_connection    → ~/.db/mssql/prod
+postgres_prod_connection → ~/.db/postgres/prod
+
+# API tokens, service credentials, etc.
 ```
 
-### AWS Config Not Regenerating
+### Adding a new secret
 
 ```bash
-# Check if accounts.json exists
-cat .aws/accounts.json
-
-# Verify JSON syntax
-jq . .aws/accounts.json
-
-# Check Nix can read it
-nix-instantiate --eval -E 'builtins.fromJSON (builtins.readFile ./.aws/accounts.json)'
-
-# Force regeneration
-rm ~/.aws/config
-nix-rebuild && exec zsh
-
-# Verify generation
-cat ~/.aws/config
+secrets-edit                          # 1. Add key + value to secrets.yaml
+# Edit scripts/secrets/deploy-secrets.sh  # 2. Add mapping line
+secrets-deploy                        # 3. Deploy
+secrets-reload                        # 4. Re-source if shell var
 ```
 
-### Shell Functions Not Available
+### Hot reload
 
 ```bash
-# Check if zsh config includes AWS helpers
-grep "aws.*helper" ~/.zshrc
-
-# Reload shell
-exec zsh
-
-# Check if functions are defined
-which awsuse
-which awslogin
-
-# If missing, rebuild
-nix-rebuild && exec zsh
+# Test credentials without touching encrypted secrets
+secrets-local edit      # Create ~/.zsh_secrets.local with test values
+secrets-reload          # Apply immediately
+# ... test ...
+secrets-local rm        # Clean up
 ```
 
-### Alias Not Working
+### Encryption
 
-```bash
-# List all AWS aliases
-alias | grep "aws"
+Secrets stored in `nix-config/hosts/{machineId}/secrets.yaml` (SOPS encrypted with age).
 
-# Check if alias is generated from accounts.json
-jq -r '.[] | .alias' .aws/accounts.json
+Each profile has its own age key:
+- Personal: `.*-personal/secrets.yaml` encrypted with `&personal_key`
+- Work: `.*-work/secrets.yaml` encrypted with `&work_key`
 
-# Rebuild to regenerate aliases
-nix-rebuild && exec zsh
-
-# Verify alias
-alias tidev
-```
+Configured in `.sops.yaml` at repo root.
 
 ---
 
-## 📚 Related Documentation
+## Architecture
 
-- **[AWS Quick Reference](work/aws/aws-quick-ref.md)** - Daily commands and examples
-- **[AWS Multi-Role Guide](work/aws/aws-multi-role.md)** - Role-based access patterns
-- **[AWS Implementation Summary](work/aws/aws-implementation-summary.md)** - Technical details
-- **[Secrets Management Guide](secrets.md)** - SOPS encryption guide
-- **[CLAUDE.md](../CLAUDE.md)** - Main configuration guide
+```
+~/.aws/accounts.json          accounts.json (machine-local)
+        │                            │
+        │ [runtime]                  │ [runtime]
+        ▼                            ▼
+  awslogin/awsuse             secrets-deploy
+  (reads with jq)             (decrypts with sops+yq)
+        │                            │
+        ▼                            ▼
+  ~/.aws/config               ~/.zsh_secrets, ~/.ssh/*, ~/.db/*
+  (SSO profiles)              (deployed secrets)
+        │                            │
+        ▼                            ▼
+  AWS CLI                     Shell environment
+```
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `~/.aws/accounts.json` | Account IDs, roles, environments |
+| `~/.aws/config` | AWS CLI profiles (SSO session + per-account) |
+| `nix-config/hosts/{id}/secrets.yaml` | Encrypted secrets (SOPS) |
+| `scripts/secrets/deploy-secrets.sh` | Secret mappings + deploy logic |
+| `nix-config/lib/aws-helpers.nix` | Shell functions (awsuse, awslogin, etc.) |
+| `nix-config/home/_profiles/_template/programs/aws.nix` | Generates ~/.aws/config SSO session |
+| `nix-config/lib/reload-helpers.nix` | Hot reload functions |
+| `config/user-config.nix` | SSO URL, region, proxy settings |
 
 ---
 
-## 🔑 Key Takeaways
+## Troubleshooting
 
-### Work Profile
-✅ AWS profiles auto-generated from `accounts.json`
-✅ Shell functions provide easy switching (`awsuse`, `awslogin`)
-✅ Aliases created automatically (`tidev`, `psqa`)
-✅ Hot reload: `nix-rebuild && exec zsh`
+### AWS profile not working
 
-### Personal Profile
-✅ IAM credentials encrypted in SOPS (`secrets.yaml`)
-✅ Auto-decrypted on rebuild to `~/.aws/credentials`
-✅ API keys in `~/.zsh_secrets` (also SOPS-encrypted)
-✅ Hot reload: `edit-secrets` + `nix-rebuild && exec zsh`
+```bash
+awswho                        # Check current profile
+awscheck                      # Check all SSO sessions
+awslogin <project> <env>      # Re-login if expired
+```
 
-### General
-✅ Credentials NEVER in Nix config (always SOPS-encrypted)
-✅ Config IS in Nix (profiles, SSO settings)
-✅ `exec zsh` reloads environment variables
-✅ `nix-rebuild` regenerates all declarative config
+### Secrets not loading
 
----
+```bash
+secrets-status                # Check age key, encryption, deployed files
+secrets-deploy                # Re-deploy
+secrets-reload                # Re-source in current shell
+```
 
-**Last Updated:** November 2025
-**Version:** 2.0.0
+### Profile not found after awslogin
+
+```bash
+# awslogin creates profiles dynamically. If it fails:
+cat ~/.aws/config | grep "sso-session"   # SSO session must exist
+jq . ~/.aws/accounts.json               # Verify JSON syntax
+```
+
+### New account not showing in awslist
+
+```bash
+# awslist reads ~/.aws/accounts.json at runtime
+jq . ~/.aws/accounts.json     # Check if entry exists
+# No rebuild needed — just edit the file
+```

@@ -27,9 +27,9 @@ FAILURES=0
 # Check 1: Link validation
 echo -e "${YELLOW}[1/2]${NC} Validating documentation links..."
 if python3 "$SCRIPT_DIR/check-doc-links.py" CLAUDE.md; then
-    echo -e "${GREEN}      ✅ Link validation passed${NC}"
+    echo -e "${GREEN}      Link validation passed${NC}"
 else
-    echo -e "${RED}      ❌ Link validation failed${NC}"
+    echo -e "${RED}      error: link validation failed${NC}"
     ((FAILURES++))
 fi
 echo ""
@@ -37,9 +37,9 @@ echo ""
 # Check 2: File count verification
 echo -e "${YELLOW}[2/2]${NC} Verifying documentation file count..."
 if "$SCRIPT_DIR/count-docs.sh" --warn; then
-    echo -e "${GREEN}      ✅ File count verification passed${NC}"
+    echo -e "${GREEN}      File count verification passed${NC}"
 else
-    echo -e "${YELLOW}      ⚠️  File count verification warning${NC}"
+    echo -e "${YELLOW}      warning: file count verification warning${NC}"
     # Don't increment failures for warnings
 fi
 echo ""
@@ -47,11 +47,11 @@ echo ""
 # Summary
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
 if [[ $FAILURES -eq 0 ]]; then
-    echo -e "${GREEN}║  ✅ All validation checks passed!     ║${NC}"
+    echo -e "${GREEN}║  All validation checks passed!     ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     exit 0
 else
-    echo -e "${RED}║  ❌ $FAILURES validation check(s) failed   ║${NC}"
+    echo -e "${RED}║  error: $FAILURES validation check(s) failed   ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     exit 1
 fi

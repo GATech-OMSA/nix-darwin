@@ -72,34 +72,34 @@ banner() {
 
 show_removal_summary() {
   echo ""
-  echo -e "${BOLD}${YELLOW}⚠️  The following test credentials will be removed:${NC}"
+  echo -e "${BOLD}${YELLOW}warning: the following test credentials will be removed:${NC}"
   echo ""
 
   local found_any=false
 
   if [ -f "$HOME/.db/production" ]; then
-    [ "$found_any" = false ] && echo "  🗄️  Database Credentials:"
+    [ "$found_any" = false ] && echo "   Database Credentials:"
     echo "     • ~/.db/production"
     found_any=true
   fi
 
   if [ -f "$HOME/.tokens/github" ]; then
     [ -f "$HOME/.db/production" ] && echo ""
-    echo "  🔑 API Tokens:"
+    echo "  API Tokens:"
     echo "     • ~/.tokens/github"
     found_any=true
   fi
 
   if [ -f "$HOME/.credentials/stripe" ]; then
     [ -f "$HOME/.tokens/github" ] && echo ""
-    echo "  💳 API Keys:"
+    echo "  API Keys:"
     echo "     • ~/.credentials/stripe"
     found_any=true
   fi
 
   if [ -f "$HOME/.env.test" ]; then
     [ -f "$HOME/.credentials/stripe" ] && echo ""
-    echo "  🌍 Environment Files:"
+    echo "  Environment Files:"
     echo "     • ~/.env.test"
     found_any=true
   fi
@@ -140,7 +140,7 @@ confirm_cleanup() {
 }
 
 cleanup_test_credentials() {
-  print_step "🗑️  Removing Test Credential Files"
+  print_step " Removing Test Credential Files"
 
   local removed=0
 
@@ -169,7 +169,7 @@ cleanup_test_credentials() {
 }
 
 cleanup_empty_directories() {
-  print_step "🗑️  Removing Empty Directories"
+  print_step " Removing Empty Directories"
 
   local removed=0
 
@@ -209,7 +209,7 @@ cleanup_empty_directories() {
 }
 
 show_completion() {
-  print_step "✅ Cleanup Complete"
+  print_step "Cleanup Complete"
 
   echo ""
   echo -e "${BOLD}${GREEN}Test credentials have been removed!${NC}"
@@ -229,7 +229,7 @@ main() {
   confirm_cleanup
 
   echo ""
-  print_step "🚀 Starting Cleanup"
+  print_step "Starting Cleanup"
 
   cleanup_test_credentials
   cleanup_empty_directories

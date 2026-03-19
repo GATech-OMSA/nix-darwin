@@ -87,7 +87,7 @@ check_fail() {
 check_warn() {
   ((TOTAL_CHECKS++))
   ((WARNINGS++))
-  echo -e "  ${YELLOW}⚠${NC} $1"
+  echo -e "  ${YELLOW}▸${NC} $1"
   if [[ -n "${2:-}" ]]; then
     echo -e "    ${YELLOW}→${NC} $2"
   fi
@@ -553,7 +553,7 @@ check_backup_verification() {
   if echo "$verify_clean" | grep -q "Verification Score:"; then
     passed=$(echo "$verify_clean" | grep "✓ Passed:" | grep -oE '[0-9]+' | head -n1 || echo "0")
     failed=$(echo "$verify_clean" | grep "✗ Failed:" | grep -oE '[0-9]+' | head -n1 || echo "0")
-    warnings=$(echo "$verify_clean" | grep "⚠ Warnings:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+    warnings=$(echo "$verify_clean" | grep "▸ Warnings:" | grep -oE '[0-9]+' | head -n1 || echo "0")
     total=$(echo "$verify_clean" | grep "Total Checks:" | grep -oE '[0-9]+' | head -n1 || echo "0")
 
     if [[ $verify_exit_code -eq 0 ]]; then
@@ -580,7 +580,7 @@ check_backup_verification() {
 # ============================================================================
 
 main() {
-  print_header "🏥 NIX-DARWIN SYSTEM HEALTH CHECK"
+  print_header "NIX-DARWIN SYSTEM HEALTH CHECK"
 
   # Run all checks
   check_nix_daemon
@@ -594,7 +594,7 @@ main() {
   check_backup_verification
 
   # Calculate health score
-  print_header "📊 HEALTH REPORT"
+  print_header "HEALTH REPORT"
   echo ""
 
   local pass_percent=0
@@ -605,24 +605,24 @@ main() {
   echo -e "${BOLD}Total Checks:${NC} $TOTAL_CHECKS"
   echo -e "${GREEN}✓ Passed:${NC}     $PASSED_CHECKS"
   echo -e "${RED}✗ Failed:${NC}     $FAILED_CHECKS"
-  echo -e "${YELLOW}⚠ Warnings:${NC}   $WARNINGS"
+  echo -e "${YELLOW}▸ Warnings:${NC}   $WARNINGS"
   echo ""
 
   # Determine health status
-  local health_emoji="🟢"
+  local health_emoji=""
   local health_status="HEALTHY"
   local health_color="$GREEN"
 
   if [[ $FAILED_CHECKS -gt 5 ]] || [[ $pass_percent -lt 60 ]]; then
-    health_emoji="🔴"
+    health_emoji=""
     health_status="CRITICAL"
     health_color="$RED"
   elif [[ $FAILED_CHECKS -gt 2 ]] || [[ $pass_percent -lt 80 ]]; then
-    health_emoji="🟡"
+    health_emoji=""
     health_status="NEEDS ATTENTION"
     health_color="$YELLOW"
   elif [[ $WARNINGS -gt 3 ]] || [[ $pass_percent -lt 90 ]]; then
-    health_emoji="🟡"
+    health_emoji=""
     health_status="FAIR"
     health_color="$YELLOW"
   fi
@@ -640,7 +640,7 @@ main() {
       echo "  • Run 'darwin-rebuild switch --flake ~/nix-darwin' if system is not activated"
     fi
     if [[ $WARNINGS -gt 0 ]]; then
-      echo "  • Review warnings (marked with ⚠) for potential issues"
+      echo "  • Review warnings (marked with ▸) for potential issues"
     fi
     echo "  • Run with --verbose flag for detailed information"
     echo ""

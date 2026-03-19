@@ -27,17 +27,17 @@ rec {
           # Validate file permissions (should be 600 for security)
           local perms=$(stat -f "%Lp" "''${conn_file}" 2>/dev/null || echo "000")
           if [ "$perms" != "600" ]; then
-            echo "⚠️  WARNING: Insecure permissions on ''${conn_file} (current: $perms, expected: 600)"
+            echo "warning: insecure permissions on ''${conn_file} (current: $perms, expected: 600)"
             echo "   Fix: chmod 600 ''${conn_file}"
             echo ""
           fi
 
           # Source connection file and connect
           source "''${conn_file}"
-          echo "🔌 Connecting to ${description} (''${env})..."
+          echo "Connecting to ${description} (''${env})..."
           ${command}
         else
-          echo "❌ Error: ${description} connection file not found for environment: ''${env}"
+          echo "error: ${description} connection file not found for environment: ''${env}"
           echo "Expected: ''${conn_file}"
           echo "Available environments: prod, dev, qa, test"
           return 1
@@ -75,7 +75,7 @@ rec {
   mkDatabaseList = databases:
     ''
       function dblist() {
-        echo "📊 Available Database Connections:"
+        echo "Available Database Connections:"
         echo ""
         ${lib.concatMapStringsSep "\n" (db: ''
           echo "${db.label}:"
@@ -111,16 +111,16 @@ rec {
           # Validate file permissions (should be 600 for security)
           local perms=$(stat -f "%Lp" "$token_file" 2>/dev/null || echo "000")
           if [ "$perms" != "600" ]; then
-            echo "⚠️  WARNING: Insecure permissions on $token_file (current: $perms, expected: 600)"
+            echo "warning: insecure permissions on $token_file (current: $perms, expected: 600)"
             echo "   Fix: chmod 600 $token_file"
             echo ""
           fi
 
           # Copy to clipboard
           cat "$token_file" | pbcopy
-          echo "✅ ${description} copied to clipboard"
+          echo "${description} copied to clipboard"
         else
-          echo "❌ Error: ${description} not found"
+          echo "error: ${description} not found"
           echo "Expected: $token_file (from secrets.yaml)"
           return 1
         fi
@@ -173,7 +173,7 @@ rec {
         local PORT_VAR="''${ENV_PREFIX}_PORT"
         local SERVICE_VAR="''${ENV_PREFIX}_SERVICE"
 
-        echo "🔌 Connecting to Oracle: ${instance} ($env)"
+        echo "Connecting to Oracle: ${instance} ($env)"
         sqlplus "''${!USERNAME_VAR}/''${!PASSWORD_VAR}@''${!HOST_VAR}:''${!PORT_VAR}/''${!SERVICE_VAR}"
       '';
 
@@ -182,7 +182,7 @@ rec {
         local PORT_VAR="''${ENV_PREFIX}_PORT"
         local DATABASE_VAR="''${ENV_PREFIX}_DATABASE"
 
-        echo "🔌 Connecting to SQL Server: ${instance} ($env)"
+        echo "Connecting to SQL Server: ${instance} ($env)"
         sqlcmd -S "''${!HOST_VAR},''${!PORT_VAR}" -d "''${!DATABASE_VAR}" \
                -U "''${!USERNAME_VAR}" -P "''${!PASSWORD_VAR}"
       '';
@@ -192,7 +192,7 @@ rec {
         local PORT_VAR="''${ENV_PREFIX}_PORT"
         local DATABASE_VAR="''${ENV_PREFIX}_DATABASE"
 
-        echo "🔌 Connecting to PostgreSQL: ${instance} ($env)"
+        echo "Connecting to PostgreSQL: ${instance} ($env)"
         PGPASSWORD="''${!PASSWORD_VAR}" psql -h "''${!HOST_VAR}" -p "''${!PORT_VAR}" \
                                             -U "''${!USERNAME_VAR}" -d "''${!DATABASE_VAR}"
       '';
@@ -202,7 +202,7 @@ rec {
         local PORT_VAR="''${ENV_PREFIX}_PORT"
         local DATABASE_VAR="''${ENV_PREFIX}_DATABASE"
 
-        echo "🔌 Connecting to MySQL: ${instance} ($env)"
+        echo "Connecting to MySQL: ${instance} ($env)"
         mysql -h "''${!HOST_VAR}" -P "''${!PORT_VAR}" -u "''${!USERNAME_VAR}" \
               -p"''${!PASSWORD_VAR}" "''${!DATABASE_VAR}"
       '';
@@ -223,7 +223,7 @@ rec {
         # Validate environment
         local valid_envs="${envList}"
         if ! echo "$valid_envs" | grep -qw "$env"; then
-          echo "❌ Invalid environment: $env"
+          echo "error: invalid environment: $env"
           echo "Available: $valid_envs"
           return 1
         fi
@@ -236,9 +236,9 @@ rec {
         local PASSWORD_VAR="''${ENV_PREFIX}_PASSWORD"
 
         if [ -z "''${!USERNAME_VAR}" ] || [ -z "''${!PASSWORD_VAR}" ]; then
-          echo "❌ Credentials not found for ''${USERNAME_VAR}"
+          echo "error: credentials not found for ''${USERNAME_VAR}"
           echo ""
-          echo "💡 Required environment variables:"
+          echo "   Required environment variables:"
           echo "   ''${USERNAME_VAR}"
           echo "   ''${PASSWORD_VAR}"
           echo "   ''${ENV_PREFIX}_HOST"
@@ -249,7 +249,7 @@ rec {
           echo "   ''${ENV_PREFIX}_DATABASE"
           ''}
           echo ""
-          echo "💡 Setup instructions:"
+          echo "   Setup instructions:"
           echo "   1. Run: edit-secrets"
           echo "   2. Add required variables (see template in file)"
           echo "   3. Save and exit"
@@ -293,7 +293,7 @@ rec {
   mkInstanceList = instances:
     ''
       function dblist-instances() {
-        echo "📊 Configured Database Instances:"
+        echo "Configured Database Instances:"
         echo ""
         ${lib.concatMapStringsSep "\n" (db: ''
           echo "  ${db.description} (${db.instance}):"
@@ -302,8 +302,8 @@ rec {
           echo "    Command: dbconnect-${db.instance} [${lib.concatStringsSep "|" db.environments}]"
           echo ""
         '') instances}
-        echo "💡 Credentials loaded from: ~/.secrets/credentials.env"
-        echo "💡 To update credentials: edit-secrets"
+        echo "   Credentials loaded from: ~/.secrets/credentials.env"
+        echo "   To update credentials: edit-secrets"
       }
     '';
 }

@@ -21,37 +21,42 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        machine: [macbook-pro-m1-personal, macbook-pro-m3-work]
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install Nix
       uses: DeterminateSystems/determinate-nix-action@v3
-      
+
     - name: Magic Nix Cache
       uses: DeterminateSystems/magic-nix-cache-action@main
-      
+
     - name: Generate Configs
+      env:
+        MACHINE_ID: ${{ matrix.machine }}
       run: |
-        # Generate dummy configs for CI
+        # Generate stub configs for CI (flake needs these to evaluate)
         cp config/machine-config.nix.template config/machine-config.nix
         cp config/user-config.nix.template config/user-config.nix
 
-        # Set a valid machineId for the dry-run (portable sed - works on BSD and GNU)
-        # Use [^"]* instead of .* to avoid greedy matching past the first closing quote
-        sed 's/machineId = "[^"]*"/machineId = "macbook-pro-m1"/' config/machine-config.nix > config/machine-config.nix.tmp && mv config/machine-config.nix.tmp config/machine-config.nix
+        # Set valid values in stubs (machine registry in flake.nix has the real configs)
+        sed "s/machineId = \"[^\"]*\"/machineId = \"${MACHINE_ID}\"/" config/machine-config.nix > config/machine-config.nix.tmp && mv config/machine-config.nix.tmp config/machine-config.nix
         sed 's/profileName = "[^"]*"/profileName = "personal"/' config/machine-config.nix > config/machine-config.nix.tmp && mv config/machine-config.nix.tmp config/machine-config.nix
-      
+        sed 's/REPLACE_USERNAME/ci-user/' config/user-config.nix > config/user-config.nix.tmp && mv config/user-config.nix.tmp config/user-config.nix
+        sed 's/REPLACE_FULLNAME/CI User/' config/user-config.nix > config/user-config.nix.tmp && mv config/user-config.nix.tmp config/user-config.nix
+        sed 's/REPLACE_EMAIL/ci@example.com/' config/user-config.nix > config/user-config.nix.tmp && mv config/user-config.nix.tmp config/user-config.nix
+        sed 's/REPLACE_AWS_SSO_ENABLED/false/' config/user-config.nix > config/user-config.nix.tmp && mv config/user-config.nix.tmp config/user-config.nix
+        sed 's/REPLACE_AWS_SSO_URL//' config/user-config.nix > config/user-config.nix.tmp && mv config/user-config.nix.tmp config/user-config.nix
+        sed 's/REPLACE_AWS_SSO_REGION/us-east-1/' config/user-config.nix > config/user-config.nix.tmp && mv config/user-config.nix.tmp config/user-config.nix
+
     - name: Check Flake
       run: nix flake check
 
-    # Note: tests/run-all-tests.sh is for local development validation
-    # It requires darwin-rebuild, SOPS, and specific hostnames that don't exist on CI
-    # CI validation is covered by 'nix flake check' and the dry-run build below
-
     - name: Build System (Dry Run)
-      # Builds the system derivation without realizing it (dry-run logic)
-      # Uses the machineId defined in config/machine-config.nix
+      env:
+        MACHINE_ID: ${{ matrix.machine }}
       run: |
-        MACHINE_ID=$(grep 'machineId =' config/machine-config.nix | cut -d'"' -f2)
-        echo "Building for machine: $MACHINE_ID"
-        nix build ".#darwinConfigurations.$MACHINE_ID.system" --dry-run
+        echo "Building: ${MACHINE_ID}"
+        nix build ".#darwinConfigurations.${MACHINE_ID}.system" --dry-run

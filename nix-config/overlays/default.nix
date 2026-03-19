@@ -8,88 +8,71 @@
 let
   # Extract proxy configuration
   goProxy = userConfig.proxies.go or { enabled = false; };
+
+  # Check for pre-built sops-install-secrets binary (for proxied machines)
+  # Resolution order:
+  #   1. ~/.local/bin/sops-install-secrets (manually imported)
+  #   2. cache/sops-nix/sops-install-secrets.gz (auto-extracted from repo)
+  # Note: builtins.getEnv requires --impure (rebuild.sh always passes this)
+  homeDir = builtins.getEnv "HOME";
+  flakeRoot = builtins.getEnv "FLAKE_ROOT";
+
+  # Check ~/.local/bin first
+  localBinPath =
+    if homeDir != "" then homeDir + "/.local/bin/sops-install-secrets" else "";
+  hasLocalBin = localBinPath != "" && builtins.pathExists localBinPath;
+
+  # Fallback: check repo cache (no manual import.sh needed)
+  repoCachePath =
+    if flakeRoot != "" then flakeRoot + "/cache/sops-nix/sops-install-secrets.gz" else "";
+  hasRepoCache = repoCachePath != "" && builtins.pathExists repoCachePath;
+
+  # Copy into Nix store for sandbox access
+  prebuiltSopsStorePath =
+    if hasLocalBin
+    then builtins.path { path = localBinPath; name = "sops-install-secrets"; }
+    else if hasRepoCache
+    then builtins.path { path = repoCachePath; name = "sops-install-secrets.gz"; }
+    else null;
+
+  hasPrebuiltSops = hasLocalBin || hasRepoCache;
 in
 
 [
   # ============================================
-  # GO PROXY CONFIGURATION (CORPORATE PROXY)
-  # ============================================
-  # TODO: buildGoModule overlay breaks other packages
-  # Need different approach for corporate proxy
-  # Temporarily disabled - SOPS will also be disabled
-
-  # ============================================
-  # PYTHON VERSION PINNING (PLACEHOLDER)
-  # ============================================
-  # Uncomment and configure when you need to pin Python to a specific version
-  # to prevent breaking changes from nixpkgs-unstable updates.
-  #
-  # Example:
-  # (final: prev: {
-  #   python313 = prev.python313.overrideAttrs (old: {
-  #     version = "3.13.0";
-  #     # Note: May require updating hash if pinning exact version
-  #   });
-  # })
-
-  # ============================================
-  # MICROMAMBA FIX (BROKEN IN NIXPKGS)
-  # ============================================
-  # Status: Micromamba 1.5.8 build BROKEN on macOS
-  # Error: Compilation failure with fmt library formatter
-  # Last tested: 2025-11-02
-  #
-  # Build error:
-  #   error: no viable conversion from 'const fmt::formatter<mamba::specs::Version>'
-  #   to 'fmt::detail::value<fmt::context>'
-  #
-  # Workaround: Using Homebrew
-  #   - See modules/darwin/homebrew.nix (micromamba in brews list)
-  #   - Command: brew install micromamba
-  #
-  # Tracking:
-  #   - Nixpkgs issue: https://github.com/NixOS/nixpkgs/issues/micromamba
-  #   - When fixed upstream, uncomment and test:
-  #
-  # (final: prev: {
-  #   micromamba = prev.micromamba.overrideAttrs (old: {
-  #     # Try newer version or apply patch
-  #   });
-  # })
-
-  # ============================================
   # SOPS-NIX CORPORATE PROXY SUPPORT
   # ============================================
   # Issue: Corporate proxy blocks Go module downloads from proxy.golang.org
-  # Solution: Use proxyVendor + GOPROXY from user-config.nix
   #
-  # Configuration: Edit config/user-config.nix:
-  #   proxies.go.enabled = true;
-  #   proxies.go.url = "https://your-nexus.company.com/repository/go-proxy/";
-  #
-  # Reference:
-  # - nixpkgs PR #173092: "buildGoModule: allow goproxy"
-  # - pkgs/build-support/go/module.nix contains proxyVendor support
-  (final: prev:
-    if goProxy.enabled or false then {
-      # Override sops-install-secrets to use corporate Go proxy
-      # Must use overrideModAttrs to inject GOPROXY into go-modules fetch phase
-      sops-install-secrets = inputs.sops-nix.packages.${prev.system}.sops-install-secrets.overrideAttrs (old: {
-        overrideModAttrs = oldMod: {
+  # Resolution order:
+  #   1. Pre-built binary at ~/.local/bin/sops-install-secrets (via cache/sops-nix/)
+  #   2. Go proxy override from user-config.nix
+  #   3. Default (build from source)
+  (_final: prev:
+    if hasPrebuiltSops then {
+      # Use pre-built binary — avoids Go build entirely
+      sops-install-secrets = prev.runCommand "sops-install-secrets" {} (
+        if hasLocalBin then ''
+          mkdir -p $out/bin
+          cp ${prebuiltSopsStorePath} $out/bin/sops-install-secrets
+          chmod +x $out/bin/sops-install-secrets
+        '' else ''
+          mkdir -p $out/bin
+          ${prev.gzip}/bin/gunzip -c ${prebuiltSopsStorePath} > $out/bin/sops-install-secrets
+          chmod +x $out/bin/sops-install-secrets
+        ''
+      );
+    }
+    else if goProxy.enabled or false then {
+      # Use corporate Go proxy for building from source
+      sops-install-secrets = inputs.sops-nix.packages.${prev.system}.sops-install-secrets.overrideAttrs (_: {
+        overrideModAttrs = _: {
           GOPROXY = "${goProxy.url},direct";
           GOPRIVATE = goProxy.private or "";
+          GOSUMDB = "off";
         };
       });
     } else
-      { }  # No override needed when proxy disabled
+      { }  # No override — build from source using default proxy.golang.org
   )
-
-  # ============================================
-  # ADDITIONAL CUSTOMIZATIONS
-  # ============================================
-  # Add more overlays as needed for:
-  # - Package feature flags
-  # - Build optimizations
-  # - Custom patches
-  # - Tool consolidation
 ]

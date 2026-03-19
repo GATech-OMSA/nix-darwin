@@ -29,7 +29,7 @@
         # Use system Python or activate an environment first with: act <env-name>
         python ~/Dev/misc-projects/HRStringCrypter/run-crypter.py
       else
-        echo "❌ Error: Python or micromamba not found"
+        echo "error: python or micromamba not found"
         echo "Please ensure Python is available (system or activate micromamba environment)"
         return 1
       fi

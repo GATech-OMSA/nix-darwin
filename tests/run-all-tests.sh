@@ -142,7 +142,7 @@ print_section() {
 
 print_info() {
   if [[ $CI_MODE -eq 0 ]]; then
-    echo -e "${BLUE}ℹ${NC} $1"
+    echo -e "${BLUE}→${NC} $1"
   fi
 }
 
@@ -192,7 +192,7 @@ generate_report() {
   local duration=$((end_time - START_TIME))
 
   if [[ $CI_MODE -eq 0 ]]; then
-    print_header "📊 Test Execution Summary"
+    print_header "Test Execution Summary"
 
     echo -e "${BOLD}Total Test Suites:${NC} $SUITES_TOTAL"
     echo -e "${GREEN}✓ Passed:${NC}          $SUITES_PASSED"
@@ -203,10 +203,10 @@ generate_report() {
     echo ""
 
     if [[ $SUITES_FAILED -eq 0 ]]; then
-      echo -e "${GREEN}${BOLD}✅ ALL TEST SUITES PASSED${NC}"
+      echo -e "${GREEN}${BOLD}ALL TEST SUITES PASSED${NC}"
       echo ""
     else
-      echo -e "${RED}${BOLD}❌ SOME TEST SUITES FAILED${NC}"
+      echo -e "${RED}${BOLD}error: sOME TEST SUITES FAILED${NC}"
       echo ""
       echo -e "${YELLOW}Review failed test output above for details${NC}"
       echo ""
@@ -229,7 +229,7 @@ generate_report() {
 # ============================================================================
 
 main() {
-  print_header "🧪 Nix-Darwin Integration Test Suite"
+  print_header "Nix-Darwin Integration Test Suite"
 
   if [[ $DRY_RUN -eq 1 ]]; then
     print_info "Dry-run mode: Skipping expensive operations"

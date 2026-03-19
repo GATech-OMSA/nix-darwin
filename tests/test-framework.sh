@@ -59,7 +59,7 @@ test_begin() {
 
   echo ""
   echo -e "${TEST_BOLD}${TEST_CYAN}════════════════════════════════════════════════════════${TEST_NC}"
-  echo -e "${TEST_BOLD}${TEST_CYAN}🧪 Test Suite: ${TEST_SUITE_NAME}${TEST_NC}"
+  echo -e "${TEST_BOLD}${TEST_CYAN}Test Suite: ${TEST_SUITE_NAME}${TEST_NC}"
   echo -e "${TEST_BOLD}${TEST_CYAN}════════════════════════════════════════════════════════${TEST_NC}"
   echo ""
 }
@@ -81,10 +81,10 @@ test_end() {
   echo ""
 
   if [[ $TEST_FAILED -eq 0 ]]; then
-    echo -e "${TEST_GREEN}${TEST_BOLD}✅ ALL TESTS PASSED${TEST_NC}"
+    echo -e "${TEST_GREEN}${TEST_BOLD}ALL TESTS PASSED${TEST_NC}"
     exit 0
   else
-    echo -e "${TEST_RED}${TEST_BOLD}❌ SOME TESTS FAILED${TEST_NC}"
+    echo -e "${TEST_RED}${TEST_BOLD}error: sOME TESTS FAILED${TEST_NC}"
     exit 1
   fi
 }
@@ -340,7 +340,7 @@ test_skip() {
 # ============================================================================
 
 test_info() {
-  echo -e "${TEST_BLUE}ℹ${TEST_NC} $1"
+  echo -e "${TEST_BLUE}→${TEST_NC} $1"
 }
 
 test_section() {

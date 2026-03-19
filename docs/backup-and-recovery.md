@@ -101,7 +101,7 @@ hosts/$(hostname)/secrets.yaml        # Encrypted with age
 
 **Backup:** Automatic via git (encrypted form)
 
-**Restore:** Automatic during `./scripts/activate.sh` or `nix-rebuild`
+**Restore:** Automatic during `./scripts/setup/activate.sh` or `nix-rebuild`
 
 **Requirement:** Age private key in `~/.config/sops/age/keys.txt`
 
@@ -184,7 +184,7 @@ nix-rebuild
 - ❌ Cannot access SSH keys
 - ❌ System cannot be fully restored
 
-**Backup immediately after running `./scripts/configure.sh`:**
+**Backup immediately after running `./scripts/setup/configure.sh`:**
 
 ```bash
 # Method 1: Password Manager (Recommended)
@@ -262,7 +262,7 @@ exec zsh
 ```bash
 # 1. Install Nix + nix-darwin + SOPS + age
 cd ~/nix-darwin
-./scripts/bootstrap.sh
+./scripts/setup/bootstrap.sh
 
 # 2. Restore age key (CRITICAL - do this first!)
 mkdir -p ~/.config/sops/age
@@ -279,13 +279,13 @@ git clone <repo> ~/nix-darwin
 cd ~/nix-darwin
 
 # 5. Run configuration wizard
-./scripts/configure.sh
+./scripts/setup/configure.sh
 # - Enter username, email, fullName
 # - Select machine profile (personal/work/minimal)
 # - Wizard will generate config/user-config.nix and config/machine-config.nix
 
 # 6. Activate system (first build)
-./scripts/activate.sh
+./scripts/setup/activate.sh
 # This will:
 # - Build nix-darwin configuration
 # - Decrypt secrets.yaml with age key
@@ -337,7 +337,7 @@ nano ~/.config/sops/age/keys.txt
 chmod 600 ~/.config/sops/age/keys.txt
 
 # 7. Rebuild
-./scripts/activate.sh
+./scripts/setup/activate.sh
 ```
 
 ---
@@ -475,7 +475,7 @@ nano ~/.config/sops/age/keys.txt
 chmod 600 ~/.config/sops/age/keys.txt
 
 # Run activation
-./scripts/activate.sh
+./scripts/setup/activate.sh
 ```
 
 ---
@@ -501,7 +501,7 @@ rm ~/.zshrc ~/.gitconfig
 
 # 4. Reinstall from scratch
 cd ~/nix-darwin
-./scripts/bootstrap.sh
+./scripts/setup/bootstrap.sh
 
 # 5. Restore age key
 mkdir -p ~/.config/sops/age
@@ -512,7 +512,7 @@ chmod 600 ~/.config/sops/age/keys.txt
 cp ~/emergency-backup/config/* ~/nix-darwin/config/
 
 # 7. Activate
-./scripts/activate.sh
+./scripts/setup/activate.sh
 
 # 8. Restore workspace
 cp -r ~/emergency-backup/workspace ~/nix-darwin/workspace/$(hostname)
@@ -564,8 +564,8 @@ cp -r ~/emergency-backup/workspace ~/nix-darwin/workspace/$(hostname)
 - [ ] Restore age key to ~/.config/sops/age/keys.txt (CRITICAL - do first!)
 - [ ] Verify age key: `cat ~/.config/sops/age/keys.txt`
 - [ ] Clone nix-darwin repository
-- [ ] Run configuration wizard: `./scripts/configure.sh`
-- [ ] Activate system: `./scripts/activate.sh`
+- [ ] Run configuration wizard: `./scripts/setup/configure.sh`
+- [ ] Activate system: `./scripts/setup/activate.sh`
 - [ ] Verify secrets decrypted: `secrets-status`
 - [ ] Restore workspace data from backup
 - [ ] Verify profile active: `echo $ACTIVE_PROFILE`
@@ -592,15 +592,14 @@ cp -r ~/emergency-backup/workspace ~/nix-darwin/workspace/$(hostname)
 ### Work Profile
 
 **Additional backup needs:**
-- Work database connections (home/_profiles/work/databases.nix)
-- AWS SSO configuration (~/.aws/config generated, but source in home/_profiles/work/aws.nix)
-- AWS account mappings (~/.aws/accounts.json - gitignored, manual backup)
+- Work database connections (home/_profiles/work/database.nix)
+- AWS accounts config (~/.aws/accounts.json — machine-local, not in repo)
 - Work-specific aliases (home/_profiles/work/aliases.nix)
 
 **CRITICAL for work profile:**
 ```bash
-# Backup AWS accounts.json (if exists)
-cp ~/.aws/accounts.json workspace/$(hostname)/backups/aws-accounts-$(date +%Y%m%d).json
+# Backup AWS accounts.json
+cp ~/.aws/accounts.json workspace/backups/aws-accounts-$(date +%Y%m%d).json
 
 # Backup work-specific configs
 cp config/machine-config.nix workspace/$(hostname)/backups/work-config-$(date +%Y%m%d).nix

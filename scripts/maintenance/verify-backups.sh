@@ -26,12 +26,12 @@ if [[ -f "$MACHINE_CONFIG" ]]; then
   MACHINE_ID=$(grep 'machineId' "$MACHINE_CONFIG" | cut -d'"' -f2)
 else
   # Fallback or error if config doesn't exist
-  echo "❌ Error: Machine config not found at $MACHINE_CONFIG"
+  echo "error: error: Machine config not found at $MACHINE_CONFIG"
   exit 1
 fi
 
 if [[ -z "$MACHINE_ID" ]]; then
-  echo "❌ Error: Could not determine machineId from config"
+  echo "error: error: Could not determine machineId from config"
   exit 1
 fi
 
@@ -104,7 +104,7 @@ check_fail() {
 check_warn() {
   ((TOTAL_CHECKS++))
   ((WARNINGS++))
-  echo -e "  ${YELLOW}⚠${NC} $1"
+  echo -e "  ${YELLOW}▸${NC} $1"
   if [[ -n "${2:-}" ]]; then
     echo -e "    ${YELLOW}→${NC} $2"
   fi
@@ -402,7 +402,7 @@ check_critical_files() {
 
   if [[ $missing_critical -gt 0 ]]; then
     echo ""
-    echo -e "  ${RED}⚠ WARNING: $missing_critical critical backup(s) missing!${NC}"
+    echo -e "  ${RED}▸ WARNING: $missing_critical critical backup(s) missing!${NC}"
     echo -e "  ${CYAN}Run: ~/nix-darwin/user-data/backup.sh${NC}"
   fi
 }
@@ -412,7 +412,7 @@ check_critical_files() {
 # ============================================================================
 
 main() {
-  print_header "🔍 BACKUP VERIFICATION"
+  print_header "BACKUP VERIFICATION"
 
   # Run all verification checks
   check_backup_directory
@@ -424,7 +424,7 @@ main() {
   check_critical_files
 
   # Generate verification report
-  print_header "📊 VERIFICATION REPORT"
+  print_header "VERIFICATION REPORT"
   echo ""
 
   local pass_percent=0
@@ -435,24 +435,24 @@ main() {
   echo -e "${BOLD}Total Checks:${NC} $TOTAL_CHECKS"
   echo -e "${GREEN}✓ Passed:${NC}     $PASSED_CHECKS"
   echo -e "${RED}✗ Failed:${NC}     $FAILED_CHECKS"
-  echo -e "${YELLOW}⚠ Warnings:${NC}   $WARNINGS"
+  echo -e "${YELLOW}▸ Warnings:${NC}   $WARNINGS"
   echo ""
 
   # Determine verification status
-  local status_emoji="🟢"
+  local status_emoji=""
   local status_text="VERIFIED"
   local status_color="$GREEN"
 
   if [[ $FAILED_CHECKS -gt 3 ]] || [[ $pass_percent -lt 60 ]]; then
-    status_emoji="🔴"
+    status_emoji=""
     status_text="CRITICAL"
     status_color="$RED"
   elif [[ $FAILED_CHECKS -gt 0 ]] || [[ $pass_percent -lt 80 ]]; then
-    status_emoji="🟡"
+    status_emoji=""
     status_text="NEEDS ATTENTION"
     status_color="$YELLOW"
   elif [[ $WARNINGS -gt 3 ]]; then
-    status_emoji="🟡"
+    status_emoji=""
     status_text="FAIR"
     status_color="$YELLOW"
   fi

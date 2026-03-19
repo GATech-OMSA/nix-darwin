@@ -1,8 +1,8 @@
 # Installation Guide
 
-**Complete installation and setup guide for nix-darwin v2.0.0**
+**Complete installation and setup guide for nix-darwin**
 
-**Last Updated**: 2025-11-10 (v2.0.0 - Profile-based architecture)
+**Last Updated**: 2026-03 (v3.0.0 - Unified secrets + multi-config flake)
 
 ---
 
@@ -35,13 +35,13 @@ git clone https://github.com/YOUR-USERNAME/nix-darwin.git ~/nix-darwin
 cd ~/nix-darwin
 
 # 2. Bootstrap (Install Nix, nix-darwin, SOPS, age)
-./scripts/bootstrap.sh
+./scripts/setup/bootstrap.sh
 
 # 3. Configure (Interactive wizard - generates config files)
-./scripts/configure.sh
+./scripts/setup/configure.sh
 
 # 4. Activate (Build and apply system)
-./scripts/activate.sh
+./scripts/setup/activate.sh
 
 # 5. Restart terminal
 exec zsh
@@ -102,7 +102,7 @@ cd nix-darwin
 
 ```bash
 cd ~/nix-darwin
-./scripts/bootstrap.sh
+./scripts/setup/bootstrap.sh
 ```
 
 **What this installs:**
@@ -134,7 +134,7 @@ exec zsh
 
 ```bash
 cd ~/nix-darwin
-./scripts/configure.sh
+./scripts/setup/configure.sh
 ```
 
 **Configuration wizard will:**
@@ -145,7 +145,7 @@ cd ~/nix-darwin
    - Email address
 
 2. **Collect Machine Information**
-   - Machine ID (unique identifier, e.g., mbp-personal-001)
+   - Machine ID (unique identifier, e.g., macbook-pro-m1-personal)
    - Profile selection (personal, work, minimal)
    - Machine description
 
@@ -177,7 +177,7 @@ cd ~/nix-darwin
 
 ```bash
 cd ~/nix-darwin
-./scripts/activate.sh
+./scripts/setup/activate.sh
 ```
 
 **What this does:**
@@ -285,7 +285,7 @@ secrets-status
 **Edit secrets (interactive):**
 
 ```bash
-edit-secrets  # Opens SOPS editor with auto-encryption
+secrets-edit  # Opens SOPS editor with auto-encryption
 
 # Add your secrets:
 # api_keys:
@@ -362,7 +362,7 @@ awsuse prod   # Switches to production account
 - Encrypted storage: `hosts/[machine-id]/secrets.yaml` (aws_accounts field)
 - Deployed to: `~/.aws/accounts.json` (auto-generated from secrets)
 
-See [AWS Multi-Role Guide](work/aws/aws-multi-role.md) for complete setup instructions.
+See [AWS Multi-Role Guide](aws-and-secrets-workflow.md) for complete setup instructions.
 
 ### 8. Test Python Setup
 
@@ -407,20 +407,20 @@ git clone https://github.com/YOUR-USERNAME/nix-darwin.git
 cd nix-darwin
 
 # 2. Run three-script workflow
-./scripts/bootstrap.sh
+./scripts/setup/bootstrap.sh
 exec zsh
 
-./scripts/configure.sh
+./scripts/setup/configure.sh
 # Select different profile if needed (e.g., work vs personal)
 
-./scripts/activate.sh
+./scripts/setup/activate.sh
 exec zsh
 ```
 
 **configure.sh will:**
 - Auto-detect you're on a new machine
 - Create new machine-specific configuration
-- Generate new machine ID (e.g., mbp-work-001)
+- Generate new machine ID (e.g., macbook-pro-m3-work)
 - Create new secret templates for this machine
 
 **Result:**
@@ -525,10 +525,10 @@ g aa && g cm "backup before v2.0.0 migration"
 g pl origin main
 
 # 3. Run configure.sh to generate config files
-./scripts/configure.sh
+./scripts/setup/configure.sh
 
 # 4. Activate new configuration
-./scripts/activate.sh
+./scripts/setup/activate.sh
 
 # 5. Verify
 health-check
@@ -729,7 +729,7 @@ ls -la config/
 # config/machine-config.nix (gitignored)
 
 # Regenerate if missing:
-./scripts/configure.sh
+./scripts/setup/configure.sh
 ```
 
 ### Profile Not Active
@@ -754,7 +754,7 @@ ls ~/.config/sops/age/
 secrets-status
 
 # Re-encrypt if needed
-edit-secrets
+secrets-edit
 ```
 
 ### Placeholder Detection
@@ -766,7 +766,7 @@ code hosts/$(hostname)/secrets-personal.nix
 
 # 2. Replace all <PLACEHOLDER> values
 # 3. Run activation again
-./scripts/activate.sh
+./scripts/setup/activate.sh
 ```
 
 ### Slow First Build
@@ -839,7 +839,7 @@ source ~/.zshrc
 1. **[Troubleshooting Guide](troubleshooting.md)** - Debug common issues
 2. **[Secrets Management](secrets.md)** - Manage encrypted secrets
 3. **[Backup & Recovery](backup-and-recovery.md)** - Protect your configuration
-4. **[AWS Multi-Role Guide](work/aws/aws-multi-role.md)** - AWS SSO setup (work profile)
+4. **[AWS Multi-Role Guide](aws-and-secrets-workflow.md)** - AWS SSO setup (work profile)
 
 ---
 

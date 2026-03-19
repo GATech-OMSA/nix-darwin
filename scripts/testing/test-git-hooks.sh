@@ -8,7 +8,7 @@ set +e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
-echo "🧪 Testing Git Hooks"
+echo "Testing Git Hooks"
 echo "==================="
 echo ""
 
@@ -36,10 +36,10 @@ run_test() {
   echo -n "Test: $test_name ... "
 
   if eval "$test_command" >/dev/null 2>&1; then
-    echo -e "${GREEN}✅ PASS${NC}"
+    echo -e "${GREEN}PASS${NC}"
     ((TESTS_PASSED++))
   else
-    echo -e "${RED}❌ FAIL${NC}"
+    echo -e "${RED}error: fAIL${NC}"
     ((TESTS_FAILED++))
   fi
 }
@@ -58,10 +58,10 @@ echo "test" > "$DUMMY_FILE"
 git add "$DUMMY_FILE" 2>/dev/null || true
 
 if git commit -m "test insecure file" 2>&1 | grep -q "BLOCKED"; then
-  echo -e "  ${GREEN}✅ PASS${NC}: Commit blocked for insecure file (644)"
+  echo -e "  ${GREEN}PASS${NC}: Commit blocked for insecure file (644)"
   ((TESTS_PASSED++))
 else
-  echo -e "  ${RED}❌ FAIL${NC}: Commit should have been blocked for 644 permissions"
+  echo -e "  ${RED}error: fAIL${NC}: Commit should have been blocked for 644 permissions"
   ((TESTS_FAILED++))
 fi
 
@@ -82,11 +82,11 @@ echo "test" > "$DUMMY_FILE"
 git add "$DUMMY_FILE" 2>/dev/null || true
 
 if git commit -m "test secure file" >/dev/null 2>&1; then
-  echo -e "  ${GREEN}✅ PASS${NC}: Commit allowed for secure file (600)"
+  echo -e "  ${GREEN}PASS${NC}: Commit allowed for secure file (600)"
   ((TESTS_PASSED++))
   git reset --soft HEAD~1  # Undo commit
 else
-  echo -e "  ${RED}❌ FAIL${NC}: Commit should have been allowed for 600 permissions"
+  echo -e "  ${RED}error: fAIL${NC}: Commit should have been allowed for 600 permissions"
   ((TESTS_FAILED++))
 fi
 
@@ -107,11 +107,11 @@ echo "test" > "$DUMMY_FILE"
 git add "$DUMMY_FILE" 2>/dev/null || true
 
 if git commit --no-verify -m "test bypass" >/dev/null 2>&1; then
-  echo -e "  ${GREEN}✅ PASS${NC}: --no-verify bypass works"
+  echo -e "  ${GREEN}PASS${NC}: --no-verify bypass works"
   ((TESTS_PASSED++))
   git reset --soft HEAD~1  # Undo commit
 else
-  echo -e "  ${RED}❌ FAIL${NC}: --no-verify should bypass hook"
+  echo -e "  ${RED}error: fAIL${NC}: --no-verify should bypass hook"
   ((TESTS_FAILED++))
 fi
 
@@ -153,10 +153,10 @@ if echo "$ERROR_OUTPUT" | grep -q "chmod 600"; then
 fi
 
 if [ "$CHECKS_PASSED" -eq "$CHECKS_TOTAL" ]; then
-  echo -e "  ${GREEN}✅ PASS${NC}: Error message contains all required information"
+  echo -e "  ${GREEN}PASS${NC}: Error message contains all required information"
   ((TESTS_PASSED++))
 else
-  echo -e "  ${RED}❌ FAIL${NC}: Error message missing information ($CHECKS_PASSED/$CHECKS_TOTAL checks passed)"
+  echo -e "  ${RED}error: fAIL${NC}: Error message missing information ($CHECKS_PASSED/$CHECKS_TOTAL checks passed)"
   ((TESTS_FAILED++))
 fi
 
@@ -181,10 +181,10 @@ ERROR_OUTPUT=$(git commit -m "test multiple files" 2>&1 || true)
 
 # Should mention both files in the error
 if echo "$ERROR_OUTPUT" | grep -q "test-token-1" && echo "$ERROR_OUTPUT" | grep -q "test-token-2"; then
-  echo -e "  ${GREEN}✅ PASS${NC}: Hook reports all insecure files"
+  echo -e "  ${GREEN}PASS${NC}: Hook reports all insecure files"
   ((TESTS_PASSED++))
 else
-  echo -e "  ${YELLOW}⚠️  SKIP${NC}: Could not verify multiple file reporting"
+  echo -e "  ${YELLOW}warning: sKIP${NC}: Could not verify multiple file reporting"
 fi
 
 # Clean up
@@ -201,9 +201,9 @@ echo -e "Failed: ${RED}$TESTS_FAILED${NC}"
 echo ""
 
 if [ "$TESTS_FAILED" -eq 0 ]; then
-  echo -e "${GREEN}✅ All hook tests passed!${NC}"
+  echo -e "${GREEN}All hook tests passed!${NC}"
   exit 0
 else
-  echo -e "${RED}❌ Some tests failed${NC}"
+  echo -e "${RED}error: some tests failed${NC}"
   exit 1
 fi

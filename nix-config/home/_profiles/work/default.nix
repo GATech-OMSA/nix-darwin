@@ -6,34 +6,35 @@
 { config, pkgs, lib, myLib, hostname, userConfig, ... }:
 
 let
+  # Corporate CA bundle path (used by both AWS_CA_BUNDLE env var and ~/.aws/config)
+  caBundlePath = "$HOME/.config/certs/cacert.pem";
+
   # Access proxy configuration from user-config.nix
   proxies = userConfig.proxies or {};
 
   # Helper to build proxy environment variables
   goProxyVars = if (proxies.go.enabled or false) then {
-    GOPROXY = "${proxies.go.url},direct";
-    GOPRIVATE = proxies.go.private;
+    GOPROXY = "${proxies.go.url or "https://proxy.golang.org"},direct";
+    GOPRIVATE = proxies.go.private or "";
     GOSUMDB = "off";  # If Nexus cannot mirror Go's sum database
   } else {};
 
   pythonProxyVars = if (proxies.python.enabled or false) then {
-    PIP_INDEX_URL = proxies.python.url;
+    PIP_INDEX_URL = proxies.python.url or "https://pypi.org/simple";
     PIP_TRUSTED_HOST = proxies.python.trustedHost or "";
   } else {};
 
   npmProxyVars = if (proxies.npm.enabled or false) then {
-    NPM_CONFIG_REGISTRY = proxies.npm.url;
+    NPM_CONFIG_REGISTRY = proxies.npm.url or "https://registry.npmjs.org";
   } else {};
 
 in {
   imports = [
-    ../_template/programs  # Base program configs
-    ../_template/shell     # Base shell configs
-    ./packages.nix         # Work-specific packages
-    ./aliases.nix          # Work-specific aliases
-    ./aws.nix              # AWS configuration
-    ./database.nix         # Database instances
-    ./programs             # Work program overrides
+    ../_template/programs      # Base program configs
+    ../_template/shell/zsh.nix # Base shell config
+    ./packages.nix             # Work-specific packages
+    ./aliases.nix              # Work-specific aliases
+    ./database.nix             # Database instances
   ];
 
   # Add Rancher Desktop to PATH (for Docker CLI)
@@ -48,7 +49,7 @@ in {
     WORKSPACE = "$HOME/Work";
 
     # AWS Configuration (corporate CA bundle)
-    AWS_CA_BUNDLE = "$HOME/.config/certs/cacert.pem";
+    AWS_CA_BUNDLE = caBundlePath;
 
     # ODBC Configuration
     ODBCSYSINI = "/usr/local/etc";

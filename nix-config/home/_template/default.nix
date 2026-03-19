@@ -56,7 +56,7 @@
         if [ -d "$NIX_DARWIN_DIR/.git" ]; then
           # Check if hooks already exist (skip if present to save time)
           if [ ! -f "$NIX_DARWIN_DIR/.git/hooks/pre-commit" ] || [ ! -f "$NIX_DARWIN_DIR/.git/hooks/pre-push" ]; then
-            echo "🪝 Installing git hooks for secrets validation..."
+            echo "Installing git hooks for secrets validation..."
 
             # Ensure hooks directory exists
             mkdir -p "$NIX_DARWIN_DIR/.git/hooks"
@@ -66,18 +66,11 @@
 #!/bin/bash
 # Pre-commit hook to check for unencrypted secrets files and credential protection
 
-echo "🔍 Validating secrets and credentials..."
+echo "→ Validating secrets and credentials..."
 
 SECRETS_PATHS=(
   "$HOME/nix-darwin/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/user-data-${username}/secrets/*.yaml"
-)
-
-CREDENTIAL_PATHS=(
-  "$HOME/.db"
-  "$HOME/.tokens"
-  "$HOME/.credentials"
-  "$HOME/.aws/credentials"
 )
 
 BLOCKED_PATTERNS=(
@@ -88,64 +81,67 @@ BLOCKED_PATTERNS=(
   "*_secrets.txt"
 )
 
+# Cache staged files list once (avoid repeated git calls)
+STAGED_FILES=$(git diff --cached --name-only)
+
 # Check if any credential files are staged
-echo "  🛡️  Checking for blocked credential files..."
+echo "  → Checking for blocked credential files..."
 for pattern in "''${BLOCKED_PATTERNS[@]}"; do
-  if git diff --cached --name-only | grep -q "$pattern"; then
-    echo "❌ ERROR: Attempting to commit credential file matching pattern: $pattern"
+  if echo "$STAGED_FILES" | grep -q "$pattern"; then
+    echo "✗ ERROR: Attempting to commit credential file matching pattern: $pattern"
     echo "   These files should never be committed. Add to .gitignore."
     exit 1
   fi
 done
 
 # Check if .db/, .tokens/, .credentials/ directories are staged
-if git diff --cached --name-only | grep -E '(^\.db/|^\.tokens/|^\.credentials/)'; then
-  echo "❌ ERROR: Attempting to commit credential directory (.db/, .tokens/, or .credentials/)"
+if echo "$STAGED_FILES" | grep -E '(^\.db/|^\.tokens/|^\.credentials/)'; then
+  echo "✗ ERROR: Attempting to commit credential directory (.db/, .tokens/, or .credentials/)"
   echo "   These directories contain plaintext credentials and should never be committed."
   echo "   Fix: Ensure .gitignore contains these directories"
   exit 1
 fi
 
 # Check SOPS-encrypted files
-echo "  🔐 Validating SOPS encryption..."
+echo "  → Validating SOPS encryption..."
 for pattern in "''${SECRETS_PATHS[@]}"; do
   for secrets_file in $pattern; do
     [ -f "$secrets_file" ] || continue
 
     # Check if staged for commit
     rel_path="''${secrets_file#$HOME/nix-darwin/}"
-    if git diff --cached --name-only | grep -q "$rel_path"; then
+    if echo "$STAGED_FILES" | grep -q "$rel_path"; then
       # SOPS can encrypt in two formats:
       # 1. Binary format (completely encrypted)
       # 2. YAML format (encrypted values with SOPS metadata)
 
       # Check for binary format
       if ! file "$secrets_file" | grep -q "ASCII text"; then
-        echo "  ✅ Encrypted (binary): $rel_path"
+        echo "  ✓ Encrypted (binary): $rel_path"
         continue
       fi
 
       # Check for SOPS YAML format (has sops: metadata section)
       if grep -q "^sops:" "$secrets_file" && grep -q "mac:" "$secrets_file"; then
-        echo "  ✅ Encrypted (YAML): $rel_path"
+        echo "  ✓ Encrypted (YAML): $rel_path"
         continue
       fi
 
       # Check for SOPS encrypted values (ENC[AES256_GCM pattern)
       if grep -q "ENC\[AES256_GCM" "$secrets_file"; then
-        echo "  ✅ Encrypted (YAML): $rel_path"
+        echo "  ✓ Encrypted (YAML): $rel_path"
         continue
       fi
 
       # Not encrypted
-      echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
+      echo "✗ ERROR: Unencrypted secrets file detected: $secrets_file"
       echo "   Please encrypt with: sops -e -i $secrets_file"
       exit 1
     fi
   done
 done
 
-echo "✅ All security checks passed"
+echo "✓ All security checks passed"
 exit 0
 EOF
 
@@ -154,7 +150,7 @@ EOF
 #!/bin/bash
 # Pre-push hook to check for unencrypted secrets files and credential protection
 
-echo "🔍 Final security check before push..."
+echo "→ Final security check before push..."
 
 SECRETS_PATHS=(
   "$HOME/nix-darwin/hosts/*/secrets.yaml"
@@ -168,7 +164,7 @@ CREDENTIAL_PATHS=(
 )
 
 # Check SOPS-encrypted files
-echo "  🔐 Validating all SOPS-encrypted files..."
+echo "  → Validating all SOPS-encrypted files..."
 error_found=0
 
 for pattern in "''${SECRETS_PATHS[@]}"; do
@@ -195,27 +191,27 @@ for pattern in "''${SECRETS_PATHS[@]}"; do
     fi
 
     # Not encrypted
-    echo "❌ ERROR: Unencrypted secrets file detected: $secrets_file"
+    echo "✗ ERROR: Unencrypted secrets file detected: $secrets_file"
     echo "   Please encrypt with: sops -e -i $secrets_file"
     error_found=1
   done
 done
 
 # Final check: ensure no credential directories in git index
-echo "  🛡️  Checking git index for credential files..."
+echo "  → Checking git index for credential files..."
 if git ls-files | grep -E '(^\.db/|^\.tokens/|^\.credentials/)'; then
-  echo "❌ ERROR: Credential files found in git index"
+  echo "✗ ERROR: Credential files found in git index"
   echo "   These should never be committed. Remove with: git rm --cached <file>"
   error_found=1
 fi
 
 if [ $error_found -eq 1 ]; then
   echo ""
-  echo "❌ Push blocked due to security issues. Please fix the above errors."
+  echo "✗ Push blocked due to security issues. Please fix the above errors."
   exit 1
 fi
 
-echo "✅ All security checks passed - safe to push"
+echo "✓ All security checks passed - safe to push"
 exit 0
 EOF
 
@@ -223,26 +219,13 @@ EOF
             chmod +x "$NIX_DARWIN_DIR/.git/hooks/pre-commit"
             chmod +x "$NIX_DARWIN_DIR/.git/hooks/pre-push"
 
-            echo "  ✅ Git hooks installed successfully"
+            echo "  ✓ Git hooks installed successfully"
           fi
         fi
       '';
     };
   };
 
-  # Import all configurations
-  imports = [
-    # Mixins (reusable configurations)
-    ../_mixins/base.nix
-    ../_mixins/dev.nix
-  ]
-  # Import machine-specific mixins based on hostname
-  ++ myLib.importIfPersonal hostname ../_mixins/personal.nix
-  ++ myLib.importIfWork hostname ../_mixins/work.nix;
-
   # Let Home Manager manage itself
   programs.home-manager.enable = true;
-
-  # Nicely reload system units when changing configs
-  systemd.user.startServices = "sd-switch";
 }

@@ -30,8 +30,8 @@ GEN_NEW=""
 msg() { echo -e "${BOLD}$1${RESET}"; }
 success() { echo -e "${GREEN}✓${RESET} $1"; }
 error() { echo -e "${RED}✗${RESET} $1" >&2; }
-warning() { echo -e "${YELLOW}⚠${RESET} $1"; }
-info() { echo -e "${BLUE}ℹ${RESET} $1"; }
+warning() { echo -e "${YELLOW}▸${RESET} $1"; }
+info() { echo -e "${BLUE}→${RESET} $1"; }
 section() { echo -e "\n${CYAN}${BOLD}═══ $1 ═══${RESET}\n"; }
 
 show_help() {
@@ -141,7 +141,7 @@ info "New: $NEW_STORE"
 echo ""
 
 # Compare packages
-section "📦 Package Changes"
+section "Package Changes"
 
 # Get package lists
 OLD_PACKAGES=$(ls "$OLD_PATH/sw/bin/" 2>/dev/null | sort)
@@ -202,7 +202,7 @@ if [[ "$PACKAGES_ONLY" == "true" ]]; then
 fi
 
 # Compare system settings (darwin/)
-section "⚙️  System Settings"
+section " System Settings"
 
 if diff -r "$OLD_PATH/darwin/" "$NEW_PATH/darwin/" > /dev/null 2>&1; then
     success "No system setting changes"
@@ -223,7 +223,7 @@ fi
 echo ""
 
 # Compare Home Manager (user/)
-section "🏠 Home Manager Configuration"
+section "Home Manager Configuration"
 
 if [[ -d "$OLD_PATH/user" ]] && [[ -d "$NEW_PATH/user" ]]; then
     if diff -r "$OLD_PATH/user/" "$NEW_PATH/user/" > /dev/null 2>&1; then
@@ -246,7 +246,7 @@ fi
 echo ""
 
 # Compare activation scripts
-section "🔧 Activation Scripts"
+section "Activation Scripts"
 
 if diff "$OLD_PATH/activate" "$NEW_PATH/activate" > /dev/null 2>&1; then
     success "No activation script changes"
@@ -265,7 +265,7 @@ fi
 echo ""
 
 # Compare etc/ configuration
-section "📝 System Configuration (/etc)"
+section "System Configuration (/etc)"
 
 if [[ -L "$OLD_PATH/etc" ]] && [[ -L "$NEW_PATH/etc" ]]; then
     OLD_ETC=$(readlink "$OLD_PATH/etc")
@@ -288,7 +288,7 @@ fi
 echo ""
 
 # Summary
-section "📊 Summary"
+section "Summary"
 
 ADDED_COUNT=0
 REMOVED_COUNT=0
@@ -308,19 +308,19 @@ HAS_CHANGES=false
 
 if ! diff -r "$OLD_PATH/darwin/" "$NEW_PATH/darwin/" > /dev/null 2>&1; then
     HAS_CHANGES=true
-    echo -e "${YELLOW}⚙ ${RESET} System settings changed"
+    echo -e "${YELLOW}▸${RESET} System settings changed"
 fi
 
 if [[ -d "$OLD_PATH/user" ]] && [[ -d "$NEW_PATH/user" ]]; then
     if ! diff -r "$OLD_PATH/user/" "$NEW_PATH/user/" > /dev/null 2>&1; then
         HAS_CHANGES=true
-        echo -e "${YELLOW}🏠${RESET} Home Manager configuration changed"
+        echo -e "${YELLOW}▸${RESET} Home Manager configuration changed"
     fi
 fi
 
 if ! diff "$OLD_PATH/activate" "$NEW_PATH/activate" > /dev/null 2>&1; then
     HAS_CHANGES=true
-    echo -e "${YELLOW}🔧${RESET} Activation scripts changed"
+    echo -e "${YELLOW}▸${RESET} Activation scripts changed"
 fi
 
 if [[ "$HAS_CHANGES" == "false" ]]; then

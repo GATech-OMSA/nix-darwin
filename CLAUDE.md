@@ -159,33 +159,21 @@ nix-config/home/_profiles/
 
 ## 7️⃣ DOCUMENTATION STATUS
 
-**Status:** ✅ Documentation consolidation complete (November 2025)
-
 CLAUDE.md is the **authoritative source** for all configuration instructions.
 
-**Documentation Structure:**
-- **17 active user guides** in `docs/`
-- **2 AI workflow guides** in `claudedocs/guides/`
-- **5 archived guides** in `deprecated/docs/` with clear deprecation notes
-- **Zero redundancies** - each guide has unique, well-defined purpose
+**Active Documentation (6 guides):**
+- `docs/installation.md` — Three-script setup workflow
+- `docs/troubleshooting.md` — Debugging guide
+- `docs/secrets.md` — SOPS encryption
+- `docs/backup-and-recovery.md` — Disaster recovery
+- `docs/aws-and-secrets-workflow.md` — AWS SSO + secrets hot reload
+- `docs/maintenance.md` — Cleanup tiers & tools
 
-**Key Documentation:**
-- Installation: `docs/installation.md` (v2.0.0 three-script workflow)
-- Troubleshooting: `docs/troubleshooting.md`
-- Maintenance: `docs/guides/maintenance.md` (Cleanup tiers & tools)
-- Secrets: `docs/secrets.md` (SOPS encryption)
-- AWS & Secrets: `docs/aws-and-secrets-workflow.md` (comprehensive workflow with hot reload)
-- Python: `docs/python-development.md` (UV + direnv auto-activation)
-- Development: `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` (project management)
+**AI Workflow Guides (2):**
+- `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` — Project management
+- `claudedocs/guides/ALIAS-PHILOSOPHY.md` — Five-tier naming system
 
-**Guidelines to prevent markdown sprawl:**
-- ✅ CREATE docs for: major features, architectural changes, complex new systems
-- ✅ UPDATE docs for: major additions, breaking changes, major bug fixes
-- ❌ SKIP docs for: small fixes, refactoring, version bumps, performance tweaks
-- ✅ UPDATE changelog for: major features, breaking changes, architecture changes
-- ❌ SKIP changelog for: small fixes, minor improvements, documentation updates
-
-See `docs/DOCS-REVIEW.md` for complete consolidation results and `deprecated/docs/README.md` for archived documentation.
+**Archived:** `deprecate/docs/` — Retired guides preserved in git history
 
 ---
 
@@ -237,102 +225,29 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 # 📚 DOCUMENTATION
 
-**Status:** ✅ Consolidation complete - 18 active guides
+**Status:** ✅ Simplified - 6 user guides + 2 AI guides
 
 ## User Documentation (Public)
 
 **Location:** `docs/` - For end users and repository visitors
 
-### Essential Guides
-- 📖 **[Installation Guide](docs/installation.md)** - Complete v2.0.0 setup (three-script workflow)
-- 📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Profile system issues and fixes
-- 📖 **[Backup & Recovery Guide](docs/backup-and-recovery.md)** - Disaster recovery and age key backups
-- 📖 **[Secrets Management Guide](docs/secrets.md)** - SOPS age encryption and profile secrets
-- 📖 **[AWS & Secrets Workflow](docs/aws-and-secrets-workflow.md)** - Comprehensive AWS and secrets workflow with hot reload
-- 📖 **[Python Development Guide](docs/python-development.md)** - UV + direnv auto-activation workflow
-
-### AWS Reference Documentation
-- 📋 [AWS Multi-Role Guide](docs/work/aws/aws-multi-role.md) - AWS SSO multi-account configuration
-- 📋 [AWS Quick Reference](docs/work/aws/aws-quick-ref.md) - AWS daily commands and shortcuts
-- 📋 [AWS Implementation Summary](docs/work/aws/aws-implementation-summary.md) - AWS feature implementation details
-
-## AI Assistant Documentation (claudedocs/)
-
-**Location:** `claudedocs/` - For Claude Code and AI development workflows
-
-### Development Guides
-- 📋 [Development Workflow](claudedocs/guides/DEVELOPMENT-WORKFLOW.md) - Complete project workflow and task management
-- 📋 [Alias Philosophy](claudedocs/guides/ALIAS-PHILOSOPHY.md) - Five-tier alias naming system and safety guidelines
-
-### Planning & Project Tracking (Gitignored)
-- 📋 [ACTIVE.md](claudedocs/planning/ACTIVE.md) - Current projects and status
-- 📋 [BACKLOG.md](claudedocs/planning/BACKLOG.md) - New work items and grooming queue
-- 📋 [COMPLETED.md](claudedocs/planning/COMPLETED.md) - Completed projects index
-
-## Deprecated Documentation
-
-**Location:** `deprecated/docs/` - Archived documentation with deprecation notes
-
-See [Deprecated Documentation README](deprecated/docs/README.md) for details on:
-- QUICK-REFERENCE.md (superseded by aws-and-secrets-workflow.md)
-- project-workflow.md (superseded by DEVELOPMENT-WORKFLOW.md)
-- CLEAN-SETUP-STEPS.md (superseded by installation.md)
-- learning/ (personal notes, also gitignored)
-
-## Documentation Structure
-
 ```
-docs/                          # Public user documentation (18 files)
-├── installation.md           # v2.0.0 setup guide ✅
-├── troubleshooting.md        # Debugging guide ✅
-├── backup-and-recovery.md    # Disaster recovery ✅
-├── secrets.md                # SOPS encryption ✅
-├── aws-and-secrets-workflow.md # Complete AWS & secrets workflow ✅
-├── python-development.md     # UV + direnv workflow ✅
-├── DOCS-REVIEW.md            # Consolidation results ✅
-├── architecture/             # ADRs and architecture docs
-│   └── decisions/           # 6 architecture decision records
-└── work/aws/                 # AWS-specific documentation
-    ├── aws-quick-ref.md      # Daily commands ✅
-    ├── aws-multi-role.md     # Multi-account patterns ✅
-    └── aws-implementation-summary.md # Technical details ✅
+docs/                           # User-facing documentation (6 files)
+├── installation.md            # Three-script setup workflow
+├── troubleshooting.md         # Debugging guide
+├── secrets.md                 # SOPS encryption
+├── backup-and-recovery.md     # Disaster recovery
+├── aws-and-secrets-workflow.md # AWS SSO + secrets hot reload
+└── maintenance.md             # Cleanup tiers & tools
 
-claudedocs/                    # AI assistant documentation (2 files)
-├── guides/
-│   ├── DEVELOPMENT-WORKFLOW.md # Complete project workflow ✅
-│   └── ALIAS-PHILOSOPHY.md     # Five-tier naming system ✅
-└── planning/                  # Project management (gitignored)
-    ├── ACTIVE.md              # Current work tracking
-    ├── BACKLOG.md             # New work intake
-    ├── COMPLETED.md           # Completed projects index
-    ├── projects/              # Active project directories
-    └── archive/               # Archived completed projects
+claudedocs/guides/              # AI workflow guides (2 files)
+├── DEVELOPMENT-WORKFLOW.md    # Project management
+└── ALIAS-PHILOSOPHY.md        # Five-tier naming system
 
-deprecated/docs/               # Archived documentation (5 files)
-├── README.md                  # Deprecation documentation ✅
-├── quick-reference/          # Superseded by aws-and-secrets-workflow
-├── learning/                 # Personal notes (also gitignored)
-├── project-workflow/         # Superseded by DEVELOPMENT-WORKFLOW
-└── clean-setup-steps/        # Superseded by installation.md
+claudedocs/planning/            # Project tracking (gitignored)
+
+deprecate/docs/                 # Archived guides (git history)
 ```
-
-## Directory Purpose
-
-**`docs/`** - Public documentation:
-- End-user guides (installation, troubleshooting, backups, secrets)
-- AWS workflow and reference documentation
-- Architecture decision records (ADRs)
-- Committed to repository and visible on GitHub
-
-**`claudedocs/`** - AI development documentation:
-- AI assistant workflow guides
-- Project management and planning (gitignored)
-- For Claude Code and AI agents
-
-**`deprecated/docs/`** - Historical preservation:
-- Archived documentation with clear deprecation notes
-- Superseded guides preserved for reference
-- See README.md for what replaced each file
 
 ---
 
@@ -352,11 +267,15 @@ deprecated/docs/               # Archived documentation (5 files)
 | Brew Audit | `nix-brew-audit` | Check Brew apps for Nix migration |
 | Health check | `just health` (or `nix-health`) | Troubleshooting |
 | Update all | `just update` (or `update-all`) | Weekly maintenance |
-| Edit secrets | `just secrets-edit` | Manage encrypted secrets |
+| Edit secrets | `secrets-edit` | Edit encrypted secrets.yaml |
+| Deploy secrets | `secrets-deploy` | Decrypt + deploy (no rebuild needed) |
+| Reload secrets | `secrets-reload` | Re-source in current shell |
+| Scan secrets | `secrets-rescan` | Discover unmanaged secrets (read-only) |
 | Run tests | `just test` | Run integration suite |
 | Edit config | `nixconf` | Daily development |
 | Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See nix-config/home/_profiles/_template/programs/git.nix |
-| AWS login | `awslogin <alias> <env> [role]` | Dynamic profile creation |
+| AWS login | `awslogin <alias> <env> [role]` | SSO login + dynamic profile creation |
+| AWS switch | `awsuse <alias> <env> [role]` | Switch profile (no login) |
 | AWS list | `awslist` | Show all configured accounts |
 | AWS find | `awsfind <name>` | Search accounts by name/alias |
 | AWS where | `awswhere <account-id>` | Find account by ID |
@@ -364,8 +283,8 @@ deprecated/docs/               # Archived documentation (5 files)
 
 **First-time setup:**
 ```bash
-sudo nix run nix-darwin -- switch --flake .#macbook-pro-m1   # Personal
-sudo nix run nix-darwin -- switch --flake .#mbp-work         # Work
+sudo nix run nix-darwin -- switch --flake .#macbook-pro-m1-personal   # Personal
+sudo nix run nix-darwin -- switch --flake .#macbook-pro-m3-work      # Work
 ```
 
 ---
@@ -385,7 +304,7 @@ nix-darwin/
 ├── nix-config/            # All Nix configuration files
 │   ├── hosts/            # Machine-specific configs + secrets
 │   │   ├── _template/    # Template for new machines
-│   │   └── macbook-pro-m1/  # Machine configs (secrets.yaml, etc.)
+│   │   └── macbook-pro-m1-personal/  # Machine configs (secrets.yaml, etc.)
 │   ├── home/             # Home Manager configurations
 │   │   ├── _profiles/    # Profile system (personal/work/minimal)
 │   │   │   ├── _template/  # Shared programs and shell configs
@@ -405,12 +324,12 @@ nix-darwin/
 │   ├── maintenance/      # System maintenance
 │   ├── validation/       # Config validation
 │   ├── testing/          # Test utilities
-│   └── (secret scripts)  # rescan-secrets.sh, edit-secrets.sh, etc.
+│   └── secrets/          # deploy-secrets.sh, edit-secrets.sh, rescan, etc.
 ├── docs/                  # User-facing documentation
 ├── claudedocs/            # Project planning and guides (gitignored)
 ├── tests/                 # Test suite
 ├── workspace/             # Per-machine workspace (gitignored)
-└── secrets/               # Local secrets storage (gitignored)
+└── cache/                 # Pre-built binaries (sops-install-secrets)
 ```
 
 **Note:** Full architecture documentation will be created after root reorganization is complete.
@@ -450,11 +369,14 @@ user-data/secrets/
 
 **Manage secrets:**
 ```bash
-edit-secrets              # Edit encrypted secrets
-chmod 600 ~/.db/prod      # Fix permissions if needed
+secrets-edit              # Edit encrypted secrets.yaml
+secrets-deploy            # Decrypt + deploy to target paths
+secrets-reload            # Re-source in current shell
+secrets-rescan            # Discover unmanaged secrets (read-only)
 ```
 
-Secrets are defined in `nix-config/hosts/$(machineId)/secrets.yaml` (SOPS encrypted).
+Secrets stored in `nix-config/hosts/{machineId}/secrets.yaml` (SOPS encrypted).
+Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth).
 
 ---
 
@@ -539,8 +461,7 @@ COMPLETED.md (chronological index)
 - Cross-project dependencies: `project-name #XXX` in Blockers field
 
 **Reference documentation:**
-- [AWS Multi-Role Guide](docs/work/aws/aws-multi-role.md)
-- [AWS Quick Reference](docs/work/aws/aws-quick-ref.md)
+- [AWS & Secrets Workflow](docs/aws-and-secrets-workflow.md)
 
 ---
 
@@ -563,7 +484,7 @@ COMPLETED.md (chronological index)
 |--------|-------|--------|
 | CLAUDE.md size | ~12KB (target <50KB) | ✅ Optimized |
 | Token count | ~1.8K (target <8K) | ✅ Efficient |
-| Documentation files | 17 user guides + 2 AI guides | ✅ Complete |
+| Documentation files | 6 user guides + 2 AI guides | ✅ Lean |
 | Core instructions | 9 critical rules | ✅ Clear |
 | System status | Production Ready | ✅ Stable |
 

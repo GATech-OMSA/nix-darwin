@@ -46,8 +46,8 @@
       # "antigravity"
       "visual-studio-code"
       "claude-code"
+      "ghostty"             # Terminal emulator (Homebrew for personal, Nix for work)
       "iterm2"
-      "ghostty"         # Modern terminal emulator (alongside iTerm2)
       # "dash"
       "warp"
       "fork"
@@ -62,6 +62,7 @@
       "chatgpt"
       "claude"
       "codex"
+      "codex-app"       # OpenAI Codex GUI (separate from codex CLI)
       "ollama-app"
 
       # Utilities

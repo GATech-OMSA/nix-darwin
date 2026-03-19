@@ -9,7 +9,7 @@
     # ============================================
     # ACTIVE PERSONAL TOOLS
     # ============================================
-    neofetch
+    # neofetch  # Deprecated/unmaintained — use fastfetch (installed in system packages)
 
     # ============================================
     # CREATIVE & MEDIA TOOLS (Uncomment as needed)

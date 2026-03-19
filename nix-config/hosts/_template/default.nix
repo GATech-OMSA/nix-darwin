@@ -1,17 +1,17 @@
-{ config, pkgs, lib, username, hostname, machineType, ... }:
+{ config, pkgs, lib, username, hostname, profileName, ... }:
 
 {
   # Host-specific configuration template
   # Copy this directory and customize for your new machine
   #
-  # Secrets are automatically loaded based on machineType:
+  # Secrets are loaded based on profileName (personal/work):
   #   - personal: loads secrets-personal.nix
   #   - work: loads secrets-work.nix
 
-  # Conditional secret imports based on machine type
+  # Conditional secret imports based on profile
   imports =
-    lib.optional (machineType == "personal") ./secrets-personal.nix ++
-    lib.optional (machineType == "work") ./secrets-work.nix;
+    lib.optional (profileName == "personal") ./secrets-personal.nix ++
+    lib.optional (profileName == "work") ./secrets-work.nix;
 
   networking = {
     hostName = hostname;

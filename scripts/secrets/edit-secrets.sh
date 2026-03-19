@@ -16,9 +16,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-info() { echo -e "${BLUE}ℹ ${NC} $*"; }
+info() { echo -e "${BLUE}→${NC} $*"; }
 success() { echo -e "${GREEN}✓${NC} $*"; }
-warning() { echo -e "${YELLOW}⚠${NC} $*"; }
+warning() { echo -e "${YELLOW}▸${NC} $*"; }
 error() { echo -e "${RED}✗${NC} $*" >&2; }
 
 # Configuration
@@ -99,8 +99,8 @@ if sops "$SECRETS_FILE"; then
   success "Secrets updated successfully"
   echo ""
   info "Next steps:"
-  echo "  1. Verify changes: ./scripts/secrets/view-secrets.sh"
-  echo "  2. Rebuild system: nix-rebuild && exec zsh"
+  echo "  1. Deploy: secrets-deploy"
+  echo "  2. Reload: secrets-reload"
 else
   error "SOPS editor exited with error"
   if [ "$NO_BACKUP" = false ]; then

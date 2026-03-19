@@ -28,7 +28,7 @@ build:
 # Rollback to previous generation
 rollback:
     @echo "⏪ Rolling back..."
-    ./scripts/maintenance/rollback.sh
+    ./scripts/maintenance/rebuild.sh --rollback
 
 # Show system health
 health:
@@ -58,7 +58,7 @@ update-nix:
 # Clean up garbage (old generations)
 cleanup:
     @echo "🧹 Cleaning up garbage..."
-    ./scripts/maintenance/cleanup.sh
+    ./scripts/maintenance/system-cleanup.sh
 
 # Audit permissions
 audit:

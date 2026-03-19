@@ -189,7 +189,7 @@ check_aws_files() {
 
   local aws_files=(
     "${HOME}/.aws/credentials"
-    "${HOME}/.aws/config"
+    # ~/.aws/config is not a secret (SSO profiles, region settings) — skip 600 check
     "${HOME}/.aws/accounts.json"
     "${HOME}/.aws/.last_profile"
   )
@@ -240,9 +240,8 @@ check_ssh_files() {
 
   local ssh_files=(
     "${HOME}/.ssh/id_ed25519"
-    "${HOME}/.ssh/id_ed25519.pub"
+    # .pub keys are meant to be world-readable (644) — skip 600 check
     "${HOME}/.ssh/id_ed25519_work"
-    "${HOME}/.ssh/id_ed25519_work.pub"
     "${HOME}/.ssh/known_hosts"
   )
 
@@ -307,7 +306,7 @@ check_sops_key() {
 # ============================================================================
 
 generate_summary_report() {
-  print_header "📊 SECURITY AUDIT SUMMARY"
+  print_header "SECURITY AUDIT SUMMARY"
   echo ""
 
   # File statistics
@@ -317,7 +316,7 @@ generate_summary_report() {
   echo -e "${YELLOW}○ Missing:${NC}        $MISSING_FILES"
 
   if [[ $FIX_MODE -eq 1 ]] && [[ $FIXED_FILES -gt 0 ]]; then
-    echo -e "${CYAN}🔧 Fixed:${NC}          $FIXED_FILES"
+    echo -e "${CYAN}Fixed:${NC}          $FIXED_FILES"
   fi
 
   echo ""
@@ -329,16 +328,16 @@ generate_summary_report() {
     secure_percent=$(( (SECURE_FILES * 100) / existing_files ))
   fi
 
-  local status_emoji="🟢"
+  local status_emoji=""
   local status_text="SECURE"
   local status_color="$GREEN"
 
   if [[ $INSECURE_FILES -gt 5 ]]; then
-    status_emoji="🔴"
+    status_emoji=""
     status_text="CRITICAL"
     status_color="$RED"
   elif [[ $INSECURE_FILES -gt 0 ]]; then
-    status_emoji="🟡"
+    status_emoji=""
     status_text="NEEDS ATTENTION"
     status_color="$YELLOW"
   fi
@@ -353,7 +352,7 @@ generate_fix_recommendations() {
     return
   fi
 
-  print_header "🔧 FIX RECOMMENDATIONS"
+  print_header "FIX RECOMMENDATIONS"
   echo ""
 
   if [[ $FIX_MODE -eq 1 ]]; then
@@ -391,7 +390,7 @@ generate_missing_file_report() {
     return
   fi
 
-  print_header "📋 MISSING FILES (Optional)"
+  print_header "MISSING FILES (Optional)"
   echo ""
   echo -e "${YELLOW}These files are registered but don't exist yet:${NC}"
   echo ""
@@ -411,9 +410,9 @@ generate_missing_file_report() {
 
 main() {
   if [[ $FIX_MODE -eq 1 ]]; then
-    print_header "🔒 SECURITY PERMISSION AUDIT & FIX"
+    print_header "SECURITY PERMISSION AUDIT & FIX"
   else
-    print_header "🔒 SECURITY PERMISSION AUDIT"
+    print_header "SECURITY PERMISSION AUDIT"
   fi
 
   echo ""

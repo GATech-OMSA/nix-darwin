@@ -28,7 +28,7 @@ fi
 
 confirm() {
   if [[ "$FORCE" == "true" ]]; then return 0; fi
-  read -p "❓ $1 (y/N) " -n 1 -r
+  read -p "$1 (y/N) " -n 1 -r
   echo ""
   [[ $REPLY =~ ^[Yy]$ ]]
 }
@@ -38,7 +38,7 @@ header() {
 }
 
 success() {
-  echo -e "${GREEN}✅ $1${NC}"
+  echo -e "${GREEN}$1${NC}"
 }
 
 # ============================================ 
@@ -47,13 +47,13 @@ success() {
 header "Nix Maintenance"
 
 if confirm "Run Nix garbage collection (removes old generations)?"; then
-  echo "🧹 Cleaning up Nix store..."
+  echo "Cleaning up Nix store..."
   nix-collect-garbage -d
   success "Nix garbage collected"
 fi
 
 if confirm "Optimise Nix store (links duplicate files)?"; then
-  echo "⚙️  Optimising Nix store..."
+  echo " Optimising Nix store..."
   nix-store --optimise
   success "Nix store optimised"
 fi
@@ -65,13 +65,13 @@ header "Homebrew Maintenance"
 
 if command -v brew &> /dev/null; then
   if confirm "Clean up Homebrew cache and old versions?"; then
-    echo "🧹 Running brew cleanup..."
+    echo "Running brew cleanup..."
     brew cleanup -s
     rm -rf "$(brew --cache)"
     success "Homebrew cleaned"
   fi
 else
-  echo "ℹ️  Homebrew not found, skipping."
+  echo "Homebrew not found, skipping."
 fi
 
 # ============================================
@@ -80,27 +80,27 @@ fi
 header "macOS Maintenance"
 
 if confirm "Clear user caches (safe) and system caches (best effort)?"; then
-  echo "🧹 Clearing user caches (~/Library/Caches)..."
+  echo "Clearing user caches (~/Library/Caches)..."
   rm -rf ~/Library/Caches/*
   success "User caches cleared"
 
-  echo "🧹 Clearing system caches (/Library/Caches)..."
+  echo "Clearing system caches (/Library/Caches)..."
   echo "   (Note: Some system files are protected by SIP - ignoring errors)"
   sudo rm -rf /Library/Caches/* 2>/dev/null || true
   success "System caches cleared (allowed files only)"
 fi
 
 if confirm "Clear logs?"; then
-  echo "🧹 Clearing user logs..."
+  echo "Clearing user logs..."
   rm -rf ~/Library/Logs/*
   
-  echo "🧹 Clearing system logs..."
+  echo "Clearing system logs..."
   sudo rm -rf /private/var/log/* 2>/dev/null || true
   sudo rm -rf /Library/Logs/* 2>/dev/null || true
   success "Logs cleared"
 fi
 if confirm "Empty Trash?"; then
-  echo "🗑️  Emptying Trash..."
+  echo " Emptying Trash..."
   rm -rf ~/.Trash/*
   success "Trash emptied"
 fi
@@ -117,4 +117,4 @@ if command -v docker &> /dev/null; then
 fi
 
 header "Maintenance Complete"
-df -h / | tail -n 1 | awk '{print "📍 Remaining disk space: " $4}'
+df -h / | tail -n 1 | awk '{print "Remaining disk space: " $4}'

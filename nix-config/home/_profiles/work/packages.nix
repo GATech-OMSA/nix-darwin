@@ -2,16 +2,17 @@
 #
 # Work-specific packages for corporate development
 
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   home.packages = with pkgs; [
     # ============================================
     # ACTIVE WORK TOOLS
     # ============================================
-    # Secrets management (manual - no sops-nix due to corporate proxy)
-    sops               # Secrets encryption CLI (pre-built binary)
-    age                # Age encryption tool (for sops)
+    # Secrets management - already in system packages (modules/darwin/packages.nix)
+    # sops
+    # age
+    # yq-go
 
     # Python development
     python313          # Python 3.13
@@ -24,8 +25,9 @@
 
     # ODBC drivers and database clients
     unixODBC           # ODBC driver manager
-    freetds            # ODBC for SQL Server
-    postgresql_16      # PostgreSQL client + libpq
+    unixODBCDrivers.msodbcsql18  # Microsoft ODBC Driver 18 for SQL Server
+    # freetds          # Superseded by msodbcsql18
+    postgresql_17      # PostgreSQL client + libpq
 
     # Database CLI tools
     pgcli              # PostgreSQL CLI with auto-completion

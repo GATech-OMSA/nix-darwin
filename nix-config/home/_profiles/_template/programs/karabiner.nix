@@ -48,7 +48,7 @@ in
         fi
 
         ${myLib.msg.success "Karabiner setup complete"}
-        echo "  ⚠️  Note: Grant 'Input Monitoring' permission in System Settings when prompted"
+        echo "  warning: grant 'Input Monitoring' permission in System Settings when prompted"
       fi
     ''
   );
