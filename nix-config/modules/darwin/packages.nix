@@ -130,8 +130,7 @@ let
 
   # Work-only packages
   workPackages = with pkgs; [
-    # ghostty — macOS builds not available via Nix (nixpkgs or flake)
-    # Install via: direct download from ghostty.org
+    ghostty-bin  # Terminal emulator (pre-built macOS binary from nixpkgs)
   ];
 
   # Personal-only packages (AI/ML tools not needed on work machines)
