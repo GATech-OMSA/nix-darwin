@@ -13,7 +13,7 @@ rec {
   # Also supports ~/.zsh_secrets.local for temporary testing
   #
   # Usage:
-  #   secrets-reload              # Reload both files (or: reload-secrets)
+  #   secrets-reload              # Reload both files
   #   secrets-local edit          # Edit local test overrides
   #   secrets-local show          # Show local overrides
   #   secrets-local rm            # Remove local overrides
@@ -24,12 +24,12 @@ rec {
   #
   # Workflow:
   #   1. secrets-local edit       # Create temporary test credentials
-  #   2. reload-secrets           # Apply immediately to current shell
+  #   2. secrets-reload           # Apply immediately to current shell
   #   3. Test your changes
   #   4. secrets-local rm         # Clean up when done
   #
   mkSecretsReload = ''
-    function reload-secrets() {
+    function secrets-reload() {
       echo "Reloading secrets..."
       echo ""
 
@@ -77,9 +77,6 @@ rec {
       echo ""
       echo "   For permanent changes: edit-secrets + nix-rebuild"
     }
-
-    # Aliases (domain-first convention: secrets- + TAB shows all)
-    alias secrets-reload='reload-secrets'
   '';
 
   # ==================================================
@@ -117,7 +114,7 @@ EOF
 
           ''${EDITOR:-vim} ~/.zsh_secrets.local
           echo ""
-          echo "   Run: reload-secrets (to apply changes)"
+          echo "   Run: secrets-reload (to apply changes)"
           ;;
 
         show|s|cat)
@@ -137,7 +134,7 @@ EOF
             /bin/rm ~/.zsh_secrets.local
             echo "Deleted ~/.zsh_secrets.local"
             echo ""
-            echo "   Run: reload-secrets (to clear overrides)"
+            echo "   Run: secrets-reload (to clear overrides)"
           else
             echo "error: no ~/.zsh_secrets.local found"
           fi
@@ -174,7 +171,7 @@ EOF
           echo ""
           echo "Workflow:"
           echo "  1. secrets-local edit      # Create test credentials"
-          echo "  2. secrets-reload          # Apply to current shell"
+          echo "  2. secrets-reload           # Apply to current shell"
           echo "  3. Test your changes"
           echo "  4. secrets-local rm        # Clean up when done"
           echo ""

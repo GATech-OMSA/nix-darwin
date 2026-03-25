@@ -20,7 +20,7 @@ The system uses a tiered cleanup approach to balance safety and thoroughness.
 
 These scripts provide specific maintenance functions beyond general cleanup.
 
-*   `cleanup-system`: Runs `scripts/maintenance/system-cleanup.sh`. An interactive script that guides you through cleaning Nix, Brew, macOS caches, and Docker. Good for occasional manual maintenance.
+*   `system-cleanup`: Runs `scripts/maintenance/system-cleanup.sh`. An interactive script that guides you through cleaning Nix, Brew, macOS caches, and Docker. Good for occasional manual maintenance.
 
 ---
 
@@ -36,7 +36,7 @@ These scripts provide specific maintenance functions beyond general cleanup.
 
 ### Troubleshooting / Disk Space Recovery
 *   Run `cleanup-aggressive` to reclaim maximum space.
-*   Run `cleanup-system` for an interactive, guided cleanup process.
+*   Run `system-cleanup` for an interactive, guided cleanup process.
 
 ---
 

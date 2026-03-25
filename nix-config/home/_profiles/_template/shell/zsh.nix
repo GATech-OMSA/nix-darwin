@@ -79,9 +79,7 @@ in
 
       # Quick open shortcuts
       vs = "code .";          # Open VS Code in current directory
-      vscode = "code .";      # Alias for vs (full name)
       f = "open .";           # Open Finder in current directory
-      finder = "open .";      # Alias for f (full name)
 
       # Configuration shortcuts
       nixconf = "code ${nixDarwinDir}";
@@ -109,9 +107,8 @@ in
       nix-preflight = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh";
 
       # System health check - Validate nix-darwin system state (no shell restart needed)
-      # Usage: nix-health-check (normal) | nix-health-check --verbose (detailed)
-      nix-health-check = "${nixDarwinDir}/scripts/maintenance/health-check.sh";
-      nix-health = "${nixDarwinDir}/scripts/maintenance/health-check.sh";  # Shorter alternate
+      # Usage: nix-health (normal) | nix-health --verbose (detailed)
+      nix-health = "${nixDarwinDir}/scripts/maintenance/health-check.sh";
 
       # Compare configurations between generations (no shell restart needed)
       # Usage: nix-config-diff (current vs previous) | nix-config-diff --generations N M
@@ -138,7 +135,6 @@ in
 
       # Scaffold new machine configuration from template
       nix-scaffold-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
-      nix-new-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
 
       # Secret management (Secret Management v2.0)
       # Tier 3: domain-action pattern for namespace grouping (secrets-*)
@@ -147,7 +143,7 @@ in
       secrets-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
       secrets-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
       secrets-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
-      secrets-status = "${nixDarwinDir}/scripts/secrets/status-secrets.sh";
+      # secrets-status provided by lazy-loaded credentials-mgmt.zsh (richer output)
       secrets-deploy = "${nixDarwinDir}/scripts/secrets/deploy-secrets.sh";
 
       # Maintenance & validation
@@ -191,12 +187,10 @@ in
 
       # Quick directories (cd operations)
       dev = "cd ~/Dev";
-      downloads = "cd ~/Downloads";
-      desktop = "cd ~/Desktop";
-      docs = "cd ~/Documents";
-      apps = "cd ~/Applications";
       down = "cd ~/Downloads";
       desk = "cd ~/Desktop";
+      docs = "cd ~/Documents";
+      apps = "cd ~/Applications";
 
       # Finder operations (Tier 5: f + target)
       fdev = "open ~/Dev";
@@ -335,7 +329,7 @@ in
       # cleanup-aggressive : Deep clean (requires confirmation)
       
       # Script-based maintenance
-      cleanup-system = "${nixDarwinDir}/scripts/maintenance/system-cleanup.sh";  # External script
+      system-cleanup = "${nixDarwinDir}/scripts/maintenance/system-cleanup.sh";
     };
 
 
@@ -593,7 +587,7 @@ in
       # HOT RELOAD FUNCTIONS
       # ============================================
       # Quick reload of secrets and environment without rebuild
-      # Functions: reload-secrets, secrets-local {edit|show|rm}
+      # Functions: secrets-reload, secrets-local {edit|show|rm}
 
       ${myLib.reload.mkAllHotReloadFunctions}
 

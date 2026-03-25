@@ -58,7 +58,6 @@ nix-rebuild-skip-checks # Emergency rebuild
 nix-rebuild-debug      # Verbose rebuild
 nix-check              # Validate configuration
 nix-health             # System health check
-nix-health-check       # System health check (long form)
 nix-rollback           # Rollback to previous generation
 nix-config-diff        # Compare generations
 nix-config-diff-packages # Package changes only
@@ -93,7 +92,7 @@ cleanup-aggressive     # Deep clean (requires confirmation)
 cleanup-nix            # Nix generations only
 cleanup-docker         # Docker cleanup only
 cleanup-python         # Python cache cleanup only
-cleanup-system         # Interactive guided cleanup script
+system-cleanup         # Interactive guided cleanup script
 ```
 
 ---
