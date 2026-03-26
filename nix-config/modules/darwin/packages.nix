@@ -112,6 +112,7 @@ let
     # Development Utilities
     gnumake  # Build automation
     go  # Go language
+    bun  # Fast JavaScript runtime and package manager
 
     # Containers & Orchestration
     kubectl
