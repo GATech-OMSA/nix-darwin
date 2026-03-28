@@ -14,6 +14,8 @@ NC='\033[0m' # No Color
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DOCS_SCRIPT_DIR="$REPO_ROOT/scripts/docs"
+MAINTENANCE_SCRIPT_DIR="$REPO_ROOT/scripts/maintenance"
 
 cd "$REPO_ROOT"
 
@@ -26,7 +28,7 @@ FAILURES=0
 
 # Check 1: Link validation
 echo -e "${YELLOW}[1/2]${NC} Validating documentation links..."
-if python3 "$SCRIPT_DIR/check-doc-links.py" CLAUDE.md; then
+if python3 "$DOCS_SCRIPT_DIR/check-doc-links.py" CLAUDE.md; then
     echo -e "${GREEN}      Link validation passed${NC}"
 else
     echo -e "${RED}      error: link validation failed${NC}"
@@ -36,7 +38,7 @@ echo ""
 
 # Check 2: File count verification
 echo -e "${YELLOW}[2/2]${NC} Verifying documentation file count..."
-if "$SCRIPT_DIR/count-docs.sh" --warn; then
+if "$MAINTENANCE_SCRIPT_DIR/count-docs.sh" --warn; then
     echo -e "${GREEN}      File count verification passed${NC}"
 else
     echo -e "${YELLOW}      warning: file count verification warning${NC}"

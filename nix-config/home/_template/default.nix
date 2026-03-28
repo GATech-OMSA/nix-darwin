@@ -48,6 +48,29 @@
 
     # Activation scripts (run on every rebuild)
     activation = {
+      secureCredentialPermissions = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        home_dir="${config.home.homeDirectory}"
+
+        # Keep sensitive local auth material locked down on every activation.
+        if [ -d "$home_dir/.ssh" ]; then
+          chmod 700 "$home_dir/.ssh" 2>/dev/null || true
+          [ -f "$home_dir/.ssh/config" ] && chmod 600 "$home_dir/.ssh/config" 2>/dev/null || true
+          find "$home_dir/.ssh" -maxdepth 1 -type f ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
+          find "$home_dir/.ssh" -maxdepth 1 -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
+        fi
+
+        if [ -d "$home_dir/.aws" ]; then
+          chmod 700 "$home_dir/.aws" 2>/dev/null || true
+          [ -f "$home_dir/.aws/credentials" ] && chmod 600 "$home_dir/.aws/credentials" 2>/dev/null || true
+          [ -f "$home_dir/.aws/config" ] && chmod 600 "$home_dir/.aws/config" 2>/dev/null || true
+        fi
+
+        if [ -d "$home_dir/.config/sops/age" ]; then
+          chmod 700 "$home_dir/.config/sops/age" 2>/dev/null || true
+          [ -f "$home_dir/.config/sops/age/keys.txt" ] && chmod 600 "$home_dir/.config/sops/age/keys.txt" 2>/dev/null || true
+        fi
+      '';
+
       installGitHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
         # Install git hooks for secrets validation
         NIX_DARWIN_DIR="${config.home.homeDirectory}/nix-darwin"
@@ -69,8 +92,9 @@
 echo "→ Validating secrets and credentials..."
 
 SECRETS_PATHS=(
+  "$HOME/nix-darwin/nix-config/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/hosts/*/secrets.yaml"
-  "$HOME/nix-darwin/user-data-${username}/secrets/*.yaml"
+  "$HOME/nix-darwin/user-data-*/secrets/*.yaml"
 )
 
 BLOCKED_PATTERNS=(
@@ -153,8 +177,9 @@ EOF
 echo "→ Final security check before push..."
 
 SECRETS_PATHS=(
+  "$HOME/nix-darwin/nix-config/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/hosts/*/secrets.yaml"
-  "$HOME/nix-darwin/user-data-${username}/secrets/*.yaml"
+  "$HOME/nix-darwin/user-data-*/secrets/*.yaml"
 )
 
 CREDENTIAL_PATHS=(

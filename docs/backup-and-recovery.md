@@ -701,7 +701,7 @@ exec zsh
 - **[Installation Guide](installation.md)** - New machine setup with v2.0.0
 - **[Secrets Management](secrets.md)** - SOPS age encryption setup
 - **[Troubleshooting](troubleshooting.md)** - Recovery procedures
-- **[AWS Multi-Role Guide](work/aws/aws-multi-role.md)** - Work profile AWS setup
+- **[AWS & Secrets Reference](aws-and-secrets-workflow.md)** - AWS SSO and secrets workflow
 
 ---
 
