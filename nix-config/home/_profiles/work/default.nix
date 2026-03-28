@@ -1,7 +1,7 @@
 # home/_profiles/work/default.nix
 #
 # Work profile configuration
-# For: Corporate development, AWS infrastructure, database connectivity
+# For: Corporate development, AWS infrastructure
 
 { config, pkgs, lib, myLib, hostname, userConfig, ... }:
 
@@ -32,9 +32,9 @@ in {
   imports = [
     ../_template/programs      # Base program configs
     ../_template/shell/zsh.nix # Base shell config
+    ../../_template/development # Development configs (Python, Node, AI/ML)
     ./packages.nix             # Work-specific packages
     ./aliases.nix              # Work-specific aliases
-    ./database.nix             # Database instances
   ];
 
   # Add Rancher Desktop to PATH (for Docker CLI)
@@ -51,9 +51,6 @@ in {
     # AWS Configuration (corporate CA bundle)
     AWS_CA_BUNDLE = caBundlePath;
 
-    # ODBC Configuration
-    ODBCSYSINI = "/usr/local/etc";
-    ODBCINI = "/usr/local/etc/odbc.ini";
   }
   // goProxyVars      # Merge Go proxy vars if enabled
   // pythonProxyVars  # Merge Python proxy vars if enabled

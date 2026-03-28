@@ -1,203 +1,136 @@
 # home/_profiles/work/packages.nix
 #
 # Work-specific packages for corporate development
+# All packages commented out — uncomment as needed
 
 { pkgs, lib, ... }:
 
 {
   home.packages = with pkgs; [
     # ============================================
-    # ACTIVE WORK TOOLS
+    # API DEVELOPMENT & TESTING
     # ============================================
-    # Secrets management - already in system packages (modules/darwin/packages.nix)
-    # sops
-    # age
-    # yq-go
-
-    # Python development
-    python313          # Python 3.13
-    uv                 # Fast Python package installer
-    # micromamba       # BROKEN in nixpkgs 1.5.8 (fmt formatter issue) - using Homebrew instead
-
-    # Node.js (required for VS Code extensions like Amazon Q)
-    nodejs_22          # Node.js 22 LTS
-
-
-    # ODBC drivers and database clients
-    unixODBC           # ODBC driver manager
-    unixODBCDrivers.msodbcsql18  # Microsoft ODBC Driver 18 for SQL Server
-    # freetds          # Superseded by msodbcsql18
-    postgresql_17      # PostgreSQL client + libpq
-
-    # Database CLI tools
-    pgcli              # PostgreSQL CLI with auto-completion
-    # mycli            # MySQL/MariaDB CLI (uncomment if needed)
+    # bruno              # Open-source API client (Git-friendly Postman alternative)
+    # hurl               # Run and test HTTP requests from plain text files
+    # posting            # TUI HTTP client
+    # xh                 # Fast HTTP request tool (httpie-compatible)
 
     # ============================================
-    # DATA ENGINEERING & ETL TOOLS (Uncomment as needed)
+    # CONTAINER & KUBERNETES
+    # ============================================
+    # k9s                # TUI for Kubernetes cluster management
+    # kubectx            # Switch kubectl contexts/namespaces quickly
+    # dive               # Explore Docker image layers
+    # lazydocker         # TUI for Docker management
+    # helm               # Kubernetes package manager
+    # kustomize          # Kubernetes config customization
+    # skaffold           # Local Kubernetes development
+    # tilt               # Multi-service dev environment for K8s
+    # argocd             # GitOps continuous delivery
+
+    # ============================================
+    # SECURITY & COMPLIANCE
+    # ============================================
+    # trivy              # Container/filesystem vulnerability scanner
+    # grype              # Container image vulnerability scanner
+    # syft               # SBOM (software bill of materials) generator
+    # cosign             # Container image signing/verification
+    # gitleaks           # Secret detection in git repos
+    # trufflehog         # Credential scanner for git/S3/filesystems
+
+    # ============================================
+    # CLOUD & INFRASTRUCTURE
+    # ============================================
+    # AWS tools
+    # aws-vault          # Secure AWS credential storage
+    # aws-iam-authenticator  # EKS authentication
+    # eksctl             # EKS cluster management
+    # granted            # Fast AWS role switching with SSO
+    # infracost          # Cloud cost estimates for Terraform
+    # steampipe          # Cloud infrastructure queries
+
+    # Terraform/OpenTofu
+    # tenv               # Terraform/OpenTofu version manager
+
+    # Azure tools
+    # azure-cli          # Azure command-line
+
+    # GCP tools
+    # google-cloud-sdk   # GCP command-line
+
+    # Multi-cloud
+    # cloudquery         # Cloud asset inventory
+
+    # ============================================
+    # DATA ENGINEERING & ETL
     # ============================================
     # ETL frameworks
     # airflow            # Workflow orchestration
     # dagster            # Data orchestration
     # prefect            # Modern workflow orchestration
-    # luigi              # Python ETL framework
 
     # Data transformation
-    # dbt                # Data transformation tool
-    # dataform           # SQL-based data transformation
     # sqlfluff           # SQL linter
 
-    # Data integration
-    # airbyte            # Open-source data integration
-    # meltano            # ELT platform
-    # singer-python      # Data extraction framework
-
-    # Data quality
-    # great-expectations # Data validation
-    # soda-core          # Data quality testing
-    # datafold           # Data testing
-
-    # ============================================
-    # BIG DATA & ANALYTICS (Uncomment as needed)
-    # ============================================
-    # Apache ecosystem
-    # spark              # Distributed computing
-    # hadoop             # Distributed storage/processing
-    # hive               # Data warehouse
-    # kafka              # Event streaming
-    # flink              # Stream processing
-
-    # Data lakes & warehouses
-    # delta-lake         # ACID transactions on data lakes
-    # iceberg            # Table format for data lakes
-    # hudi               # Incremental data processing
+    # Object storage
+    # minio-client       # S3-compatible object storage CLI
 
     # Query engines
-    # presto             # Distributed SQL query engine
-    # trino              # Fast distributed SQL
     # duckdb             # In-process analytical database
     # clickhouse         # Column-oriented database
 
     # ============================================
-    # CLOUD & INFRASTRUCTURE (Uncomment as needed)
+    # MONITORING & OBSERVABILITY
     # ============================================
-    # AWS tools (beyond awscli2)
-    # aws-vault          # Secure AWS credential storage
-    # aws-iam-authenticator  # EKS authentication
-    # eksctl             # EKS cluster management
-    # aws-nuke           # AWS resource cleanup
-    # steampipe          # Cloud infrastructure queries
-
-    # Azure tools
-    # azure-cli          # Azure command-line
-    # azure-functions-core-tools  # Azure Functions
-
-    # GCP tools
-    # google-cloud-sdk   # GCP command-line
-    # gcloud-sql-proxy   # Cloud SQL proxy
-
-    # Multi-cloud
-    # cloudsplaining     # AWS IAM security assessment
-    # cloud-nuke         # Multi-cloud resource cleanup
-    # cloudquery         # Cloud asset inventory
-
-    # ============================================
-    # DATA SCIENCE & ML/AI (Uncomment as needed)
-    # ============================================
-    # ML frameworks
-    # python3Packages.tensorflow
-    # python3Packages.pytorch
-    # python3Packages.scikit-learn
-
-    # MLOps
-    # mlflow             # ML lifecycle management
-    # kubeflow           # ML on Kubernetes
-    # seldon-core        # ML deployment
-
-    # ============================================
-    # MONITORING & OBSERVABILITY (Uncomment as needed)
-    # ============================================
-    # Metrics & monitoring
+    # Metrics & pipelines
     # prometheus         # Metrics collection
     # grafana            # Metrics visualization
-    # telegraf           # Metrics collection agent
-
-    # Logging
-    # elasticsearch      # Log storage
-    # logstash           # Log processing
-    # kibana             # Log visualization
-    # fluentd            # Log collection
+    # vector             # High-performance log/metric pipeline
 
     # Tracing
     # jaeger             # Distributed tracing
-    # zipkin             # Distributed tracing
     # tempo              # Distributed tracing backend
-
-    # Application Performance Monitoring
     # opentelemetry-collector  # Telemetry collection
-    # datadog-agent      # Datadog APM
-    # new-relic-cli      # New Relic CLI
+
+    # Load testing
+    # k6                 # Load testing tool (Grafana)
+    # vegeta             # HTTP load testing
+    # hey                # Simple HTTP load generator
 
     # ============================================
-    # DATA QUALITY & TESTING (Uncomment as needed)
+    # AI-ASSISTED DEVELOPMENT
     # ============================================
-    # Data testing
-    # pytest             # Python testing (in dev.nix)
-    # great-expectations # Data validation framework
-    # pandera            # Pandas data validation
-    # cerberus           # Schema validation
-
-    # Data profiling
-    # ydata-profiling    # Data profiling
-    # pandas-profiling   # Deprecated (use ydata-profiling)
-
-    # Data lineage
-    # datahub            # Metadata platform
-    # amundsen           # Data discovery
-    # marquez            # Metadata service
-
-    # Schema validation
-    # jsonschema         # JSON schema validation
-    # pydantic           # Data validation (Python)
+    # aider-chat         # AI pair programming in terminal
+    # fabric-ai          # AI-powered CLI for text processing patterns
 
     # ============================================
-    # BUSINESS INTELLIGENCE & VISUALIZATION (Uncomment as needed)
+    # CODE ANALYSIS & BENCHMARKING
     # ============================================
-    # BI tools
-    # metabase           # Open-source BI
-    # superset           # Data visualization
-    # redash             # SQL-based BI
-
-    # Reporting
-    # jasperreports      # Reporting engine
-    # pentaho            # BI suite
-
-    # Dashboard frameworks
-    # streamlit          # Python data apps
-    # dash               # Python dashboards
-    # voila              # Jupyter dashboards
+    # tokei              # Fast code statistics by language
+    # scc                # Fast code counter with complexity
+    # hyperfine          # CLI benchmarking tool
 
     # ============================================
-    # COLLABORATION & DOCUMENTATION (Uncomment as needed)
+    # NETWORKING & DIAGNOSTICS
     # ============================================
-    # Documentation
+    # doggo              # Modern DNS client (dig alternative)
+    # bandwhich          # TUI bandwidth utilization by process
+    # trippy             # Modern network diagnostics (traceroute + ping TUI)
+
+    # ============================================
+    # DATA SCIENCE & ML/AI
+    # ============================================
+    # python3Packages.tensorflow
+    # python3Packages.pytorch
+    # python3Packages.scikit-learn
+    # mlflow             # ML lifecycle management
+
+    # ============================================
+    # DOCUMENTATION & DIAGRAMMING
+    # ============================================
     # mkdocs             # Documentation generator
-    # sphinx             # Python documentation
-    # jupyter-book       # Executable books
     # quarto             # Scientific publishing
-
-    # Diagramming
     # mermaid-cli        # Text-to-diagram
-    # plantuml           # UML diagrams
     # graphviz           # Graph visualization
-    # drawio             # Diagramming tool
-
-    # Project management
-    # jira-cli           # Jira CLI
-    # gh                 # GitHub CLI (in shared packages)
-
-    # Knowledge management
-    # obsidian           # Knowledge base (via Homebrew on personal)
-    # notion             # Workspace (web-based)
   ];
 }

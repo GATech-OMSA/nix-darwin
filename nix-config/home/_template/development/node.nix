@@ -6,7 +6,5 @@
 
   home.packages = with pkgs; [
     nodejs_22  # Includes npm by default
-    nodePackages.pnpm
-    nodePackages.yarn
   ];
 }

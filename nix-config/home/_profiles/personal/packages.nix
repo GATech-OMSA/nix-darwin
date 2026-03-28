@@ -1,104 +1,120 @@
 # home/_profiles/personal/packages.nix
 #
 # Packages specific to personal profile
+# All packages commented out — uncomment as needed
 
 { pkgs, ... }:
 
 {
   home.packages = with pkgs; [
     # ============================================
-    # ACTIVE PERSONAL TOOLS
+    # CREATIVE & MEDIA TOOLS
     # ============================================
-    # neofetch  # Deprecated/unmaintained — use fastfetch (installed in system packages)
+    # Video & audio
+    # ffmpeg             # Video/audio converter
+    # yt-dlp             # Video/audio downloader (youtube-dl successor)
+    # obs-studio         # Screen recording/streaming
+    # handbrake          # Video transcoder
+    # sox                # Sound processing
 
-    # ============================================
-    # CREATIVE & MEDIA TOOLS (Uncomment as needed)
-    # ============================================
-    # Video editing & processing
-    # ffmpeg         # Video/audio converter
-    # handbrake      # Video transcoder
-    # obs-studio     # Screen recording/streaming
+    # Image
+    # imagemagick        # Image manipulation CLI
+    # darktable          # Photo workflow
+    # inkscape           # Vector graphics editor
 
-    # Image editing & graphics
-    # imagemagick    # Image manipulation CLI
-    # gimp           # Photo editor
-    # inkscape       # Vector graphics editor
-    # darktable      # Photo workflow
-
-    # Audio tools
-    # audacity       # Audio editor
-    # sox            # Sound processing
+    # Code screenshots & terminal recording
+    # silicon            # Create code screenshots from terminal
+    # vhs                # Record terminal sessions as GIFs
+    # charm-freeze       # Generate code images from terminal
 
     # ============================================
-    # PRODUCTIVITY & ORGANIZATION (Uncomment as needed)
+    # TERMINAL PRODUCTIVITY
     # ============================================
-    # Note-taking & writing
-    # obsidian       # Knowledge base (via Homebrew)
-    # marksman       # Markdown LSP
-    # pandoc         # Document converter (in shared packages)
-    # vale           # Prose linter
+    # File managers
+    # yazi               # Blazing fast terminal file manager (Rust)
+    # superfile          # Modern TUI file manager
 
-    # PDF & reading
-    # calibre        # E-book manager
-    # zathura        # Minimal PDF viewer
-    # qpdfview       # PDF viewer
+    # Search & navigation
+    # television         # Fuzzy finder TUI for files/text/git
 
-    # Task management
-    # taskwarrior    # CLI task manager
-    # timewarrior    # Time tracking
+    # Rendering & display
+    # glow               # Terminal Markdown renderer
+    # onefetch           # Git repo info (neofetch for repos)
 
-    # ============================================
-    # LEARNING & RESEARCH (Uncomment as needed)
-    # ============================================
-    # Research tools
-    # zotero         # Reference manager
-    # anki           # Spaced repetition flashcards
+    # Shells & multiplexers
+    # nushell            # Structured data shell (modern shell alternative)
+    # zellij             # Terminal multiplexer (tmux alternative)
 
-    # Documentation browsers
-    # devdocs-desktop # Offline documentation
-    # zeal           # Documentation browser
-
-    # Learning platforms
-    # jupyter        # Interactive notebooks
+    # Editors
+    # helix              # Post-modern terminal editor (Rust, Vim-like)
 
     # ============================================
-    # AI/ML EXPERIMENTATION (Uncomment as needed)
+    # AI/ML EXPERIMENTATION
     # ============================================
     # LLM tools (local)
-    # ollama         # Local LLM inference (installed separately)
-    # llm            # CLI for LLMs
-    # aichat         # Chat with AI in terminal
+    # ollama             # Local LLM inference (installed separately)
+    # aider-chat         # AI pair programming in terminal
+    # fabric-ai          # AI-powered CLI for text processing
+    # whisper-cpp        # Local speech-to-text (OpenAI Whisper)
+    # llm                # CLI for LLMs
+    # aichat             # Chat with AI in terminal
 
-    # ML frameworks & tools
-    # python3Packages.pytorch     # PyTorch
-    # python3Packages.tensorflow  # TensorFlow
-    # python3Packages.scikit-learn  # ML library
-    # python3Packages.transformers  # Hugging Face transformers
+    # ML frameworks (prefer venv over global install)
+    # python3Packages.pytorch
+    # python3Packages.tensorflow
+    # python3Packages.scikit-learn
+    # python3Packages.transformers
 
-    # Data science
-    # python3Packages.jupyter  # Jupyter notebooks
-    # python3Packages.pandas   # Data manipulation
-    # python3Packages.numpy    # Numerical computing
-    # python3Packages.matplotlib  # Plotting
+    # Data science (prefer venv over global install)
+    # python3Packages.jupyter
+    # python3Packages.pandas
+    # python3Packages.numpy
+    # python3Packages.matplotlib
 
     # Model tools
-    # huggingface-cli  # Hugging Face CLI
-    # mlflow          # ML experiment tracking
+    # mlflow             # ML experiment tracking
 
     # ============================================
-    # PERSONAL UTILITIES (Uncomment as needed)
+    # PRODUCTIVITY & WRITING
     # ============================================
-    # Backup & sync
-    # rclone         # Cloud storage sync
-    # syncthing      # P2P file sync
-    # restic         # Backup tool
+    # Note-taking
+    # nb                 # CLI note-taking, bookmarking, knowledge base
+    # marksman           # Markdown LSP
+    # vale               # Prose linter
 
-    # Password & secrets
-    # pass           # Unix password manager
-    # pwgen          # Password generator
+    # PDF & reading
+    # calibre            # E-book manager
+    # zathura            # Minimal PDF viewer
 
-    # Personal automation
-    # espanso        # Text expander
-    # hazel          # Automated file organization
+    # Task management
+    # taskwarrior        # CLI task manager
+    # timewarrior        # Time tracking
+
+    # ============================================
+    # LEARNING & RESEARCH
+    # ============================================
+    # zotero             # Reference manager
+    # anki               # Spaced repetition flashcards
+    # jupyter            # Interactive notebooks
+
+    # ============================================
+    # PRIVACY & SECURITY
+    # ============================================
+    # minisign           # Simple file signing tool
+    # rage               # Modern encryption tool (age-compatible, Rust)
+    # pass               # Unix password manager
+
+    # ============================================
+    # BACKUP & SYNC
+    # ============================================
+    # rclone             # Cloud storage sync
+    # syncthing          # P2P file sync
+    # restic             # Incremental backup tool
+    # borgbackup         # Deduplicating backup program
+
+    # ============================================
+    # PERSONAL AUTOMATION
+    # ============================================
+    # espanso            # Text expander
   ];
 }

@@ -68,13 +68,6 @@ rec {
   '';
 
   # ============================================
-  # DATABASE & CREDENTIAL HELPERS
-  # ============================================
-
-  # Import database helper library
-  database = import ./database-helpers.nix { inherit lib; };
-
-  # ============================================
   # AWS HELPERS
   # ============================================
 
