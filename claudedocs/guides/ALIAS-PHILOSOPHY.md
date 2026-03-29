@@ -117,8 +117,20 @@ cc                     # claude
 ccr                    # claude --resume
 ccc                    # claude --continue
 cca                    # claude --add-dir
+ccw                    # claude -w
+ccwt                   # claude -w --tmux
+ccq                    # claude --bare -p  (query/pipe mode)
+ccs                    # claude --model sonnet
+ccm                    # claude --effort max
+
+# Dangerous variants — ! suffix signals skip-permissions
 cc!                    # claude --dangerously-skip-permissions
+ccr!                   # claude --dangerously-skip-permissions --resume
+ccc!                   # claude --dangerously-skip-permissions --continue
 ```
+Note: `!` suffix is a deliberate exception to the "short = safe" rule.
+The `!` is a universally understood danger signal (shell/markdown convention).
+Defined in `~/.zshrc.local` — no rebuild needed to change.
 
 ---
 
@@ -188,6 +200,7 @@ These aliases map modern tools over standard Unix commands:
 | `nix-config/home/_profiles/_template/programs/git.nix` | Git aliases (g prefix) |
 | `nix-config/home/_profiles/personal/aliases.nix` | Personal-only aliases |
 | `nix-config/home/_profiles/work/aliases.nix` | Work-only aliases |
+| `~/.zshrc.local` | Claude Code aliases + local config shortcuts (not Nix-managed) |
 
 ---
 

@@ -151,7 +151,26 @@ secrets-view      # View decrypted secrets (read-only)
 secrets-backup    # Create timestamped backup
 secrets-audit     # Scan for plaintext credential exposure
 secrets-local     # Manage temporary testing overrides
+zsh-local         # Manage ~/.zshrc.local aliases/overrides
 ```
+
+### Local Overrides
+
+```bash
+# Runtime-only secret overrides
+secrets-local add OPENAI_API_KEY "sk-test-..."
+secrets-local add FEATURE_FLAG "1"
+secrets-local unset FEATURE_FLAG
+
+# Local shell aliases without rebuild
+zsh-local alias add ccr "claude --resume"
+zsh-local alias add "cc!" "claude --dangerously-skip-permissions"
+zsh-local alias rm ccr
+```
+
+Use `secrets-local` for temporary values in `~/.zsh_secrets.local`.
+Use `zsh-local` for aliases and shell tweaks in `~/.zshrc.local`.
+Permanent secrets should still go through `secrets-edit` and `secrets-deploy`.
 
 ---
 

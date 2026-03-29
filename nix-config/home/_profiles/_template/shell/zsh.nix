@@ -90,7 +90,7 @@ in
       awsconf = "code ${homeDir}/.aws/config";
       awscred = "code ${homeDir}/.aws/credentials";
       jupyterconf = "code ${homeDir}/.jupyter/jupyter_notebook_config.py";
-      zshrc = "code ${homeDir}/.zshrc";
+      # zshrc — managed in ~/.zshrc.local (no rebuild needed)
       zshsec = "code ${homeDir}/.zsh_secrets";
 
       # Nix-Darwin system management
@@ -583,7 +583,7 @@ in
       # HOT RELOAD FUNCTIONS
       # ============================================
       # Quick reload of secrets and environment without rebuild
-      # Functions: secrets-reload, secrets-local {edit|show|rm}
+      # Functions: secrets-reload, secrets-local, zsh-local
 
       ${myLib.reload.mkAllHotReloadFunctions}
 
@@ -608,7 +608,9 @@ in
       '')
 
       # Source local overrides (not Nix-managed, no rebuild needed)
+      # __ensure_zshrc_local creates the file with default aliases on first shell start
       (lib.mkOrder 9999 ''
+        __ensure_zshrc_local
         [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
       '')
     ];
