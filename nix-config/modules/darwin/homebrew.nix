@@ -66,6 +66,7 @@
       "ollama-app"
 
       # Utilities
+      "conductor"
       "appcleaner"
       "keka"
       "keyclu"
