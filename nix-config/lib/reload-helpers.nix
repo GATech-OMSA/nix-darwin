@@ -303,12 +303,35 @@ EOF
     function __ensure_zshrc_local() {
       if [ ! -f ~/.zshrc.local ]; then
         cat > ~/.zshrc.local <<'EOF'
-# Local zsh overrides
-# This file is not managed by Nix and is sourced at the end of shell init.
-#
-# Examples:
-# alias cc='claude'
-# export MY_LOCAL_FLAG='1'
+# ~/.zshrc.local
+# Local shell overrides — not managed by Nix, no rebuild needed.
+
+# Claude Code aliases
+alias cc='claude'
+alias ccr='claude --resume'
+alias ccc='claude --continue'
+alias cca='claude --add-dir'
+alias 'cc!'='claude --dangerously-skip-permissions'
+alias 'ccr!'='claude --dangerously-skip-permissions --resume'
+alias 'ccc!'='claude --dangerously-skip-permissions --continue'
+
+# Variants
+alias ccw='claude -w'
+alias ccwt='claude -w --tmux'
+alias ccq='claude --bare -p'
+alias ccs='claude --model sonnet'
+alias ccm='claude --effort max'
+
+# Config shortcuts
+alias ccconfig='code ~/.claude/settings.json'
+alias awsconfig='code ~/.aws/config'
+alias zshrc='code ~/.zshrc'
+alias zshrclocal='code ~/.zshrc.local'
+alias zshenv='code ~/.zshenv'
+alias zshenvlocal='code ~/.zshenv.local'
+alias zshsecrets='code ~/.zsh_secrets'
+alias sshconf='code ~/.ssh/config'
+alias zprofile='code ~/.zprofile'
 
 EOF
         chmod 600 ~/.zshrc.local 2>/dev/null || true

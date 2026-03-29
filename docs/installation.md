@@ -343,18 +343,20 @@ vs
 **If you selected work profile, AWS SSO multi-account support is available:**
 
 ```bash
-# 1. Edit AWS account mapping (interactive editor)
+# 1. Edit AWS account mapping (adds accounts to secrets.yaml via SOPS)
 edit-aws-map
 
-# 2. Follow the interactive guide to map AWS accounts
-# See: AWS Multi-Role Guide (available in work profile setup)
+# 2. Deploy secrets — generates ~/.aws/accounts.json from secrets.yaml
+secrets-deploy
 
-# 3. Login to AWS SSO
-awslogin
+# 3. Verify accounts loaded
+awslist
 
-# 4. Switch between accounts
-awsuse dev    # Switches to development account
-awsuse prod   # Switches to production account
+# 4. Login to AWS SSO
+awslogin <project> <env>
+
+# 5. Switch between accounts
+awsuse <project> <env>    # Switches active profile
 ```
 
 **AWS SSO account mapping:**
@@ -799,8 +801,8 @@ source ~/.zshrc
 - [ ] SSH keys generated and added to GitHub
 - [ ] Python environment working (`python --version`)
 - [ ] VS Code configured with themes
-- [ ] AWS configured (work profile only)
-- [ ] Secrets encrypted (`secrets-status`)
+- [ ] AWS configured (work profile only) — `edit-aws-map` → `secrets-deploy` → `awslogin`
+- [ ] Secrets encrypted and deployed (`secrets-status` + `secrets-deploy`)
 - [ ] Git hooks installed (automatic)
 - [ ] First commit pushed
 
