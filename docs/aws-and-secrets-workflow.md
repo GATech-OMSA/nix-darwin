@@ -216,11 +216,23 @@ secrets-reload                        # 4. Re-source if shell var
 
 ```bash
 # Test credentials without touching encrypted secrets
-secrets-local edit      # Create ~/.zsh_secrets.local with test values
-secrets-reload          # Apply immediately
+secrets-local add OPENAI_API_KEY "sk-test-..."   # Persist + apply now
+secrets-local add FEATURE_FLAG "1"               # Add another override
 # ... test ...
+secrets-local unset FEATURE_FLAG
 secrets-local rm        # Clean up
 ```
+
+```bash
+# Local zsh aliases/overrides without rebuild
+zsh-local alias add ccr "claude --resume"
+zsh-local alias add "cc!" "claude --dangerously-skip-permissions"
+zsh-local alias rm ccr
+```
+
+`secrets-local` writes to `~/.zsh_secrets.local` and reapplies secrets to the
+current shell. `zsh-local` writes to `~/.zshrc.local`, which is sourced at the
+end of shell startup and can also be reloaded manually.
 
 ### Encryption
 

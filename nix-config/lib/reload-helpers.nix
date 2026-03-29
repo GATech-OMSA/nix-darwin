@@ -7,6 +7,48 @@
 
 rec {
   # ==================================================
+  # SHARED LOCAL FILE HELPERS
+  # ==================================================
+
+  mkLocalFileHelpers = ''
+    function __local_file_upsert_prefix() {
+      local file="$1"
+      local prefix="$2"
+      local replacement="$3"
+      local tmp_file
+
+      tmp_file=$(mktemp)
+      awk -v prefix="$prefix" -v replacement="$replacement" '
+        BEGIN { replaced = 0 }
+        substr($0, 1, length(prefix)) == prefix {
+          if (!replaced) {
+            print replacement
+            replaced = 1
+          }
+          next
+        }
+        { print }
+        END {
+          if (!replaced) {
+            print replacement
+          }
+        }
+      ' "$file" > "$tmp_file" && mv "$tmp_file" "$file"
+    }
+
+    function __local_file_remove_prefix() {
+      local file="$1"
+      local prefix="$2"
+      local tmp_file
+
+      tmp_file=$(mktemp)
+      awk -v prefix="$prefix" '
+        substr($0, 1, length(prefix)) != prefix { print }
+      ' "$file" > "$tmp_file" && mv "$tmp_file" "$file"
+    }
+  '';
+
+  # ==================================================
   # SECRETS HOT RELOAD
   # ==================================================
   # Reload secrets from ~/.zsh_secrets without rebuilding
@@ -86,17 +128,9 @@ rec {
   # Local secrets override SOPS-managed secrets temporarily
   #
   mkLocalSecretsHelper = ''
-    function secrets-local() {
-      local action="''${1:-help}"
-
-      case "$action" in
-        edit|e)
-          echo "Opening ~/.zsh_secrets.local for editing..."
-          echo ""
-
-          # Create file with template if it doesn't exist
-          if [ ! -f ~/.zsh_secrets.local ]; then
-            cat > ~/.zsh_secrets.local <<'EOF'
+    function __ensure_local_secrets_file() {
+      if [ ! -f ~/.zsh_secrets.local ]; then
+        cat > ~/.zsh_secrets.local <<'EOF'
 # Local Secrets - Temporary Testing Overrides
 # This file is gitignored and not managed by Nix
 # Use for testing credentials without touching encrypted secrets
@@ -109,12 +143,74 @@ rec {
 # When done testing: secrets-local rm
 
 EOF
-            echo "Created ~/.zsh_secrets.local with template"
-          fi
+        chmod 600 ~/.zsh_secrets.local 2>/dev/null || true
+        echo "Created ~/.zsh_secrets.local with template"
+      fi
+    }
+
+    function secrets-local() {
+      local action="''${1:-help}"
+
+      case "$action" in
+        edit|e)
+          echo "Opening ~/.zsh_secrets.local for editing..."
+          echo ""
+
+          __ensure_local_secrets_file
 
           ''${EDITOR:-vim} ~/.zsh_secrets.local
           echo ""
           echo "   Run: secrets-reload (to apply changes)"
+          ;;
+
+        set|add)
+          local key="''${2:-}"
+          shift 2
+          local value="$*"
+
+          if [[ -z "$key" || -z "$value" ]]; then
+            echo "Usage: secrets-local add <ENV_VAR> <value>"
+            return 1
+          fi
+
+          if [[ ! "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+            echo "error: invalid environment variable name: $key"
+            return 1
+          fi
+
+          __ensure_local_secrets_file
+
+          local escaped_value="''${value//\'/\'\\\'\'}"
+          local prefix="export $key="
+          local line="export $key='$escaped_value'"
+
+          __local_file_upsert_prefix ~/.zsh_secrets.local "$prefix" "$line"
+          chmod 600 ~/.zsh_secrets.local 2>/dev/null || true
+          export "$key=$value"
+          secrets-reload >/dev/null 2>&1 || true
+
+          echo "Saved and reloaded: $key"
+          echo "   File: ~/.zsh_secrets.local"
+          ;;
+
+        unset|rm-key|delete-key|remove-key)
+          local key="''${2:-}"
+
+          if [[ -z "$key" ]]; then
+            echo "Usage: secrets-local unset <ENV_VAR>"
+            return 1
+          fi
+
+          if [ ! -f ~/.zsh_secrets.local ]; then
+            echo "error: no ~/.zsh_secrets.local found"
+            return 1
+          fi
+
+          __local_file_remove_prefix ~/.zsh_secrets.local "export $key="
+          unset "$key" 2>/dev/null || true
+          secrets-reload >/dev/null 2>&1 || true
+
+          echo "Removed and reloaded: $key"
           ;;
 
         show|s|cat)
@@ -154,6 +250,8 @@ EOF
           echo ""
           echo "Actions:"
           echo "  edit (e)     - Edit ~/.zsh_secrets.local"
+          echo "  add          - Add or update ENV var and export it now"
+          echo "  unset        - Remove ENV var and unset it now"
           echo "  show (s)     - Show contents"
           echo "  delete (rm)  - Delete local secrets"
           echo "  path         - Show file location"
@@ -177,6 +275,8 @@ EOF
           echo ""
           echo "Examples:"
           echo "  secrets-local edit         # Open in \$EDITOR"
+          echo "  secrets-local add FOO bar  # Persist + export now"
+          echo "  secrets-local unset FOO    # Remove local override"
           echo "  secrets-local show         # View contents"
           echo "  secrets-local rm           # Remove file"
           ;;
@@ -195,11 +295,172 @@ EOF
   '';
 
   # ==================================================
+  # LOCAL ZSHRC HELPER
+  # ==================================================
+  # Helper to manage ~/.zshrc.local for aliases and local overrides
+  #
+  mkLocalZshrcHelper = ''
+    function __ensure_zshrc_local() {
+      if [ ! -f ~/.zshrc.local ]; then
+        cat > ~/.zshrc.local <<'EOF'
+# Local zsh overrides
+# This file is not managed by Nix and is sourced at the end of shell init.
+#
+# Examples:
+# alias cc='claude'
+# export MY_LOCAL_FLAG='1'
+
+EOF
+        chmod 600 ~/.zshrc.local 2>/dev/null || true
+        echo "Created ~/.zshrc.local with template"
+      fi
+    }
+
+    function zsh-local() {
+      local action="''${1:-help}"
+
+      case "$action" in
+        edit|e)
+          __ensure_zshrc_local
+          ''${EDITOR:-vim} ~/.zshrc.local
+          ;;
+
+        show|s|cat)
+          if [ -f ~/.zshrc.local ]; then
+            cat ~/.zshrc.local
+          else
+            echo "error: no ~/.zshrc.local found"
+            echo ""
+            echo "   Create with: zsh-local edit"
+          fi
+          ;;
+
+        reload|r)
+          if [ -f ~/.zshrc.local ]; then
+            if source ~/.zshrc.local 2>/dev/null; then
+              echo "Reloaded ~/.zshrc.local"
+            else
+              echo "error: failed to source ~/.zshrc.local (syntax error?)"
+              return 1
+            fi
+          else
+            echo "error: no ~/.zshrc.local found"
+            return 1
+          fi
+          ;;
+
+        alias)
+          local subaction="''${2:-help}"
+
+          case "$subaction" in
+            add|set)
+              local name="''${3:-}"
+              shift 3
+              local value="$*"
+
+              if [[ -z "$name" || -z "$value" ]]; then
+                echo "Usage: zsh-local alias add <name> <command>"
+                return 1
+              fi
+
+              if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_!%+.-]*$ ]]; then
+                echo "error: invalid alias name: $name"
+                return 1
+              fi
+
+              __ensure_zshrc_local
+
+              local escaped_value="''${value//\'/\'\\\'\'}"
+              local prefix="alias $name="
+              local line="alias $name='$escaped_value'"
+
+              __local_file_upsert_prefix ~/.zshrc.local "$prefix" "$line"
+              chmod 600 ~/.zshrc.local 2>/dev/null || true
+              alias "$name=$value"
+
+              echo "Saved and loaded alias: $name"
+              echo "   Command: $value"
+              ;;
+
+            rm|remove|delete|unset)
+              local name="''${3:-}"
+
+              if [[ -z "$name" ]]; then
+                echo "Usage: zsh-local alias rm <name>"
+                return 1
+              fi
+
+              if [ ! -f ~/.zshrc.local ]; then
+                echo "error: no ~/.zshrc.local found"
+                return 1
+              fi
+
+              __local_file_remove_prefix ~/.zshrc.local "alias $name="
+              unalias "$name" 2>/dev/null || true
+
+              echo "Removed alias: $name"
+              ;;
+
+            show)
+              if [ -f ~/.zshrc.local ]; then
+                grep '^alias ' ~/.zshrc.local || true
+              else
+                echo "error: no ~/.zshrc.local found"
+                return 1
+              fi
+              ;;
+
+            *)
+              echo "Usage: zsh-local alias <add|rm|show> ..."
+              echo ""
+              echo "Examples:"
+              echo "  zsh-local alias add cc claude"
+              echo "  zsh-local alias add ccr 'claude --resume'"
+              echo "  zsh-local alias rm cc"
+              echo "  zsh-local alias show"
+              return 1
+              ;;
+          esac
+          ;;
+
+        help|h|"")
+          echo "Usage: zsh-local <action>"
+          echo ""
+          echo "Actions:"
+          echo "  edit            - Open ~/.zshrc.local"
+          echo "  show            - Show ~/.zshrc.local"
+          echo "  reload          - Source ~/.zshrc.local now"
+          echo "  alias add       - Add or update alias and load it now"
+          echo "  alias rm        - Remove alias from file and current shell"
+          echo "  alias show      - Show aliases stored in ~/.zshrc.local"
+          echo ""
+          echo "Examples:"
+          echo "  zsh-local alias add cc claude"
+          echo "  zsh-local alias add ccr 'claude --resume'"
+          echo "  zsh-local alias rm cc"
+          echo "  zsh-local reload"
+          ;;
+
+        *)
+          echo "error: unknown action: $action"
+          echo ""
+          echo "   Run: zsh-local help"
+          return 1
+          ;;
+      esac
+    }
+
+    alias zlocal='zsh-local'
+  '';
+
+  # ==================================================
   # GENERATE ALL HOT RELOAD FUNCTIONS
   # ==================================================
   # Combine all hot reload helpers into single export
   #
   mkAllHotReloadFunctions =
+    mkLocalFileHelpers + "\n\n" +
     mkSecretsReload + "\n\n" +
-    mkLocalSecretsHelper;
+    mkLocalSecretsHelper + "\n\n" +
+    mkLocalZshrcHelper;
 }

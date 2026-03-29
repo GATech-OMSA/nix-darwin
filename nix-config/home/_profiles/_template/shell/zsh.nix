@@ -583,7 +583,7 @@ in
       # HOT RELOAD FUNCTIONS
       # ============================================
       # Quick reload of secrets and environment without rebuild
-      # Functions: secrets-reload, secrets-local {edit|show|rm}
+      # Functions: secrets-reload, secrets-local, zsh-local
 
       ${myLib.reload.mkAllHotReloadFunctions}
 
