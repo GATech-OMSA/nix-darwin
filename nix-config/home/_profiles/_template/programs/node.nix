@@ -13,6 +13,10 @@
     # Save exact versions (no ^ or ~)
     save-exact=true
 
+    # Supply chain protection: reject packages published less than 7 days ago
+    # Gives community time to detect and remove malicious releases
+    min-release-age=7
+
     # Optional: Configure registry (uncomment if needed)
     # registry=https://registry.npmjs.org/
 

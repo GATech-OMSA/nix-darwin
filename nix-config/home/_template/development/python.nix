@@ -25,4 +25,10 @@
   home.sessionVariables = {
     UV_PYTHON_PREFERENCE = "only-managed";
   };
+
+  # UV supply chain protection: reject packages published less than 7 days ago
+  # Gives community time to detect and remove malicious releases
+  xdg.configFile."uv/uv.toml".text = ''
+    exclude-newer = "7 days"
+  '';
 }
