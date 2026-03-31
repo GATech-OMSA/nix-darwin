@@ -25,13 +25,14 @@ jobs:
       matrix:
         machine: [macbook-pro-m1-personal, macbook-pro-m3-work]
     steps:
-    - uses: actions/checkout@v4
+    # Supply chain protection: pin actions to commit SHAs, not mutable tags/branches
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
     - name: Install Nix
-      uses: DeterminateSystems/determinate-nix-action@v3
+      uses: DeterminateSystems/determinate-nix-action@a18f73c54ca8525de051e73c31512a67f44df919 # v3
 
     - name: Magic Nix Cache
-      uses: DeterminateSystems/magic-nix-cache-action@main
+      uses: DeterminateSystems/magic-nix-cache-action@1828eb4e5414b8dfe36daae53ea3e4b8c3fdec7a # main 2026-03-31
 
     - name: Generate Configs
       env:

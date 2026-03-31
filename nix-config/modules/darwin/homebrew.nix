@@ -13,8 +13,10 @@
 
     onActivation = {
       cleanup = "zap";
-      autoUpdate = true;
-      upgrade = true;
+      # Supply chain protection: don't auto-pull and upgrade on every rebuild
+      # Run `brew update && brew upgrade` manually when ready to review changes
+      autoUpdate = false;
+      upgrade = false;
     };
 
     global = {

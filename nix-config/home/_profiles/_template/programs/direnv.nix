@@ -15,11 +15,12 @@
   # direnv configuration file
   home.file.".config/direnv/direnv.toml".text = ''
     [global]
-    load_dotenv = true
-    strict_env = false
+    # Supply chain protection: don't auto-load .env files from cloned repos
+    load_dotenv = false
+    strict_env = true
 
-    [whitelist]
-    prefix = [ "~/Dev" ]
+    # No blanket whitelist — run `direnv allow` per-project after reviewing .envrc
+    # This prevents malicious repos from auto-executing code on cd
   '';
 
   # Custom direnv layouts for Python development
