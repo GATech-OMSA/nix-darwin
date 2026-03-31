@@ -161,13 +161,14 @@ nix-config/home/_profiles/
 
 CLAUDE.md is the **authoritative source** for all configuration instructions.
 
-**Active Documentation (6 guides):**
+**Active Documentation (7 guides):**
 - `docs/installation.md` — Three-script setup workflow
 - `docs/troubleshooting.md` — Debugging guide
 - `docs/secrets.md` — SOPS encryption
 - `docs/backup-and-recovery.md` — Disaster recovery
 - `docs/aws-and-secrets-workflow.md` — AWS SSO + secrets hot reload
 - `docs/maintenance.md` — Cleanup tiers & tools
+- `docs/supply-chain-security.md` — Package quarantine & CI hardening
 
 **AI Workflow Guides (2):**
 - `claudedocs/guides/DEVELOPMENT-WORKFLOW.md` — Project management
@@ -225,20 +226,21 @@ git commit -m "feat: Add dark mode... Co-Authored-By: Claude"
 
 # 📚 DOCUMENTATION
 
-**Status:** ✅ Simplified - 6 user guides + 2 AI guides
+**Status:** ✅ Simplified - 7 user guides + 2 AI guides
 
 ## User Documentation (Public)
 
 **Location:** `docs/` - For end users and repository visitors
 
 ```
-docs/                           # User-facing documentation (6 files)
+docs/                           # User-facing documentation (7 files)
 ├── installation.md            # Three-script setup workflow
 ├── troubleshooting.md         # Debugging guide
 ├── secrets.md                 # SOPS encryption
 ├── backup-and-recovery.md     # Disaster recovery
 ├── aws-and-secrets-workflow.md # AWS SSO + secrets hot reload
-└── maintenance.md             # Cleanup tiers & tools
+├── maintenance.md             # Cleanup tiers & tools
+└── supply-chain-security.md   # Package quarantine & CI hardening
 
 claudedocs/guides/              # AI workflow guides (2 files)
 ├── DEVELOPMENT-WORKFLOW.md    # Project management
@@ -359,6 +361,14 @@ Applies to both personal and work profiles. Disabled by default. Edit URLs to ma
 - File permission checks (600)
 - Credential protection
 
+**Supply chain protections (see `docs/supply-chain-security.md`):**
+- npm: 7-day quarantine (`min-release-age=7`)
+- uv/Python: 7-day quarantine (`exclude-newer = "7 days"`)
+- Homebrew: manual updates only (no auto-upgrade on rebuild)
+- GitHub Actions: pinned to commit SHAs, not mutable tags
+- direnv: explicit `direnv allow` per-project, no blanket whitelist
+- Nix: `flake.lock` pins all inputs, hermetic sandboxed builds
+
 **Never committed (protected paths):**
 ```
 ~/.db/*
@@ -397,6 +407,7 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 | Work profile settings | `nix-config/home/_profiles/work/default.nix` |
 | Switch profile | Edit `config/machine-config.nix` → `profileName = "..."` |
 | Configure corporate proxy | `config/user-config.nix` → Uncomment `proxies` section, set `enabled = true` |
+| Change supply chain settings | `docs/supply-chain-security.md` has file locations per manager |
 
 ---
 
@@ -484,7 +495,7 @@ COMPLETED.md (chronological index)
 |--------|-------|--------|
 | CLAUDE.md size | ~12KB (target <50KB) | ✅ Optimized |
 | Token count | ~1.8K (target <8K) | ✅ Efficient |
-| Documentation files | 6 user guides + 2 AI guides | ✅ Lean |
+| Documentation files | 7 user guides + 2 AI guides | ✅ Lean |
 | Core instructions | 9 critical rules | ✅ Clear |
 | System status | Production Ready | ✅ Stable |
 
