@@ -16,7 +16,7 @@ let
     "/Applications/Microsoft Outlook.app"
     "/Applications/Microsoft Teams.app"
     "/System/Applications/Notes.app"
-    "/Applications/iTerm.app"
+    "/Applications/Ghostty.app"
     # "/System/Applications/System Settings.app"
   ];
 
@@ -28,9 +28,10 @@ let
     "/System/Applications/Phone.app"
     "/System/Applications/Notes.app"
     "/System/Applications/Music.app"
-    "/System/Applications/System Settings.app"
-    "/Applications/iTerm.app"
+    "/Applications/Claude.app"
+    "/Applications/Ghostty.app"
     "/Applications/Visual Studio Code.app"
+    "/System/Applications/System Settings.app"
   ];
 
   # Select apps based on machine type
