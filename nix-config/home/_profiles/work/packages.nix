@@ -100,6 +100,7 @@
     # ============================================
     # AI-ASSISTED DEVELOPMENT
     # ============================================
+    kiro-cli            # Command-line interface for Kiro agentic IDE
     # aider-chat         # AI pair programming in terminal
     # fabric-ai          # AI-powered CLI for text processing patterns
 
