@@ -84,16 +84,17 @@ info "Machine: $MACHINE_ID"
 info "Secrets: $SECRETS_FILE"
 echo ""
 
-# Decrypt entire file once into memory
+# Decrypt entire file once to a temp file (avoids shell mangling multiline values)
 info "Decrypting secrets..."
-DECRYPTED=$(SOPS_AGE_KEY_FILE="$AGE_KEY" sops -d "$SECRETS_FILE" 2>/dev/null)
-if [ $? -ne 0 ]; then
+DECRYPTED_FILE=$(mktemp)
+trap '/bin/rm -f "$DECRYPTED_FILE"' EXIT
+if ! SOPS_AGE_KEY_FILE="$AGE_KEY" sops -d "$SECRETS_FILE" > "$DECRYPTED_FILE" 2>/dev/null; then
   error "Failed to decrypt secrets file"
   exit 1
 fi
 
 # Get available keys
-AVAILABLE_KEYS=$(printf '%s\n' "$DECRYPTED" | yq 'keys | .[]' 2>/dev/null)
+AVAILABLE_KEYS=$(yq 'keys | .[]' "$DECRYPTED_FILE" 2>/dev/null)
 
 if [ -z "$AVAILABLE_KEYS" ]; then
   error "No keys found in secrets file (yq returned empty)"
@@ -156,8 +157,8 @@ for mapping in "${MAPPINGS[@]}"; do
     continue
   fi
 
-  # Use --raw-output to preserve multiline values (SSH keys, etc.)
-  VALUE=$(printf '%s\n' "$DECRYPTED" | yq -r ".$key" 2>/dev/null)
+  # Read from temp file to preserve multiline values (SSH keys, etc.)
+  VALUE=$(yq -r ".$key" "$DECRYPTED_FILE" 2>/dev/null)
 
   if [[ -z "$VALUE" || "$VALUE" == "null" ]]; then
     skipped=$(( skipped + 1 ))

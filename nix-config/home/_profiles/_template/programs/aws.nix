@@ -64,16 +64,13 @@ in
       $DRY_RUN_CMD rm "$config_file"
     fi
 
-    # Update only if different or doesn't exist
-    if [[ ! -f "$config_file" ]] || ! echo "$config_content" | $DRY_RUN_CMD diff -q - "$config_file" >/dev/null 2>&1; then
-      # Backup existing config before overwriting
-      if [[ -f "$config_file" ]]; then
-        $DRY_RUN_CMD mkdir -p "$HOME/.aws/backup"
-        $DRY_RUN_CMD /bin/cp "$config_file" "$HOME/.aws/backup/config-$(date +%Y%m%d-%H%M%S)"
-      fi
+    # Only write if file doesn't exist — awslogin appends runtime profiles
+    # to this file, so we must not overwrite it on every rebuild.
+    # To force regeneration: rm ~/.aws/config && nix-rebuild
+    if [[ ! -f "$config_file" ]]; then
       $DRY_RUN_CMD echo "$config_content" > "$config_file"
       $DRY_RUN_CMD chmod 644 "$config_file"
-      echo "Updated writable ~/.aws/config"
+      echo "Created writable ~/.aws/config"
     fi
   '';
 
