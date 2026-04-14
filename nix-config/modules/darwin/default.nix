@@ -21,24 +21,35 @@ in
   # Disable Nix management - Determinate Nix handles daemon and installation
   # Determinate Nix manages its own daemon that conflicts with nix-darwin's native Nix management
   nix.enable = false;
-  nix.settings = {
-    experimental-features = "nix-command flakes";
-    # Optimize builds
-    max-jobs = "auto";
-    # Allow user to accept extra substituters (e.g., sops-nix cache)
-    trusted-users = [ "root" username ];
-    # Keep Determinate Nix cache settings
-    trusted-substituters = [ "https://cache.flakehub.com" ];
 
-    # Allow Go proxy environment variables to pass through to build sandbox
-    # Required for corporate proxy support with proxyVendor = true
-    # These impure env vars are only used when packages explicitly enable proxyVendor
-    impure-env-vars = lib.mkIf goProxyEnabled [
-      "GOPROXY"
-      "GOPRIVATE"
-      "GOSUMDB"
-    ];
-  };
+  # Manage /etc/nix/nix.custom.conf declaratively
+  # Determinate Nix !include's this file, making it the correct mechanism for
+  # injecting settings — nix.settings is dead code when nix.enable = false.
+  environment.etc."nix/nix.custom.conf".text = ''
+    # Managed by nix-darwin — do not edit directly.
+    # Source: nix-config/modules/darwin/default.nix
+
+    # ==== Determinate Nix installer defaults ====
+    # Store optimization — deduplicate identical files via hard links
+    auto-optimise-store = true
+
+    # Auto garbage collection — safety net when disk runs low
+    min-free = 10737418240
+    max-free = 21474836480
+
+    # ==== Security ====
+    # Isolate builds from the host environment
+    sandbox = true
+
+    # Allow root and the primary user to manage trusted substituters
+    trusted-users = root ${username}
+  '' + lib.optionalString goProxyEnabled ''
+
+    # ==== Corporate proxy support ====
+    # Allow Go proxy environment variables to pass through to the build sandbox.
+    # Required when Go packages use proxyVendor = true behind a corporate proxy.
+    impure-env-vars = GOPROXY GOPRIVATE GOSUMDB
+  '';
 
   # System-wide environment variables for Nix builds
   # These are available during darwin-rebuild and all Nix builds
