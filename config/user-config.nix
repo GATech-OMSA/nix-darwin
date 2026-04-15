@@ -27,8 +27,9 @@
     };
 
     # NPM package proxy (corporate Nexus registry)
+    # Enable on work machine: enabled = true;
     npm = {
-      enabled = true;
+      enabled = false;
       url = "https://nexus.ci.duke-energy.app/repository/duke-cne-npm";
     };
   };

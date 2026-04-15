@@ -39,7 +39,8 @@ in {
 
   # Add Rancher Desktop to PATH (for Docker CLI)
   home.sessionPath = [
-    "$HOME/.rd/bin"  # Rancher Desktop binaries (docker, kubectl, etc.)
+    "$HOME/.rd/bin"        # Rancher Desktop binaries (docker, kubectl, etc.)
+    "$HOME/.npm-global/bin" # npm global installs (Nix store is read-only)
   ];
 
   # Work-specific session variables

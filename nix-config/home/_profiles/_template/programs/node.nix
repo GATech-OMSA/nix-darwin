@@ -4,11 +4,14 @@ let
   proxies = userConfig.proxies or {};
   npmProxyEnabled = proxies.npm.enabled or false;
   npmRegistryUrl = proxies.npm.url or "https://registry.npmjs.org";
+  # Nix-managed npm has a read-only prefix (/nix/store), so global installs fail.
+  # Work profile uses Nix npm — redirect global prefix to a writable directory.
+  npmGlobalPrefix = proxies.npm.globalPrefix or "$HOME/.npm-global";
 in
 {
   # NPM Configuration - Declarative setup
   # Replaces manual ~/.npmrc management
-  # Registry is set automatically when proxies.npm is enabled in user-config.nix
+  # Registry and global prefix are set when proxies.npm is enabled in user-config.nix
 
   home.file.".npmrc".text = ''
     # NPM initialization defaults
@@ -27,5 +30,8 @@ in
 
     # Corporate registry (from user-config.nix proxies.npm)
     registry=${npmRegistryUrl}
+
+    # Writable global prefix (Nix store is read-only)
+    prefix=${npmGlobalPrefix}
   '';
 }
