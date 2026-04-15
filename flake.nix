@@ -95,6 +95,7 @@
 
           modules = [
             { nixpkgs.overlays = overlays; }
+            { system.configurationRevision = self.rev or self.dirtyRev or null; }
             sops-nix.darwinModules.sops
             ./nix-config/hosts/${machine.machineId}
             ./nix-config/modules/darwin
