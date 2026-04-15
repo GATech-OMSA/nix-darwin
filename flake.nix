@@ -24,13 +24,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # AI coding tools (openspec, claude-code, etc.)
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   # ============================================
   # OUTPUTS - System Configurations
   # ============================================
 
-  outputs = inputs@{ self, nix-darwin, home-manager, nixpkgs, sops-nix }:
+  outputs = inputs@{ self, nix-darwin, home-manager, nixpkgs, sops-nix, llm-agents }:
     let
       # ============================================
       # HELPER IMPORTS

@@ -3,7 +3,7 @@
 # Work-specific packages for corporate development
 # All packages commented out — uncomment as needed
 
-{ pkgs, lib, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
   home.packages = with pkgs; [
@@ -101,6 +101,7 @@
     # AI-ASSISTED DEVELOPMENT
     # ============================================
     kiro-cli            # Command-line interface for Kiro agentic IDE
+    inputs.llm-agents.packages.${pkgs.system}.openspec  # Spec-driven development CLI
     # aider-chat         # AI pair programming in terminal
     # fabric-ai          # AI-powered CLI for text processing patterns
 
