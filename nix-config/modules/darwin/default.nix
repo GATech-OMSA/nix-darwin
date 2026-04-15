@@ -16,6 +16,7 @@ in
     ./fonts.nix
     ./security.nix
     ./packages.nix
+    ./builders.nix
   ];
 
   # Disable Nix management - Determinate Nix handles daemon and installation
@@ -43,6 +44,10 @@ in
 
     # Allow root and the primary user to manage trusted substituters
     trusted-users = root ${username}
+
+    # ==== Distributed builds ====
+    # Let remote builders fetch from cache.nixos.org instead of uploading from local
+    builders-use-substitutes = true
   '' + lib.optionalString goProxyEnabled ''
 
     # ==== Corporate proxy support ====
