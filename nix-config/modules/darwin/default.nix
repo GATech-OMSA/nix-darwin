@@ -1,4 +1,4 @@
-{ config, pkgs, lib, username, userConfig ? {}, ... }:
+{ config, pkgs, lib, inputs, username, userConfig ? {}, ... }:
 
 # Darwin Modules - Module Imports
 #
@@ -50,6 +50,21 @@ in
     # Required when Go packages use proxyVendor = true behind a corporate proxy.
     impure-env-vars = GOPROXY GOPRIVATE GOSUMDB
   '';
+
+  # Pin nixpkgs in the flake registry to the flake.lock-locked version.
+  # Determinate Nix ships a global registry pointing to FlakeHub's weekly nixpkgs,
+  # so `nix shell nixpkgs#hello` resolves to a different nixpkgs than the flake.
+  # Cannot use nix.registry (gated behind nix.enable) so write the file directly.
+  environment.etc."nix/registry.json".text = builtins.toJSON {
+    version = 2;
+    flakes = [
+      {
+        from  = { type = "indirect"; id = "nixpkgs"; };
+        to    = { type = "path"; path = inputs.nixpkgs.outPath; };
+        exact = true;
+      }
+    ];
+  };
 
   # System-wide environment variables for Nix builds
   # These are available during darwin-rebuild and all Nix builds
