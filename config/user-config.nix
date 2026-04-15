@@ -26,10 +26,10 @@
       trustedHost = "";
     };
 
-    # NPM package proxy (configure if needed)
+    # NPM package proxy (corporate Nexus registry)
     npm = {
-      enabled = false;
-      url = "";
+      enabled = true;
+      url = "https://nexus.ci.duke-energy.app/repository/duke-cne-npm";
     };
   };
 }
