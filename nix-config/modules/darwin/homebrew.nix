@@ -58,7 +58,7 @@
       # Productivity
       "alfred"
       "raycast"
-      # "karabiner-elements"
+      "karabiner-elements"
 
       # AI/LLM
       "chatgpt"
