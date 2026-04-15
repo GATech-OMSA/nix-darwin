@@ -20,7 +20,7 @@
     # ============================================
     # k9s                # TUI for Kubernetes cluster management
     # kubectx            # Switch kubectl contexts/namespaces quickly
-    # dive               # Explore Docker image layers
+    dive               # Explore Docker image layers
     # lazydocker         # TUI for Docker management
     # helm               # Kubernetes package manager
     # kustomize          # Kubernetes config customization
@@ -31,7 +31,7 @@
     # ============================================
     # SECURITY & COMPLIANCE
     # ============================================
-    # trivy              # Container/filesystem vulnerability scanner
+    trivy              # Container/filesystem vulnerability scanner
     # grype              # Container image vulnerability scanner
     # syft               # SBOM (software bill of materials) generator
     # cosign             # Container image signing/verification
@@ -70,7 +70,7 @@
     # prefect            # Modern workflow orchestration
 
     # Data transformation
-    # sqlfluff           # SQL linter
+    sqlfluff           # SQL linter
 
     # Object storage
     # minio-client       # S3-compatible object storage CLI
@@ -114,7 +114,7 @@
     # ============================================
     # NETWORKING & DIAGNOSTICS
     # ============================================
-    # doggo              # Modern DNS client (dig alternative)
+    doggo              # Modern DNS client (dig alternative)
     # bandwhich          # TUI bandwidth utilization by process
     # trippy             # Modern network diagnostics (traceroute + ping TUI)
 
