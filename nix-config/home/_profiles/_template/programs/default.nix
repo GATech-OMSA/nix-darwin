@@ -18,6 +18,7 @@ in
     ./fzf.nix
     ./git.nix
     ./karabiner.nix
+    ./nix-index.nix
     ./node.nix
     ./ssh.nix
     ./zoxide.nix
