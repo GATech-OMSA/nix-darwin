@@ -27,6 +27,10 @@
   # Corporate proxy configuration (optional, mainly for work profiles)
   # Uncomment and configure if you're behind a corporate proxy
   # proxies = {
+  #   # Corporate CA bundle — fanned out to all TLS-speaking tools
+  #   # (AWS, Node, Python, npm, curl, Cargo)
+  #   corporateCaBundle = "$HOME/.config/certs/cacert.pem";
+  #
   #   # Go module proxy (for sops-nix and other Go-based tools)
   #   go = {
   #     enabled = true;
@@ -41,16 +45,15 @@
   #     trustedHost = "nexus.example.com";  # For --trusted-host flag
   #   };
   #
-  #   # NPM package proxy
+  #   # NPM package proxy (also sets writable global prefix on work profile)
   #   npm = {
   #     enabled = false;
   #     url = "https://nexus.example.com/repository/npm-proxy/";
   #   };
   #
-  #   # Maven/Gradle proxy (for Java development)
-  #   maven = {
+  #   # Cargo/Rust proxy
+  #   cargo = {
   #     enabled = false;
-  #     url = "https://nexus.example.com/repository/maven-public/";
   #   };
   # };
 }

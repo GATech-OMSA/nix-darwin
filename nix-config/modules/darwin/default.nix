@@ -72,7 +72,9 @@ in
   };
 
   # System-wide environment variables for Nix builds
-  # These are available during darwin-rebuild and all Nix builds
+  # These are available during darwin-rebuild and all Nix builds.
+  # Note: work/default.nix sets the same Go proxy vars for user shell sessions.
+  # Both are needed — this covers build sandbox, that covers runtime.
   environment.variables = lib.mkIf goProxyEnabled {
     GOPROXY = "${proxies.go.url},direct";
     GOPRIVATE = proxies.go.private;

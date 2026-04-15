@@ -2,16 +2,19 @@
 
 let
   proxies = userConfig.proxies or {};
-  npmProxyEnabled = proxies.npm.enabled or false;
+  # Only apply corporate npm settings on the work profile to prevent
+  # Nexus registry and writable prefix leaking into personal/minimal
+  isWorkProfile = profileName == "work";
+  npmProxyEnabled = isWorkProfile && (proxies.npm.enabled or false);
   npmRegistryUrl = proxies.npm.url or "https://registry.npmjs.org";
-  # Nix-managed npm has a read-only prefix (/nix/store), so global installs fail.
-  # Work profile uses Nix npm — redirect global prefix to a writable directory.
   npmGlobalPrefix = proxies.npm.globalPrefix or "$HOME/.npm-global";
+  corporateCaBundle = proxies.corporateCaBundle or "";
+  hasCaBundle = corporateCaBundle != "";
 in
 {
   # NPM Configuration - Declarative setup
   # Replaces manual ~/.npmrc management
-  # Registry and global prefix are set when proxies.npm is enabled in user-config.nix
+  # Corporate registry, writable prefix, and CA bundle are work-profile only
 
   home.file.".npmrc".text = ''
     # NPM initialization defaults
@@ -28,10 +31,20 @@ in
   ''
   + lib.optionalString npmProxyEnabled ''
 
-    # Corporate registry (from user-config.nix proxies.npm)
+    # Corporate registry (work profile, from user-config.nix proxies.npm)
     registry=${npmRegistryUrl}
 
     # Writable global prefix (Nix store is read-only)
     prefix=${npmGlobalPrefix}
+  ''
+  + lib.optionalString (npmProxyEnabled && hasCaBundle) ''
+
+    # Corporate CA bundle for TLS verification
+    cafile=${corporateCaBundle}
   '';
+
+  # Add writable npm global bin to PATH (work profile only)
+  home.sessionPath = lib.mkIf npmProxyEnabled [
+    "${npmGlobalPrefix}/bin"
+  ];
 }

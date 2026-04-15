@@ -35,7 +35,7 @@ Package published (potentially malicious)
 | **npm** | `min-release-age=7` — rejects packages < 7 days old | `nix-config/home/_profiles/_template/programs/node.nix` |
 | **uv** | `exclude-newer = "7 days"` — same quarantine for Python | `nix-config/home/_template/development/python.nix` |
 | **Nix** | `flake.lock` pins exact revisions; hermetic builds | `flake.nix` + `flake.lock` |
-| **Go** | Sum database (`sum.golang.org`) verifies module integrity | Built-in to Go toolchain |
+| **Go** | Sum database (`sum.golang.org`) verifies module integrity; **disabled on work profile** (`GOSUMDB=off`) when corporate proxy is enabled — proxy provides its own integrity checks | Built-in to Go toolchain; proxy override in `work/default.nix` |
 | **Homebrew** | No age-gate; mitigated by disabling auto-upgrade | `nix-config/modules/darwin/homebrew.nix` |
 
 ### CI/CD Pipeline

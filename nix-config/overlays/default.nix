@@ -17,6 +17,10 @@ let
   homeDir = builtins.getEnv "HOME";
   flakeRoot = builtins.getEnv "FLAKE_ROOT";
 
+  # Pinned SHA256 of cache/sops-nix/sops-install-secrets.gz
+  # Update via: shasum -a 256 cache/sops-nix/sops-install-secrets.gz | cut -d' ' -f1
+  pinnedSopsHash = "cf4f9155cc2d77fa99e1ee285f5efa87a780d51136be33152eec7a3366e0c0f4";
+
   # Check ~/.local/bin first
   localBinPath =
     if homeDir != "" then homeDir + "/.local/bin/sops-install-secrets" else "";
@@ -28,11 +32,17 @@ let
   hasRepoCache = repoCachePath != "" && builtins.pathExists repoCachePath;
 
   # Copy into Nix store for sandbox access
+  # builtins.path with sha256 verifies the file hash at eval time — a tampered
+  # binary will fail the build rather than being silently trusted
   prebuiltSopsStorePath =
     if hasLocalBin
     then builtins.path { path = localBinPath; name = "sops-install-secrets"; }
     else if hasRepoCache
-    then builtins.path { path = repoCachePath; name = "sops-install-secrets.gz"; }
+    then builtins.path {
+      path = repoCachePath;
+      name = "sops-install-secrets.gz";
+      sha256 = pinnedSopsHash;
+    }
     else null;
 
   hasPrebuiltSops = hasLocalBin || hasRepoCache;
