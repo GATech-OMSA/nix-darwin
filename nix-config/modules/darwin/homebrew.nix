@@ -47,7 +47,7 @@
       "orbstack"            # Docker & Linux VMs (fast, lightweight)
       # "antigravity"
       "visual-studio-code"
-      "claude-code"
+      "claude-code@latest"    # rolling channel; stable `claude-code` cask lags behind
       "ghostty"             # Terminal emulator (Homebrew for personal, Nix for work)
       "iterm2"
       # "dash"
