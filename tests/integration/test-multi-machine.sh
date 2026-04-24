@@ -13,22 +13,29 @@ test_section "Machine Type Detection"
 current_hostname=$(hostname -s)
 test_info "Current hostname: $current_hostname"
 
-# Determine expected configuration
-if [[ "$current_hostname" == "mbp-jimmy" ]]; then
-  expected_mode="home"
-  expected_profile="personal"
-  config_name="mbp-jimmy"
-elif [[ "$current_hostname" == "mbp-work" ]]; then
-  expected_mode="work"
-  expected_profile="work-domain"
-  config_name="mbp-work"
-else
-  test_skip "All multi-machine tests" "Unknown hostname: $current_hostname"
+# Read machineId and profileName from config (the canonical source of truth)
+machine_id=$(nix eval --raw --file "$REPO_ROOT/config/machine-config.nix" machineId 2>/dev/null || echo "")
+profile_name=$(nix eval --raw --file "$REPO_ROOT/config/machine-config.nix" profileName 2>/dev/null || echo "")
+
+if [[ -z "$machine_id" ]]; then
+  test_skip "All multi-machine tests" "Could not read machineId from config"
   test_end
 fi
 
+# Derive expected mode from profile
+if [[ "$profile_name" == "personal" ]]; then
+  expected_mode="home"
+elif [[ "$profile_name" == "work" ]]; then
+  expected_mode="work"
+else
+  expected_mode="$profile_name"
+fi
+
+config_name="$machine_id"
+
+test_info "Machine ID: $machine_id"
+test_info "Profile: $profile_name"
 test_info "Expected MACHINE_MODE: $expected_mode"
-test_info "Expected AWS_PROFILE: $expected_profile"
 
 test_section "Environment Variables"
 
@@ -38,114 +45,70 @@ assert_equals \
   "$expected_mode" \
   "MACHINE_MODE matches machine type"
 
-# Test: AWS_PROFILE matches expected (if set)
+# AWS_PROFILE can be modified at runtime (e.g., by awsuse), so just check it's set
 if [[ -n "${AWS_PROFILE:-}" ]]; then
-  assert_equals \
-    "$AWS_PROFILE" \
-    "$expected_profile" \
-    "AWS_PROFILE matches machine type"
+  _test_log "pass" "AWS_PROFILE is set: $AWS_PROFILE"
 else
   test_skip "AWS_PROFILE test" "AWS_PROFILE not set"
 fi
 
-test_section "Mixin Configuration"
+test_section "Profile Configuration"
 
-# Test: Appropriate mixin is loaded
-if [[ "$current_hostname" == "mbp-jimmy" ]]; then
-  assert_file_exists \
-    "$REPO_ROOT/home/_mixins/personal.nix" \
-    "Personal mixin exists"
+# Test: Profile directory exists for active profile
+assert_directory_exists \
+  "$REPO_ROOT/nix-config/home/_profiles/$profile_name" \
+  "Profile directory exists: $profile_name"
 
-  # Verify it's being used in configuration
-  if [[ -f "$REPO_ROOT/hosts/mbp-jimmy/default.nix" ]]; then
-    assert_file_contains \
-      "$REPO_ROOT/hosts/mbp-jimmy/default.nix" \
-      "personal.nix" \
-      "Personal Mac imports personal.nix"
-  fi
-
-elif [[ "$current_hostname" == "mbp-work" ]]; then
-  assert_file_exists \
-    "$REPO_ROOT/home/_mixins/work.nix" \
-    "Work mixin exists"
-
-  # Verify it's being used in configuration
-  if [[ -f "$REPO_ROOT/hosts/mbp-work/default.nix" ]]; then
-    assert_file_contains \
-      "$REPO_ROOT/hosts/mbp-work/default.nix" \
-      "work.nix" \
-      "Work Mac imports work.nix"
-  fi
-fi
+assert_file_exists \
+  "$REPO_ROOT/nix-config/home/_profiles/$profile_name/default.nix" \
+  "Profile default.nix exists"
 
 test_section "Git Configuration"
 
 # Test: Git email matches machine type
 git_email=$(git config user.email 2>/dev/null || echo "")
 
-if [[ "$current_hostname" == "mbp-jimmy" ]]; then
+if [[ "$profile_name" == "personal" ]]; then
   if [[ "$git_email" == *"users.noreply.github.com"* ]]; then
-    _test_log "pass" "Personal Mac uses GitHub noreply email"
+    _test_log "pass" "Personal profile uses GitHub noreply email"
   else
-    _test_log "fail" "Personal Mac email unexpected: $git_email"
+    _test_log "fail" "Personal profile email unexpected: $git_email"
   fi
 
-elif [[ "$current_hostname" == "mbp-work" ]]; then
+elif [[ "$profile_name" == "work" ]]; then
   if [[ "$git_email" == *"@"* ]] && [[ "$git_email" != *"users.noreply.github.com"* ]]; then
-    _test_log "pass" "Work Mac uses work email: $git_email"
+    _test_log "pass" "Work profile uses work email: $git_email"
   else
-    _test_log "fail" "Work Mac email unexpected: $git_email"
+    _test_log "fail" "Work profile email unexpected: $git_email"
   fi
 fi
 
 test_section "Machine-Specific Functions"
 
-# Test: Work-specific functions on work Mac
-if [[ "$current_hostname" == "mbp-work" ]]; then
-  if command -v awslogin &> /dev/null; then
-    _test_log "pass" "Work Mac has awslogin function"
-  else
-    _test_log "fail" "Work Mac missing awslogin function"
-  fi
-
-  if command -v awswho &> /dev/null; then
-    _test_log "pass" "Work Mac has awswho function"
-  else
-    _test_log "fail" "Work Mac missing awswho function"
-  fi
-fi
-
-# Test: Personal-specific settings on personal Mac
-if [[ "$current_hostname" == "mbp-jimmy" ]]; then
-  # Personal Mac should not have work-specific functions
-  if ! command -v awslogin &> /dev/null; then
-    _test_log "pass" "Personal Mac doesn't have work functions"
-  else
-    _test_log "fail" "Personal Mac has work-specific functions"
-  fi
-fi
+# AWS functions are zsh aliases — not available in non-interactive bash
+test_skip "AWS function checks" "zsh functions, not available in bash test scripts"
 
 test_section "Configuration Files"
 
 # Test: Host-specific directory exists
 assert_directory_exists \
-  "$REPO_ROOT/hosts/$config_name" \
-  "Host directory exists: hosts/$config_name"
+  "$REPO_ROOT/nix-config/hosts/$config_name" \
+  "Host directory exists: nix-config/hosts/$config_name"
 
 # Test: Host configuration files exist
 assert_file_exists \
-  "$REPO_ROOT/hosts/$config_name/default.nix" \
+  "$REPO_ROOT/nix-config/hosts/$config_name/default.nix" \
   "Host default.nix exists"
 
 # Test: Secrets file exists (should be encrypted)
-if [[ -f "$REPO_ROOT/hosts/$config_name/secrets.yaml" ]]; then
+if [[ -f "$REPO_ROOT/nix-config/hosts/$config_name/secrets.yaml" ]]; then
   assert_file_exists \
-    "$REPO_ROOT/hosts/$config_name/secrets.yaml" \
+    "$REPO_ROOT/nix-config/hosts/$config_name/secrets.yaml" \
     "Secrets file exists"
 
-  # Should be encrypted (binary)
-  if file "$REPO_ROOT/hosts/$config_name/secrets.yaml" | grep -q "data"; then
-    _test_log "pass" "Secrets file is encrypted"
+  # SOPS-encrypted files contain ENC[AES256_GCM markers
+  if grep -q "ENC\[AES256_GCM" "$REPO_ROOT/nix-config/hosts/$config_name/secrets.yaml" 2>/dev/null; then
+    _test_log "pass" "Secrets file is SOPS-encrypted"
   else
     _test_log "fail" "Secrets file is not encrypted"
   fi

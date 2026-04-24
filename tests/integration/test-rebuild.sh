@@ -32,12 +32,12 @@ test_section "Pre-Flight Checks"
 
 # Test: Pre-flight script exists
 assert_file_exists \
-  "$REPO_ROOT/scripts/pre-flight-checks.sh" \
+  "$REPO_ROOT/scripts/maintenance/pre-flight-checks.sh" \
   "Pre-flight checks script exists"
 
 # Test: Pre-flight checks pass
 if [[ "${TEST_DRY_RUN:-0}" -eq 0 ]]; then
-  if "$REPO_ROOT/scripts/pre-flight-checks.sh" --quiet 2>&1 | tee /tmp/preflight-test.log; then
+  if "$REPO_ROOT/scripts/maintenance/pre-flight-checks.sh" --quiet 2>&1 | tee /tmp/preflight-test.log; then
     _test_log "pass" "Pre-flight checks pass"
   else
     _test_log "fail" "Pre-flight checks failed" \
@@ -49,20 +49,21 @@ fi
 
 test_section "Build Process"
 
-current_hostname=$(hostname -s)
+# Flake outputs are keyed on machineId, not hostname
+machine_id=$(nix eval --raw --file "$REPO_ROOT/config/machine-config.nix" machineId 2>/dev/null || echo "")
 
-if [[ "$current_hostname" != "mbp-jimmy" ]] && [[ "$current_hostname" != "mbp-work" ]]; then
-  test_skip "Build test" "Unknown hostname: $current_hostname"
+if [[ -z "$machine_id" ]]; then
+  test_skip "Build test" "Could not read machineId from config"
   test_end
 fi
 
 # Test: Configuration builds successfully
 if [[ "${TEST_DRY_RUN:-0}" -eq 0 ]]; then
-  test_info "Building configuration (this may take several minutes)..."
+  test_info "Building configuration for $machine_id (this may take several minutes)..."
 
   build_start=$(date +%s)
 
-  if darwin-rebuild build --flake "$REPO_ROOT#$current_hostname" 2>&1 | tee /tmp/rebuild-test.log; then
+  if darwin-rebuild build --flake "$REPO_ROOT#$machine_id" 2>&1 | tee /tmp/rebuild-test.log; then
     build_end=$(date +%s)
     build_duration=$((build_end - build_start))
 

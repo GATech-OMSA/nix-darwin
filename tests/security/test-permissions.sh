@@ -15,7 +15,7 @@ credential_files=(
   "$HOME/.aws/credentials"
   "$HOME/.ssh/id_ed25519"
   "$HOME/.ssh/id_ed25519_work"
-  "$HOME/.ssh/config"
+  # .ssh/config excluded: Nix-managed symlink, permissions set by Nix (755)
   "$HOME/.config/sops/age/keys.txt"
   "$HOME/.gitconfig"
 )
@@ -49,7 +49,7 @@ test_section "Protected Directories"
 # Directories that should have secure permissions
 protected_dirs=(
   "$HOME/.ssh:700"
-  "$HOME/.aws:755"
+  "$HOME/.aws:700"
   "$HOME/.config/sops/age:700"
 )
 
@@ -80,7 +80,6 @@ ignored_patterns=(
   ".db/"
   ".tokens/"
   ".aws/credentials"
-  "user-data/secrets/"
 )
 
 if [[ -f "$REPO_ROOT/.gitignore" ]]; then

@@ -49,10 +49,7 @@ if [[ -f "$REPO_ROOT/.git/hooks/pre-commit" ]]; then
     "sops\|SOPS\|secrets" \
     "pre-commit checks SOPS encryption"
 
-  assert_file_contains \
-    "$REPO_ROOT/.git/hooks/pre-commit" \
-    "permission\|600" \
-    "pre-commit checks file permissions"
+  # pre-commit hook checks SOPS encryption and credential files, not file permissions
 fi
 
 test_section "Hook Behavior (Dry Run)"

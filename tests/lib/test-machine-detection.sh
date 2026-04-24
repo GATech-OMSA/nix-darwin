@@ -63,33 +63,31 @@ fi
 
 test_section "Nix Evaluation"
 
-# Test: Nix can evaluate machine-specific configuration
-if [[ "$current_hostname" == "mbp-jimmy" ]] || [[ "$current_hostname" == "mbp-work" ]]; then
+# Flake outputs are keyed on machineId (from config/machine-config.nix), not hostname
+machine_id=$(nix eval --raw --file "$REPO_ROOT/config/machine-config.nix" machineId 2>/dev/null || echo "")
+
+if [[ -n "$machine_id" ]]; then
   assert_command_succeeds \
-    "nix eval --raw '$REPO_ROOT#darwinConfigurations.$current_hostname.system' 2>/dev/null" \
-    "Nix can evaluate current machine configuration"
+    "nix eval --raw '$REPO_ROOT#darwinConfigurations.$machine_id.system' 2>/dev/null" \
+    "Nix can evaluate current machine configuration ($machine_id)"
+else
+  test_skip "Nix evaluation" "Could not read machineId from config"
 fi
 
-# Test: Machine-specific lib functions (if we can evaluate them)
-# This would require evaluating Nix expressions, which is complex
-# For now, we just verify the lib directory structure
-
 assert_directory_exists \
-  "$REPO_ROOT/lib" \
-  "lib/ directory exists"
+  "$REPO_ROOT/nix-config/lib" \
+  "nix-config/lib/ directory exists"
 
 assert_file_exists \
-  "$REPO_ROOT/lib/default.nix" \
-  "lib/default.nix exists"
+  "$REPO_ROOT/nix-config/lib/default.nix" \
+  "nix-config/lib/default.nix exists"
 
 test_section "Helper Functions Exist"
 
 # Test: Key lib files exist
 lib_files=(
-  "$REPO_ROOT/lib/machine.nix"
-  "$REPO_ROOT/lib/navigation.nix"
-  "$REPO_ROOT/lib/scaffold.nix"
-  "$REPO_ROOT/lib/update.nix"
+  "$REPO_ROOT/nix-config/lib/aws-helpers.nix"
+  "$REPO_ROOT/nix-config/lib/reload-helpers.nix"
 )
 
 for lib_file in "${lib_files[@]}"; do
@@ -97,7 +95,7 @@ for lib_file in "${lib_files[@]}"; do
     filename=$(basename "$lib_file")
     assert_command_succeeds \
       "nix-instantiate --parse '$lib_file'" \
-      "lib/$filename has valid syntax"
+      "nix-config/lib/$filename has valid syntax"
   fi
 done
 
