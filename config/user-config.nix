@@ -36,7 +36,7 @@
     # NPM package proxy (corporate Nexus registry)
     npm = {
       enabled = false;
-      url = "https://nexus.ci.duke-energy.app/repository/duke-cne-npm";
+      url = "";
     };
 
     # Cargo/Rust proxy

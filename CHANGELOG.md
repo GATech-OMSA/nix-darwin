@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Karabiner-Elements cask now managed declaratively alongside existing Home Manager configuration
 - Curated profile packages activated: personal (ffmpeg, yt-dlp, imagemagick, glow, rclone, restic), work (trivy, dive, sqlfluff, doggo)
 - Distributed builds infrastructure via `/etc/nix/machines` — ready for a second personal machine; work↔personal blocked by MDM
+- `llm-agents.nix` flake input — provides `openspec` CLI for spec-driven development (work profile)
+- `claude-code@latest` Homebrew cask — rolling channel to track latest releases
+- Corporate proxy expansion — CA bundle fan-out (`corporateCaBundle` in `user-config.nix`), Cargo proxy support, npm work-profile scoping with writable global prefix
+- `sops-install-secrets.gz` hash pinning — repo-cached binary verified at eval time via `builtins.path { sha256 }` to detect tampering
 
 ### Changed
 
@@ -26,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nix daemon settings migrated from dead `nix.settings` to `/etc/nix/nix.custom.conf` — settings (sandbox, trusted-users) were silently ignored before this change
 - `security.nix` refactored to use `myLib.selectByProfile` for profile-specific firewall values, replacing manual conditionals
+- CA bundle env vars (`AWS_CA_BUNDLE`, etc.) no longer set when `corporateCaBundle` is empty — previously fell back to a hardcoded path that might not exist
+- `aws.nix` CA bundle now reads from `proxies.corporateCaBundle` instead of hardcoded path — single source of truth for all TLS trust configuration
 
 ---
 

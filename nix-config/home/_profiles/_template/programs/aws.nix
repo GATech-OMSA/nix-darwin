@@ -7,9 +7,11 @@
 { config, pkgs, lib, hostname, myLib, profileName, userConfig, ... }:
 
 let
-  # CA bundle path for corporate certificates (work machines only)
-  # AWS CLI expands ~ but not $HOME in config files
-  caBundle = if profileName == "work" then "~/.config/certs/cacert.pem" else null;
+  proxies = userConfig.proxies or {};
+  # CA bundle path for corporate certificates — reads from proxies.corporateCaBundle
+  # AWS CLI expands ~ but not $HOME in config files, so we substitute ~ for $HOME
+  corporateCa = proxies.corporateCaBundle or "";
+  caBundle = if corporateCa != "" then builtins.replaceStrings ["$HOME"] ["~"] corporateCa else null;
   caBundleConfig = if caBundle != null then ''ca-bundle = ${caBundle}'' else "";
 
   # AWS SSO configuration from user-config.nix

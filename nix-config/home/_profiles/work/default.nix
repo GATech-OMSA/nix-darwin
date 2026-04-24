@@ -21,9 +21,7 @@ let
     REQUESTS_CA_BUNDLE = caBundlePath;   # Python requests library
     PIP_CERT = caBundlePath;             # pip TLS verification
     SSL_CERT_FILE = caBundlePath;        # Generic OpenSSL (curl, etc.)
-  } else {
-    AWS_CA_BUNDLE = caBundlePath;
-  };
+  } else {};
 
   # Helper to build proxy environment variables
   goProxyVars = if (proxies.go.enabled or false) then {
@@ -41,7 +39,7 @@ let
     NPM_CONFIG_REGISTRY = proxies.npm.url or "https://registry.npmjs.org";
   } else {};
 
-  cargoProxyVars = if (proxies.cargo.enabled or false) then {
+  cargoProxyVars = if (proxies.cargo.enabled or false) && hasCaBundle then {
     CARGO_HTTP_CAINFO = caBundlePath;
   } else {};
 

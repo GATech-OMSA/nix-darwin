@@ -33,7 +33,9 @@ let
 
   # Copy into Nix store for sandbox access
   # builtins.path with sha256 verifies the file hash at eval time — a tampered
-  # binary will fail the build rather than being silently trusted
+  # binary will fail the build rather than being silently trusted.
+  # Note: localBinPath is NOT hash-pinned because the user manages that binary
+  # manually (e.g. scp from another machine). Only the repo cache is pinned.
   prebuiltSopsStorePath =
     if hasLocalBin
     then builtins.path { path = localBinPath; name = "sops-install-secrets"; }

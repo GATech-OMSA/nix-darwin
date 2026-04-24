@@ -484,6 +484,8 @@ COMPLETED.md (chronological index)
 | Scope | Rule | Purpose |
 |-------|------|---------|
 | `**/*.nix` | [Nix Standards](.claude/rules/gen-lang-nix.md) | myLib patterns, file headers, state versions |
+| `**/*.sh` | [Shell Scripts](.claude/rules/gen-lang-shell.md) | Headers, error handling, script organization |
+| `nix-config/**/*.zsh` | [ZSH Functions](.claude/rules/gen-lang-zsh.md) | Sourced functions, no exit/shebang, naming |
 | `.github/workflows/**` | [GitHub Actions](.claude/rules/gen-ci-github-actions.md) | Nix CI, dry-run builds, config templates |
 <!-- RULES-INDEX-END -->
 
