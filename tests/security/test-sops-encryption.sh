@@ -28,8 +28,8 @@ assert_file_permissions \
 
 test_section "Secrets Files"
 
-# Find all secrets.yaml files
-secrets_files=$(find "$REPO_ROOT/hosts" -name "secrets.yaml" 2>/dev/null || true)
+# Find all secrets.yaml files (actual secrets live under nix-config/hosts)
+secrets_files=$(/usr/bin/find "$REPO_ROOT/nix-config/hosts" -name "secrets.yaml" 2>/dev/null || true)
 
 if [[ -z "$secrets_files" ]]; then
   test_skip "Secrets encryption test" "No secrets.yaml files found"
@@ -49,11 +49,25 @@ while IFS= read -r file; do
 
   relative_path="${file#$REPO_ROOT/}"
 
-  # Check if file is binary (encrypted)
-  if file "$file" | grep -q "data"; then
+  # SOPS encrypts in two formats:
+  # 1. Binary (completely encrypted, file reports "data")
+  # 2. YAML with encrypted values (sops: metadata + mac: integrity marker)
+  is_encrypted=false
+
+  if ! file "$file" | grep -q "ASCII text"; then
+    is_encrypted=true
+    test_verbose "Binary encrypted: $relative_path"
+  elif grep -q "^sops:" "$file" && grep -q "mac:" "$file"; then
+    is_encrypted=true
+    test_verbose "SOPS YAML encrypted: $relative_path"
+  elif grep -q "ENC\[AES256_GCM" "$file"; then
+    is_encrypted=true
+    test_verbose "SOPS YAML encrypted (ENC markers): $relative_path"
+  fi
+
+  if [[ "$is_encrypted" == "true" ]]; then
     _test_log "pass" "Encrypted: $relative_path"
 
-    # Additional validation: check for SOPS metadata
     if sops --decrypt "$file" &> /dev/null; then
       test_verbose "SOPS can decrypt: $relative_path"
     else
@@ -62,7 +76,7 @@ while IFS= read -r file; do
     fi
   else
     _test_log "fail" "Not encrypted: $relative_path" \
-      "File is plaintext, should be encrypted"
+      "File is plaintext, should be encrypted with: sops -e -i $file"
   fi
 done <<< "$secrets_files"
 
@@ -97,8 +111,8 @@ plaintext_found=0
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
 
-  # If file is plaintext and contains password patterns
-  if ! file "$file" | grep -q "data"; then
+  # If file is plaintext (ASCII text, no SOPS markers) and contains password patterns
+  if file "$file" | grep -q "ASCII text" && ! grep -q "^sops:" "$file" && ! grep -q "ENC\[AES256_GCM" "$file"; then
     if grep -E "(password|secret|key):\s*[^{]" "$file" &> /dev/null; then
       ((plaintext_found++))
       _test_log "fail" "Plaintext secrets in: ${file#$REPO_ROOT/}" \
