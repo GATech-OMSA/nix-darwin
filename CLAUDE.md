@@ -35,7 +35,7 @@ nix-rebuild && exec zsh
 ```
 User wants to change shell config  → Edit: nix-config/home/_profiles/_template/shell/zsh.nix
 User wants to change Git config    → Edit: nix-config/home/_profiles/_template/programs/git.nix
-User wants to change system pkg    → Edit: nix-config/modules/shared/packages.nix
+User wants to change system pkg    → Edit: nix-config/modules/darwin/packages.nix
 ```
 
 **Rebuild requirement:** `nix-rebuild && exec zsh`
@@ -300,7 +300,7 @@ sudo nix run nix-darwin -- switch --flake .#macbook-pro-m3-work      # Work
 ```
 nix-darwin/
 ├── flake.nix              # Entry point, reads config/machine-config.nix
-├── config/                # Machine and user configuration (gitignored)
+├── config/                # Machine and user configuration (tracked for flake evaluation)
 │   ├── machine-config.nix # machineId, profileName, enableHomeManager, skipGoPackages
 │   └── user-config.nix    # username + email (user-specific)
 ├── nix-config/            # All Nix configuration files
@@ -396,7 +396,7 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 
 | Goal | Edit This File |
 |------|----------------|
-| Add system package | `nix-config/modules/shared/packages.nix` |
+| Add system package | `nix-config/modules/darwin/packages.nix` |
 | Add GUI app | `nix-config/modules/darwin/homebrew.nix` |
 | Add shell alias (universal) | `nix-config/home/_profiles/_template/shell/zsh.nix` |
 | Add shell alias (profile-specific) | `nix-config/home/_profiles/personal/aliases.nix` or `work/aliases.nix` |

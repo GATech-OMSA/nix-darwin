@@ -141,7 +141,7 @@ awslist                        # List all accounts
 
 ```bash
 # System packages:
-nano ~/nix-darwin/nix-config/modules/shared/packages.nix
+nano ~/nix-darwin/nix-config/modules/darwin/packages.nix
 nix-rebuild && exec zsh
 ```
 

@@ -44,7 +44,7 @@
 
       myLib = import ./nix-config/lib { inherit inputs; };
 
-      # User config (gitignored, must exist before building)
+      # User config (tracked, must exist before building)
       userConfig = import ./config/user-config.nix;
 
       # Overlays (reads userConfig for proxy settings)
