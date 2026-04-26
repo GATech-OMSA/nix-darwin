@@ -15,15 +15,16 @@ default:
 # SYSTEM MANAGEMENT
 # ============================================================================
 
-# Build and switch to the configuration
+# Build and switch to the configuration (uses smart rebuild with pre-flight checks)
 switch:
-    @echo "🚀 Rebuilding system..."
-    darwin-rebuild switch --flake .
+    ./scripts/maintenance/rebuild.sh
 
-# Build only (don't switch)
+# Build only (don't switch) — validates the config compiles
 build:
-    @echo "🏗️  Building system (no switch)..."
-    darwin-rebuild build --flake .
+    #!/usr/bin/env bash
+    MACHINE_ID=$(nix eval --raw --file config/machine-config.nix machineId 2>/dev/null || echo "default")
+    echo "Building system for $MACHINE_ID (no switch)..."
+    nix build ".#darwinConfigurations.$MACHINE_ID.system" --impure
 
 # Rollback to previous generation
 rollback:
