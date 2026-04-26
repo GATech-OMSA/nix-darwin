@@ -40,10 +40,12 @@
     # GUI applications only
     casks = [
       # Browsers
+      "firefox"
       "orion"
       "google-chrome"
 
       # Development
+      "cursor"
       "orbstack"            # Docker & Linux VMs (fast, lightweight)
       # "antigravity"
       "visual-studio-code"
@@ -65,6 +67,7 @@
       "claude"
       "codex"
       "codex-app"       # OpenAI Codex GUI (separate from codex CLI)
+      "jan"             # Local LLM runner
       "ollama-app"
 
       # Utilities
@@ -79,6 +82,9 @@
       "slack"
       "whatsapp"
       "zoom"
+
+      # Finance
+      "tradingview"
 
       # Other
       "pdf-expert"
