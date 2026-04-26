@@ -146,27 +146,12 @@ in
   # Machine-specific packages should go in mixins (personal.nix, work.nix, dev.nix)
 
   environment.systemPackages =
-    # Essential packages for all machines
     essentialPackages
-
-    # Development packages for all dev machines
     ++ developmentPackages
-
-    # Work-only packages
-    ++ lib.optionals (profileName == "work") workPackages
-
-    # Personal-only packages (AI/ML)
-    ++ lib.optionals (profileName == "personal") personalPackages
+    ++ (myLib.selectByProfile profileName {
+      work = workPackages;
+      personal = personalPackages;
+      default = [];
+    })
   ;
-
-  # Package Organization:
-  #   - essentialPackages: CLI tools for ALL machines
-  #   - developmentPackages: Dev tools for all dev machines
-  #   - workPackages: Work-only (ghostty, etc.) — gated by profileName == "work"
-  #   - personalPackages: Personal-only — gated by profileName == "personal"
-  #
-  # Profile-specific packages also in:
-  #   - home/_profiles/work/packages.nix (ODBC, DB clients, Python, Node)
-  #   - home/_profiles/personal/packages.nix
-  #   - User programs (bat, eza, fzf, zoxide, direnv, atuin): _template/programs/
 }
