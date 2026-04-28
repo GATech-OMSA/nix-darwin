@@ -3,7 +3,7 @@
 # Purpose: Modify existing nixpkgs packages without forking nixpkgs
 # Usage: Import in flake.nix to apply customizations
 
-{ inputs, userConfig }:
+{ inputs, userConfig, machineConfig }:
 
 let
   # Extract proxy configuration
@@ -21,10 +21,13 @@ let
   # Update via: shasum -a 256 cache/sops-nix/sops-install-secrets.gz | cut -d' ' -f1
   pinnedSopsHash = "cf4f9155cc2d77fa99e1ee285f5efa87a780d51136be33152eec7a3366e0c0f4";
 
-  # Check ~/.local/bin first
+  # Check ~/.local/bin first — but skip on work profile (no override capability,
+  # always use the hash-pinned repo cache to avoid stale-binary footguns from
+  # corporate IT or old setup scripts)
+  isWorkProfile = (machineConfig.profileName or "") == "work";
   localBinPath =
     if homeDir != "" then homeDir + "/.local/bin/sops-install-secrets" else "";
-  hasLocalBin = localBinPath != "" && builtins.pathExists localBinPath;
+  hasLocalBin = !isWorkProfile && localBinPath != "" && builtins.pathExists localBinPath;
 
   # Fallback: check repo cache (no manual import.sh needed)
   repoCachePath =

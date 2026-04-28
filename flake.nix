@@ -47,8 +47,8 @@
       # User config (tracked, must exist before building)
       userConfig = import ./config/user-config.nix;
 
-      # Overlays (reads userConfig for proxy settings)
-      overlays = import ./nix-config/overlays { inherit inputs userConfig; };
+      # Overlays (reads userConfig for proxy settings, machineConfig for profile-aware gates)
+      overlays = import ./nix-config/overlays { inherit inputs userConfig machineConfig; };
 
       # Active machine config (tracked, overrides registry for local builds)
       machineConfig = import ./config/machine-config.nix;
