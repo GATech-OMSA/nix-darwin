@@ -109,6 +109,10 @@ check:
     @echo "✅ Checking flake..."
     nix flake check
 
+# Benchmark zsh interactive startup (TTY-driven). Reports p50/p95 ms.
+bench-shell *ARGS:
+    @./scripts/maintenance/bench-shell.sh {{ARGS}}
+
 # ============================================================================
 # DOCUMENTATION
 # ============================================================================

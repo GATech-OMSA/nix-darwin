@@ -331,6 +331,15 @@ in
 
     # Init content (combined: micromamba lazy-load, then main config)
     initContent = lib.mkMerge [
+      # ZPROF GATING — opt-in startup profiling
+      # Run `ZPROF=1 zsh -i -c exit` to print a flat profile of init.
+      # No overhead when unset (zsh/zprof module not loaded).
+      (lib.mkOrder 1 ''
+        if [[ -n "''${ZPROF:-}" ]]; then
+          zmodload zsh/zprof
+        fi
+      '')
+
       # PERFORMANCE OPTIMIZATIONS (The <0.5s Goal)
       # Hybrid Approach: Static generation of init scripts
       # Moves ~20ms of processing from shell-start to build-time
@@ -612,20 +621,13 @@ in
       (lib.mkOrder 9999 ''
         __ensure_zshrc_local
         [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+        # Print zprof report at end of init (opt-in via env var, see top of file).
+        if [[ -n "''${ZPROF:-}" ]]; then
+          zprof
+        fi
       '')
     ];
-
-    # Login shell init
-    loginExtra = ''
-      # Performance profiling (uncomment to use)
-      # zmodload zsh/zprof
-    '';
-
-    # Logout shell
-    logoutExtra = ''
-      # Performance profiling (uncomment to use)
-      # zprof
-    '';
   };
 
   # Starship prompt configuration - Override any conflicting settings
