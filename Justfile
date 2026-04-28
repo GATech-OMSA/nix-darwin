@@ -122,3 +122,13 @@ docs:
     @echo "📚 Generating documentation..."
     # Placeholder for future doc generation
     @echo "See docs/README.md"
+
+# Regenerate the installed-apps section of docs/app-recommendations.md
+# from nix-config/modules/darwin/homebrew.nix.
+docs-apps:
+    ./scripts/docs/sync-app-recommendations.sh
+
+# Verify docs/app-recommendations.md is in sync with homebrew.nix.
+# Used by the pre-commit hook to detect drift.
+docs-apps-check:
+    ./scripts/docs/sync-app-recommendations.sh --check

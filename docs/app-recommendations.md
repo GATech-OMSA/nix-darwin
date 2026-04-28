@@ -173,6 +173,75 @@ nix-rebuild
 
 ---
 
+<!-- BEGIN GENERATED:apps -->
+## Currently Installed (Generated)
+
+_This section is generated from `nix-config/modules/darwin/homebrew.nix` by_
+_`scripts/docs/sync-app-recommendations.sh`. Do not edit by hand —_
+_re-run via `just docs-apps` after editing `homebrew.nix`._
+
+### Casks (40)
+
+| Cask | Note |
+| --- | --- |
+| `alfred` |  |
+| `appcleaner` |  |
+| `betterdisplay` | HiDPI/brightness for external monitors on Apple Silicon |
+| `bruno` | Git-friendly local API client (modern Postman) — also on nix |
+| `chatgpt` |  |
+| `claude` |  |
+| `claude-code@latest` | rolling channel; stable `claude-code` cask lags behind |
+| `codex` |  |
+| `codex-app` | OpenAI Codex GUI (separate from codex CLI) |
+| `conductor` |  |
+| `cursor` |  |
+| `firefox` |  |
+| `fork` |  |
+| `ghostty` | Terminal emulator (Homebrew for personal, Nix for work) |
+| `google-chrome` |  |
+| `hush` | migrated from MAS — `mas uninstall 1544743900` first |
+| `iterm2` |  |
+| `jan` | Local LLM runner |
+| `kaleidoscope` | Best-in-class visual diff/merge for code, folders, images |
+| `keka` |  |
+| `keyclu` |  |
+| `little-snitch` | Outbound firewall — per-app network monitoring |
+| `microsoft-excel` | migrated from MAS — `mas uninstall 462058435` first |
+| `microsoft-powerpoint` | migrated from MAS — `mas uninstall 462062816` first |
+| `microsoft-word` |  |
+| `obsidian` |  |
+| `ollama-app` |  |
+| `orbstack` | Docker & Linux VMs (fast, lightweight) |
+| `orion` |  |
+| `pdf-expert` |  |
+| `protonvpn` |  |
+| `proxyman` | Native HTTP/HTTPS debugging proxy with SSL inspection |
+| `raycast` |  |
+| `shottr` |  |
+| `slack` |  |
+| `tradingview` |  |
+| `visual-studio-code` |  |
+| `warp` |  |
+| `whatsapp` |  |
+| `zoom` |  |
+
+### Mac App Store (8)
+
+| App | App ID | Note |
+| --- | --- | --- |
+| AdBlock Pro | `1018301773` |  |
+| Capital One Shopping | `1477110326` |  |
+| Consent-O-Matic | `1606897889` |  |
+| DarkModeSafari | `6755151037` |  |
+| Pages | `409201541` |  |
+| Rakuten Cash Back | `1451893560` |  |
+| uBlock Origin Lite | `6745342698` |  |
+| Uplock | `6469049274` | was published as "Access" before rename |
+
+<!-- END GENERATED:apps -->
+
+---
+
 ## Curation provenance
 
 The candidate list was assembled 2026-04-28 from parallel queries to `gemini -p`, `codex exec`, and web research (awesome-mac, MacStories, Reddit r/macapps, ProductHunt, Homebrew cask repo). 3-way consensus picks (`bruno`, `proxyman`, `kaleidoscope`, `betterdisplay`, `little-snitch`) were adopted into `homebrew.nix` the same day.

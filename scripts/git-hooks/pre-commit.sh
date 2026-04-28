@@ -78,4 +78,23 @@ for pattern in "${SECRETS_PATHS[@]}"; do
 done
 
 echo "✓ All security checks passed"
+
+# ============================================================================
+# DOC DRIFT — keep app-recommendations.md in sync with homebrew.nix
+# ============================================================================
+# Only runs when homebrew.nix is staged; otherwise skipped (zero overhead).
+if echo "$STAGED_FILES" | grep -qE '^nix-config/modules/darwin/homebrew\.nix$'; then
+  echo "→ Checking docs/app-recommendations.md is up to date..."
+  REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+  SYNC="$REPO_ROOT/scripts/docs/sync-app-recommendations.sh"
+  if [ -x "$SYNC" ]; then
+    if ! "$SYNC" --check; then
+      echo "✗ ERROR: docs/app-recommendations.md is stale relative to homebrew.nix" >&2
+      echo "   Fix: just docs-apps && git add docs/app-recommendations.md" >&2
+      exit 1
+    fi
+    echo "  ✓ app-recommendations.md is in sync"
+  fi
+fi
+
 exit 0
