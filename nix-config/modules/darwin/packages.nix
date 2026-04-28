@@ -119,13 +119,13 @@ let
     kubectx      # Fast K8s context/namespace switching (includes kubens)
     k9s
     kubernetes-helm
-    terraform    # Infrastructure as code
+    # terraform    # Infrastructure as code — disabled (BSL since v1.6); use opentofu or work/packages.nix → tenv if needed
 
     # Cloud
     awscli2
 
     # Interview Prep & System Design
-    mermaid-cli  # Text-to-diagram for system design
+    # mermaid-cli  # Text-to-diagram — disabled (pulls in chromium); GitHub/Obsidian/VS Code render natively
     graphviz     # Graph/architecture visualization
   ];
 

@@ -65,7 +65,7 @@
       # Productivity
       "alfred"
       "raycast"
-      "karabiner-elements"
+      # "karabiner-elements"   # disabled — re-enable + uncomment ./karabiner.nix in _template/programs/default.nix
 
       # AI/LLM
       "chatgpt"

@@ -87,4 +87,15 @@ in
     } else
       { }  # No override — build from source using default proxy.golang.org
   )
+
+  # ============================================
+  # DIRENV — skip checkPhase
+  # ============================================
+  # Issue: direnv's test suite hangs/is extremely slow on Apple Silicon
+  # (filesystem semantics tests, sandbox overhead). Tests pass in CI;
+  # locally they routinely hit 15+ min. Skip them — cached binaries on
+  # cache.nixos.org are already test-validated upstream.
+  (_final: prev: {
+    direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
+  })
 ]
