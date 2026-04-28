@@ -1,15 +1,12 @@
-{ config, pkgs, lib, myLib, username, hostname, profileName, ... }:
+{ config, pkgs, lib, username, hostname, profileName, ... }:
 
 {
   # Host-specific configuration for macbook-pro-m1-personal
   #
   # Secrets are loaded based on profileName (personal/work/minimal)
 
-  imports = myLib.selectByProfile profileName {
-    personal = [ ./secrets-personal.nix ];
-    work = [ ./secrets-work.nix ];
-    default = [];
-  };
+  imports =
+    lib.optional (profileName == "personal") ./secrets-personal.nix;
 
   networking = {
     hostName = hostname;

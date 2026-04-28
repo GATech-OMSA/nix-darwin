@@ -10,7 +10,6 @@
 
   # Conditional secret imports based on profile
   imports =
-    lib.optional (profileName == "personal") ./secrets-personal.nix ++
     lib.optional (profileName == "work") ./secrets-work.nix;
 
   networking = {
