@@ -519,13 +519,21 @@ in
       [[ -n "$TF_PLUGIN_CACHE_DIR" ]] && mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # ============================================
-      # WELCOME MESSAGE
+      # WELCOME MESSAGE (cached — avoids two subprocess calls per shell)
       # ============================================
       if [ "$TERM_PROGRAM" != "vscode" ]; then
-        _nix_ver=$(nix --version 2>/dev/null | awk '{print $NF}')
-        _os_ver=$(sw_vers -productVersion 2>/dev/null)
-        printf '\033[90m %s · macOS %s · nix %s\033[0m\n' "$MACHINE_MODE" "$_os_ver" "$_nix_ver"
-        unset _nix_ver _os_ver
+        _wf="$HOME/.cache/nix-darwin/welcome.$MACHINE_MODE"
+        # Refresh if missing or older than 24h. find -mtime -1 = modified within last day.
+        if [[ ! -s "$_wf" ]] || [[ -z "$(/usr/bin/find "$_wf" -mtime -1 2>/dev/null)" ]]; then
+          /bin/mkdir -p "$(dirname "$_wf")"
+          printf '\033[90m %s · macOS %s · nix %s\033[0m\n' \
+            "$MACHINE_MODE" \
+            "$(sw_vers -productVersion 2>/dev/null)" \
+            "$(nix --version 2>/dev/null | awk '{print $NF}')" \
+            > "$_wf"
+        fi
+        /bin/cat "$_wf"
+        unset _wf
       fi
 
       # ============================================
