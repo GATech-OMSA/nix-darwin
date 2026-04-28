@@ -73,7 +73,7 @@ let
 
     # Code Quality & Development
     pre-commit   # Git hooks framework
-    nodePackages.markdown-link-check  # Validate markdown links
+    markdown-link-check  # Validate markdown links (was nodePackages.* — moved to top-level in nixpkgs)
     just         # Command runner
 
     # Code Analysis & Search (enhance Claude Code)
