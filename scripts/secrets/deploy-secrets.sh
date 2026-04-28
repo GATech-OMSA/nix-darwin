@@ -29,6 +29,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DRY_RUN=false
 AGE_KEY="$HOME/.config/sops/age/keys.txt"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/secrets-deploy"
+MANIFEST="$STATE_DIR/manifest"
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -166,6 +168,7 @@ MAPPINGS=(
 
 deployed=0
 skipped=0
+declare -a MANIFEST_LINES=()
 
 for mapping in "${MAPPINGS[@]}"; do
   IFS='|' read -r key path mode <<< "$mapping"
@@ -229,7 +232,22 @@ for mapping in "${MAPPINGS[@]}"; do
   chmod "$mode" "$path"
   success "$key → $path"
   deployed=$(( deployed + 1 ))
+  MANIFEST_LINES+=("$path|$mode")
 done
+
+# Write manifest atomically — verify-secrets.sh (called from HM activation)
+# reads this to know what targets must exist. Keeps activation off the
+# decryption path entirely.
+if [ "$DRY_RUN" = false ] && [ "$deployed" -gt 0 ]; then
+  mkdir -p "$STATE_DIR"
+  tmp_manifest="$MANIFEST.tmp"
+  {
+    printf '# secrets-deploy manifest — written %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf '# Format: target_path|mode\n'
+    printf '%s\n' "${MANIFEST_LINES[@]}"
+  } > "$tmp_manifest"
+  /bin/mv "$tmp_manifest" "$MANIFEST"
+fi
 
 echo ""
 if [ "$DRY_RUN" = true ]; then

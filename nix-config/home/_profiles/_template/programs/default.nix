@@ -25,19 +25,24 @@ in
   ];
 
   # ==================================================
-  # SOPS SECRET DEPLOYMENT (shared across all profiles)
+  # SOPS SECRET VERIFICATION (shared across all profiles)
   # ==================================================
-  # Runs deploy-secrets.sh on every rebuild. The script decrypts secrets.yaml
-  # and deploys each key to its target path. Keys not in secrets.yaml are skipped,
-  # so the same script works for personal and work profiles.
-  home.activation.deploySopsSecrets = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    DEPLOY_SCRIPT="${nixDarwinDir}/scripts/secrets/deploy-secrets.sh"
-    if [[ ! -f "$DEPLOY_SCRIPT" ]]; then
-      echo "warning: deploy-secrets.sh not found at $DEPLOY_SCRIPT" >&2
-    elif [[ ! -x "$DEPLOY_SCRIPT" ]]; then
-      echo "warning: deploy-secrets.sh not executable, run: chmod +x $DEPLOY_SCRIPT" >&2
+  # Activation no longer writes secrets — it only VERIFIES that the targets
+  # listed in the manifest (written by secrets-deploy) exist with the right
+  # mode. This eliminates the 2026-04-28 failure class where a silent decrypt
+  # error inside activation corrupted ~/.zsh_secrets.
+  #
+  # Writers:
+  #   • secrets-deploy (manual)               — primary path
+  #   • launchd agent on secrets.yaml change  — automatic
+  #   • activate.sh (first-boot bootstrap)    — initial deploy
+  home.activation.verifySopsSecrets = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    VERIFY_SCRIPT="${nixDarwinDir}/scripts/secrets/verify-secrets.sh"
+    if [[ ! -x "$VERIFY_SCRIPT" ]]; then
+      echo "warning: verify-secrets.sh missing or not executable at $VERIFY_SCRIPT" >&2
+      echo "         skipping secret verification (this should not happen on a healthy checkout)" >&2
     else
-      $DRY_RUN_CMD "$DEPLOY_SCRIPT" || echo "warning: secret deployment failed (exit $?)" >&2
+      $DRY_RUN_CMD "$VERIFY_SCRIPT" --quiet
     fi
   '';
 }

@@ -17,6 +17,7 @@ in
     ./security.nix
     ./packages.nix
     ./builders.nix
+    ./secrets-watcher.nix
   ];
 
   # Disable Nix management - Determinate Nix handles daemon and installation
