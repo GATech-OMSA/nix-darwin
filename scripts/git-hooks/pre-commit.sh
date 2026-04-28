@@ -80,6 +80,57 @@ done
 echo "✓ All security checks passed"
 
 # ============================================================================
+# NIX FLAKE INTEGRITY — gated on staged .nix or flake.lock changes
+# ============================================================================
+# Two checks, both required for catching real breakage:
+#
+# 1) `nix flake check --no-build` — fast (~100 ms warm) structural check.
+#    Validates flake outputs that nix knows about (lib, etc.) and inputs.
+#    Does NOT deep-eval `darwinConfigurations` because nix-darwin uses a
+#    non-standard output category — empirically, syntax errors in any
+#    imported darwin module pass this check with exit 0.
+#
+# 2) `nix eval --raw .#darwinConfigurations.<id>.system.drvPath` — forces
+#    full evaluation of the entire darwin module tree. Catches syntax
+#    errors, type errors, missing imports, etc. ~3.4 s warm, ~5.5 s cold.
+#
+# Combined cost ~3.5 s warm, gated on .nix/flake.lock staged — most
+# commits pay zero overhead.
+if echo "$STAGED_FILES" | grep -qE '(\.nix$|^flake\.lock$)'; then
+  echo "→ Validating nix flake..."
+  REPO_ROOT_NX="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+  if [ -f "$REPO_ROOT_NX/flake.nix" ] && command -v nix >/dev/null 2>&1; then
+    nix_err=/tmp/.nix-precommit-err.$$
+    trap 'rm -f "$nix_err"' EXIT
+
+    # Cheap structural check first.
+    if ! nix flake check --no-build > "$nix_err" 2>&1; then
+      echo "✗ ERROR: nix flake check --no-build failed" >&2
+      grep -v '^warning: ' "$nix_err" >&2 || true
+      exit 1
+    fi
+
+    # Force-eval the active darwinConfiguration so module-tree errors fail here.
+    machine_id=$(grep 'machineId' "$REPO_ROOT_NX/config/machine-config.nix" 2>/dev/null \
+      | sed 's/.*"\(.*\)".*/\1/')
+    if [ -z "$machine_id" ]; then
+      echo "  ▸ skipping deep eval: could not determine machineId" >&2
+    else
+      eval_attr=".#darwinConfigurations.${machine_id}.system.drvPath"
+      if ! nix eval --raw "$eval_attr" > /dev/null 2> "$nix_err"; then
+        echo "✗ ERROR: nix evaluation failed for $eval_attr" >&2
+        echo "" >&2
+        cat "$nix_err" >&2
+        echo "" >&2
+        echo "   Fix the syntax/eval error above before committing." >&2
+        exit 1
+      fi
+    fi
+    echo "  ✓ flake evaluates cleanly"
+  fi
+fi
+
+# ============================================================================
 # DOC DRIFT — keep app-recommendations.md in sync with homebrew.nix
 # ============================================================================
 # Only runs when homebrew.nix is staged; otherwise skipped (zero overhead).
