@@ -113,7 +113,7 @@ function cleanup-quick() {
   __cleanup_log "quick" "Starting (dry_run=$dry_run)"
 
   if [[ "$dry_run" == "true" ]]; then
-    echo "[DRY RUN] Would run safe + micromamba + docker + pip/npm caches"
+    echo "[DRY RUN] Would run safe + docker + pip/npm/uv caches"
   else
     # Safe tier
     rm -rf ~/.Trash/* /tmp/* ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null
@@ -123,7 +123,7 @@ function cleanup-quick() {
     command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
 
     # Quick additions
-    command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null
+    # command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null  # disabled; uv is the standard
     command -v docker &>/dev/null && docker info &>/dev/null && docker image prune -af &>/dev/null
     rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
     command -v npm &>/dev/null && npm cache clean --force &>/dev/null
@@ -172,7 +172,7 @@ function cleanup-standard() {
     sudo nix-env --delete-generations +5 2>/dev/null || true
     nix-collect-garbage -d &>/dev/null
     command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
-    command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null
+    # command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null  # disabled; uv is the standard
     command -v docker &>/dev/null && docker info &>/dev/null && docker image prune -af &>/dev/null
     rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
     command -v npm &>/dev/null && npm cache clean --force &>/dev/null
@@ -234,7 +234,7 @@ function cleanup-dev() {
     sudo nix-env --delete-generations +5 2>/dev/null || true
     nix-collect-garbage -d &>/dev/null
     command -v brew &>/dev/null && brew cleanup --prune=30 &>/dev/null
-    command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null
+    # command -v micromamba &>/dev/null && micromamba clean --yes &>/dev/null  # disabled; uv is the standard
     rm -rf ~/.cache/pip/* ~/.cache/uv/* 2>/dev/null
     command -v npm &>/dev/null && npm cache clean --force &>/dev/null
     rm -rf ~/Library/Application\ Support/Code/Cache/* ~/Library/Application\ Support/Code/CachedData/* 2>/dev/null
@@ -304,7 +304,7 @@ function cleanup-aggressive() {
     # Dev tier (inline)
     rm -rf ~/.Trash/* /tmp/* ~/Downloads/*.tmp ~/Downloads/*.download 2>/dev/null
     command -v brew &>/dev/null && brew cleanup --prune=all &>/dev/null
-    command -v micromamba &>/dev/null && micromamba clean --all --yes &>/dev/null
+    # command -v micromamba &>/dev/null && micromamba clean --all --yes &>/dev/null  # disabled; uv is the standard
     rm -rf ~/.cache/* 2>/dev/null
     [[ -d "$HOME/Dev" ]] && {
       find "$HOME/Dev" -name ".terraform" -type d -prune -exec rm -rf {} + 2>/dev/null

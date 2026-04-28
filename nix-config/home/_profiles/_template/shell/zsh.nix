@@ -226,7 +226,7 @@ in
       grest = "git restore --staged";
 
       # ============================================
-      # PYTHON - MULTI-TIER (UV + Micromamba)
+      # PYTHON (UV)  — micromamba aliases disabled below
       # ============================================
       py = "python";
       ipy = "ipython";
@@ -246,12 +246,12 @@ in
       format = "ruff format .";
       "lint-fix" = "ruff check --fix .";
 
-      # Micromamba (Tier 4: abbreviated domain)
+      # Micromamba (Tier 4: abbreviated domain) — disabled; uv is the standard
       # Note: m-act and m-deact use functions (not aliases) to show usage help
-      m-create = "micromamba create";
-      m-list = "micromamba env list";
-      m-install = "micromamba install";
-      m-remove = "micromamba remove";
+      # m-create = "micromamba create";
+      # m-list = "micromamba env list";
+      # m-install = "micromamba install";
+      # m-remove = "micromamba remove";
 
       # ============================================
       # AWS
@@ -463,21 +463,21 @@ in
         }}
       '')
 
-      # Micromamba LAZY initialization - only runs when first used
-      # This saves ~100ms on shell startup
+      # Micromamba LAZY initialization — disabled; uv is the standard (CLAUDE.md)
+      # This block previously saved ~100ms on shell startup by lazy-loading micromamba.
       (lib.mkOrder 550 ''
         # Lazy-load micromamba - only initialize when first invoked
-        if command -v micromamba &> /dev/null; then
-          export MAMBA_EXE="${"\${commands[micromamba]}"}"
-          export MAMBA_ROOT_PREFIX="$HOME/micromamba"
-
-          # Wrapper function that initializes micromamba on first use
-          micromamba() {
-            unfunction micromamba  # Remove this wrapper
-            eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
-            micromamba "$@"  # Run the actual command
-          }
-        fi
+        # if command -v micromamba &> /dev/null; then
+        #   export MAMBA_EXE="${"\${commands[micromamba]}"}"
+        #   export MAMBA_ROOT_PREFIX="$HOME/micromamba"
+        #
+        #   # Wrapper function that initializes micromamba on first use
+        #   micromamba() {
+        #     unfunction micromamba  # Remove this wrapper
+        #     eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
+        #     micromamba "$@"  # Run the actual command
+        #   }
+        # fi
       '')
 
       # Main shell configuration (runs after oh-my-zsh)

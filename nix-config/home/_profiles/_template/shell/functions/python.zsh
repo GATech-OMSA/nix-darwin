@@ -37,78 +37,77 @@ function activate() {
 }
 
 # ============================================
-# MICROMAMBA CONVENIENCE FUNCTIONS
+# MICROMAMBA CONVENIENCE FUNCTIONS — disabled; uv is the standard (CLAUDE.md)
 # ============================================
-
 # Activate micromamba environment
-function m-act() {
-  if [ -z "$1" ]; then
-    echo "Usage: m-act <environment-name>"
-    echo ""
-    echo "Available environments:"
-    micromamba env list
-  else
-    micromamba activate "$1"
-  fi
-}
-
+# function m-act() {
+#   if [ -z "$1" ]; then
+#     echo "Usage: m-act <environment-name>"
+#     echo ""
+#     echo "Available environments:"
+#     micromamba env list
+#   else
+#     micromamba activate "$1"
+#   fi
+# }
+#
 # Deactivate micromamba environment
-function m-deact() {
-  micromamba deactivate
-}
-
+# function m-deact() {
+#   micromamba deactivate
+# }
+#
 # Create micromamba environment
 # Usage: m-mkenv <name> [python-version] [packages...]
 # Examples:
 #   m-mkenv myenv                    # Python 3.13 (default)
 #   m-mkenv myenv 3.12               # Python 3.12
 #   m-mkenv myenv 3.13 pandas numpy  # With packages
-function m-mkenv() {
-  if [ -z "$1" ]; then
-    echo "Usage: m-mkenv <name> [python-version] [packages...]"
-    echo ""
-    echo "Examples:"
-    echo "  m-mkenv myenv                    # Python 3.13 (default)"
-    echo "  m-mkenv myenv 3.12               # Python 3.12"
-    echo "  m-mkenv myenv 3.13 pandas numpy  # With packages"
-    return 1
-  fi
-
-  local name="$1"
-  local python_version="3.13"
-  local packages=""
-
-  # Check if second argument is a Python version (starts with 3.)
-  if [ -n "$2" ] && [[ "$2" =~ ^3\.[0-9]+$ ]]; then
-    python_version="$2"
-    shift 2
-    packages="$@"
-  else
-    shift
-    packages="$@"
-  fi
-
-  echo "Creating environment '$name' with Python $python_version..."
-  if [ -n "$packages" ]; then
-    echo "Installing packages: $packages"
-    micromamba create -n "$name" python="$python_version" ${=packages} -y
-  else
-    micromamba create -n "$name" python="$python_version" -y
-  fi
-}
-
+# function m-mkenv() {
+#   if [ -z "$1" ]; then
+#     echo "Usage: m-mkenv <name> [python-version] [packages...]"
+#     echo ""
+#     echo "Examples:"
+#     echo "  m-mkenv myenv                    # Python 3.13 (default)"
+#     echo "  m-mkenv myenv 3.12               # Python 3.12"
+#     echo "  m-mkenv myenv 3.13 pandas numpy  # With packages"
+#     return 1
+#   fi
+#
+#   local name="$1"
+#   local python_version="3.13"
+#   local packages=""
+#
+#   # Check if second argument is a Python version (starts with 3.)
+#   if [ -n "$2" ] && [[ "$2" =~ ^3\.[0-9]+$ ]]; then
+#     python_version="$2"
+#     shift 2
+#     packages="$@"
+#   else
+#     shift
+#     packages="$@"
+#   fi
+#
+#   echo "Creating environment '$name' with Python $python_version..."
+#   if [ -n "$packages" ]; then
+#     echo "Installing packages: $packages"
+#     micromamba create -n "$name" python="$python_version" ${=packages} -y
+#   else
+#     micromamba create -n "$name" python="$python_version" -y
+#   fi
+# }
+#
 # Remove micromamba environment
-function m-rmenv() {
-  if [ -z "$1" ]; then
-    echo "Usage: m-rmenv <environment-name>"
-    echo ""
-    echo "Available environments:"
-    micromamba env list
-  else
-    echo "Removing environment '$1'..."
-    micromamba env remove -n "$1" -y
-  fi
-}
+# function m-rmenv() {
+#   if [ -z "$1" ]; then
+#     echo "Usage: m-rmenv <environment-name>"
+#     echo ""
+#     echo "Available environments:"
+#     micromamba env list
+#   else
+#     echo "Removing environment '$1'..."
+#     micromamba env remove -n "$1" -y
+#   fi
+# }
 
 # ============================================
 # PYTHON ENVIRONMENT INFO

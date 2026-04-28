@@ -320,7 +320,6 @@ nix-darwin/
 │   ├── overlays/         # Package customizations
 │   └── pkgs/             # Custom packages
 ├── scripts/               # Utility scripts
-│   ├── app-catalog/      # Homebrew app management
 │   ├── setup/            # Initial setup scripts (configure.sh, activate.sh)
 │   ├── profiles/         # Profile switching
 │   ├── maintenance/      # System maintenance

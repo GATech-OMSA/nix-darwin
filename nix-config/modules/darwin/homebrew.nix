@@ -31,7 +31,7 @@
     # Only brew formulae that MUST be from Homebrew
     brews = [
       "mas"         # Mac App Store CLI
-      "micromamba"  # Conda replacement
+      # "micromamba"  # Conda replacement — disabled; uv is the standard (CLAUDE.md)
       "gemini-cli"  # Google Gemini CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
       "opencode"    # Open source AI coding agent (anomalyco/tap)
@@ -56,6 +56,11 @@
       "warp"
       "fork"
       "microsoft-word"
+      "microsoft-excel"        # migrated from MAS — `mas uninstall 462058435` first
+      "microsoft-powerpoint"   # migrated from MAS — `mas uninstall 462062816` first
+      "bruno"                  # Git-friendly local API client (modern Postman) — also on nix
+      "proxyman"               # Native HTTP/HTTPS debugging proxy with SSL inspection
+      "kaleidoscope"           # Best-in-class visual diff/merge for code, folders, images
 
       # Productivity
       "alfred"
@@ -77,6 +82,9 @@
       "keyclu"
       "shottr"
       "obsidian"
+      "hush"                # migrated from MAS — `mas uninstall 1544743900` first
+      "betterdisplay"       # HiDPI/brightness for external monitors on Apple Silicon
+      "little-snitch"       # Outbound firewall — per-app network monitoring
 
       # Communication
       "slack"
