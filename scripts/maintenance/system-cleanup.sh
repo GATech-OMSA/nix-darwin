@@ -105,14 +105,46 @@ if confirm "Empty Trash?"; then
   success "Trash emptied"
 fi
 
-# ============================================ 
+# ============================================
 # DOCKER CLEANUP
-# ============================================ 
+# ============================================
 if command -v docker &> /dev/null; then
   header "Docker Maintenance"
   if confirm "Prune unused Docker data (containers, images, networks)?"; then
     docker system prune -f
     success "Docker system pruned"
+  fi
+fi
+
+# ============================================
+# ATUIN DATABASE MAINTENANCE
+# ============================================
+# Atuin's SQLite WAL files can balloon to multi-MB and slow every shell init
+# (each `atuin uuid` call in zsh startup waits on the WAL). Checkpoint truncates
+# the WAL back to zero so subsequent reads don't have to traverse it.
+if [[ -d "$HOME/.local/share/atuin" ]] && command -v sqlite3 &> /dev/null; then
+  header "Atuin History Maintenance"
+
+  wal_size_mb() {
+    local wal="$1"
+    [[ -f "$wal" ]] && du -m "$wal" | awk '{print $1}' || echo 0
+  }
+
+  history_wal_mb=$(wal_size_mb "$HOME/.local/share/atuin/history.db-wal")
+  records_wal_mb=$(wal_size_mb "$HOME/.local/share/atuin/records.db-wal")
+  total_wal_mb=$((history_wal_mb + records_wal_mb))
+
+  if (( total_wal_mb > 1 )); then
+    echo "Atuin WAL is ${total_wal_mb}MB (history=${history_wal_mb}M records=${records_wal_mb}M)"
+    if confirm "Checkpoint atuin databases (clears WAL bloat that slows shell init)?"; then
+      for db in history.db records.db; do
+        path="$HOME/.local/share/atuin/$db"
+        [[ -f "$path" ]] && sqlite3 "$path" 'PRAGMA wal_checkpoint(TRUNCATE);' > /dev/null
+      done
+      success "Atuin WAL checkpointed"
+    fi
+  else
+    success "Atuin WAL is healthy (${total_wal_mb}MB)"
   fi
 fi
 

@@ -575,6 +575,69 @@ check_backup_verification() {
   fi
 }
 
+check_system_resources() {
+  print_category "SYSTEM RESOURCES"
+
+  # Uptime — long uptimes accumulate stale memory/swap and slow new processes
+  if uptime_days=$(uptime | sed -nE 's/.*up ([0-9]+) day.*/\1/p') && [[ -n "$uptime_days" ]]; then
+    if (( uptime_days < 14 )); then
+      check_pass "Uptime healthy" "${uptime_days} days"
+    elif (( uptime_days < 30 )); then
+      check_warn "Long uptime" "${uptime_days} days — consider rebooting if shells feel slow"
+    else
+      check_fail "Very long uptime" "${uptime_days} days — reboot recommended"
+    fi
+  fi
+
+  # Load average — sustained > num-cores indicates contention
+  cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 8)
+  load_5min=$(uptime | sed -nE 's/.*load averages?: [^ ]+ +([0-9.]+).*/\1/p')
+  if [[ -n "$load_5min" ]]; then
+    is_high=$(awk -v l="$load_5min" -v c="$cores" 'BEGIN { print (l > c * 0.75) ? 1 : 0 }')
+    if [[ "$is_high" -eq 0 ]]; then
+      check_pass "Load average normal" "5min=${load_5min} (cores=${cores})"
+    else
+      check_warn "High load average" "5min=${load_5min} on ${cores} cores"
+    fi
+  fi
+
+  # Swap pressure — committed swap can't be reclaimed without restarting apps
+  swap_used_mb=$(sysctl vm.swapusage 2>/dev/null | sed -nE 's/.*used = ([0-9.]+)M.*/\1/p' | awk '{print int($1)}')
+  if [[ -n "$swap_used_mb" ]]; then
+    if (( swap_used_mb < 1024 )); then
+      check_pass "Swap usage low" "${swap_used_mb}MB committed"
+    elif (( swap_used_mb < 4096 )); then
+      check_warn "Moderate swap usage" "${swap_used_mb}MB committed — try 'sudo purge' to reclaim RAM"
+    else
+      check_fail "Heavy swap usage" "${swap_used_mb}MB committed — reboot to fully clear"
+    fi
+  fi
+
+  # Free memory pages (16KB each on Apple Silicon)
+  pages_free=$(memory_pressure 2>/dev/null | sed -nE 's/Pages free: +([0-9]+).*/\1/p')
+  if [[ -n "$pages_free" ]]; then
+    free_mb=$(( pages_free * 16 / 1024 ))
+    if (( free_mb > 1024 )); then
+      check_pass "Free memory adequate" "${free_mb}MB"
+    elif (( free_mb > 256 )); then
+      check_warn "Free memory low" "${free_mb}MB — fresh processes may be slow"
+    else
+      check_fail "Free memory critical" "${free_mb}MB — fresh shells will hang on swap-in"
+    fi
+  fi
+
+  # Atuin WAL — bloated WAL slows every shell init via `atuin uuid`
+  history_wal="$HOME/.local/share/atuin/history.db-wal"
+  if [[ -f "$history_wal" ]]; then
+    wal_mb=$(du -m "$history_wal" 2>/dev/null | awk '{print $1}')
+    if (( wal_mb < 2 )); then
+      check_pass "Atuin WAL healthy" "${wal_mb}MB"
+    else
+      check_warn "Atuin WAL bloated" "${wal_mb}MB — run 'system-cleanup' to checkpoint"
+    fi
+  fi
+}
+
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
@@ -583,6 +646,7 @@ main() {
   print_header "NIX-DARWIN SYSTEM HEALTH CHECK"
 
   # Run all checks
+  check_system_resources
   check_nix_daemon
   check_darwin_activation
   check_home_manager
