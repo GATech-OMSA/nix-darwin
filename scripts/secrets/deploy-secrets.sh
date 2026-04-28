@@ -186,9 +186,23 @@ for mapping in "${MAPPINGS[@]}"; do
   # Sanity: extracted value must not contain other top-level YAML keys from
   # the file (would indicate yq returned the whole document instead of one
   # key's value — the bug we previously hit during activation).
+  #
+  # Belt-and-suspenders: the decrypted YAML starts with the literal comment
+  # "# Edit with: sops" — if that string appears in any extracted value, yq
+  # returned the entire document. This catches the failure mode even when the
+  # per-key regex below misses (e.g. unforeseen YAML scalar markers).
+  if printf '%s' "$VALUE" | grep -qF "# Edit with: sops"; then
+    error "Extracted value for '$key' contains the YAML file header — yq returned the whole document. Aborting to avoid corrupting $path."
+    exit 1
+  fi
+
   for other_key in $AVAILABLE_KEYS; do
     [[ "$other_key" == "$key" ]] && continue
-    if printf '%s' "$VALUE" | grep -qxF "$other_key:"; then
+    # Match real YAML key syntax: "key:" optionally followed by whitespace and
+    # a scalar style indicator (| or >). The previous "-qxF" guard required an
+    # exact full-line match for "key:" but real YAML uses "key: |" for
+    # multiline scalars, so the check never fired.
+    if printf '%s' "$VALUE" | grep -qE "^${other_key}:[[:space:]]*[|>]?[[:space:]]*$"; then
       error "Extracted value for '$key' contains another top-level key '$other_key:' — yq returned wrong content. Aborting to avoid corrupting $path."
       exit 1
     fi
