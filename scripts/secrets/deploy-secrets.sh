@@ -51,13 +51,31 @@ for nixpath in /run/current-system/sw/bin /nix/var/nix/profiles/default/bin "$HO
   [[ -d "$nixpath" ]] && [[ ":$PATH:" != *":$nixpath:"* ]] && PATH="$nixpath:$PATH"
 done
 
-# Check required tools
-for tool in sops yq; do
-  if ! command -v "$tool" &>/dev/null; then
-    error "Required tool not found: $tool"
-    exit 1
-  fi
-done
+# Resolve required tools to absolute paths and verify identity.
+# Activation hooks have an unstable PATH (which yq/sops gets found can vary by
+# generation-swap timing or stray binaries elsewhere). A wrong or older yq
+# silently returns the whole document instead of a single key value, leaving
+# secret files containing raw YAML — caught here.
+resolve_bin() {
+  local name="$1"
+  local found
+  found=$(command -v "$name" 2>/dev/null) || { error "Required tool not found: $name"; exit 1; }
+  # Ensure it actually lives in the nix store (not a stray system binary)
+  case "$found" in
+    /nix/store/*|/run/current-system/*|/nix/var/nix/profiles/*) ;;
+    *) error "Tool '$name' resolves outside nix store: $found"; exit 1 ;;
+  esac
+  printf '%s' "$found"
+}
+SOPS=$(resolve_bin sops)
+YQ=$(resolve_bin yq)
+
+# Verify yq is mikefarah/yq (Go), not kislyuk/yq (Python) — they have
+# different path syntax and the wrong one returns garbage silently.
+if ! "$YQ" --version 2>&1 | grep -q 'mikefarah'; then
+  error "yq at $YQ is not mikefarah/yq (Go). Got: $($YQ --version 2>&1 | head -1)"
+  exit 1
+fi
 
 # Auto-detect machine ID
 if [ -f "$REPO_ROOT/config/machine-config.nix" ]; then
@@ -88,13 +106,13 @@ echo ""
 info "Decrypting secrets..."
 DECRYPTED_FILE=$(mktemp)
 trap '/bin/rm -f "$DECRYPTED_FILE"' EXIT
-if ! SOPS_AGE_KEY_FILE="$AGE_KEY" sops -d "$SECRETS_FILE" > "$DECRYPTED_FILE" 2>/dev/null; then
+if ! SOPS_AGE_KEY_FILE="$AGE_KEY" "$SOPS" -d "$SECRETS_FILE" > "$DECRYPTED_FILE" 2>/dev/null; then
   error "Failed to decrypt secrets file"
   exit 1
 fi
 
 # Get available keys
-AVAILABLE_KEYS=$(yq 'keys | .[]' "$DECRYPTED_FILE" 2>/dev/null)
+AVAILABLE_KEYS=$("$YQ" 'keys | .[]' "$DECRYPTED_FILE" 2>/dev/null)
 
 if [ -z "$AVAILABLE_KEYS" ]; then
   error "No keys found in secrets file (yq returned empty)"
@@ -158,12 +176,23 @@ for mapping in "${MAPPINGS[@]}"; do
   fi
 
   # Read from temp file to preserve multiline values (SSH keys, etc.)
-  VALUE=$(yq -r ".$key" "$DECRYPTED_FILE" 2>/dev/null)
+  VALUE=$("$YQ" -r ".$key" "$DECRYPTED_FILE" 2>/dev/null)
 
   if [[ -z "$VALUE" || "$VALUE" == "null" ]]; then
     skipped=$(( skipped + 1 ))
     continue
   fi
+
+  # Sanity: extracted value must not contain other top-level YAML keys from
+  # the file (would indicate yq returned the whole document instead of one
+  # key's value — the bug we previously hit during activation).
+  for other_key in $AVAILABLE_KEYS; do
+    [[ "$other_key" == "$key" ]] && continue
+    if printf '%s' "$VALUE" | grep -qxF "$other_key:"; then
+      error "Extracted value for '$key' contains another top-level key '$other_key:' — yq returned wrong content. Aborting to avoid corrupting $path."
+      exit 1
+    fi
+  done
 
   if [ "$DRY_RUN" = true ]; then
     echo -e "  ${DIM}would deploy${NC} $key → $path ($mode)"
