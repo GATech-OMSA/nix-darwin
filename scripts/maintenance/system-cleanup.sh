@@ -117,11 +117,17 @@ if command -v docker &> /dev/null; then
 fi
 
 # ============================================
-# ATUIN DATABASE MAINTENANCE
+# ATUIN DATABASE MAINTENANCE (safety net)
 # ============================================
-# Atuin's SQLite WAL files can balloon to multi-MB and slow every shell init
-# (each `atuin uuid` call in zsh startup waits on the WAL). Checkpoint truncates
-# the WAL back to zero so subsequent reads don't have to traverse it.
+# Primary mechanism: launchd LaunchAgent `dev.nixconf.atuin-wal-checkpoint`
+# runs `PRAGMA wal_checkpoint(PASSIVE)` every 6h (see
+# nix-config/modules/darwin/atuin-wal-checkpoint.nix). PASSIVE never blocks
+# other connections, so it's safe to run while shells are open, but it can
+# only checkpoint pages no one is reading.
+#
+# This block remains as a manual escape hatch using the heavier TRUNCATE
+# pragma — it CAN block/fail if a shell holds an atuin connection, hence
+# user-prompted only. Should normally find nothing to do.
 if [[ -d "$HOME/.local/share/atuin" ]] && command -v sqlite3 &> /dev/null; then
   header "Atuin History Maintenance"
 

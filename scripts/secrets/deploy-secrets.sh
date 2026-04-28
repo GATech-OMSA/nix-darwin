@@ -169,6 +169,17 @@ MAPPINGS=(
 deployed=0
 skipped=0
 declare -a MANIFEST_LINES=()
+declare -a BACKUP_DIRS=()
+
+# Track backup directory uniquely (bash 3-compatible — no associative array)
+track_backup_dir() {
+  local d="$1"
+  local existing
+  for existing in "${BACKUP_DIRS[@]:-}"; do
+    [[ "$existing" == "$d" ]] && return 0
+  done
+  BACKUP_DIRS+=("$d")
+}
 
 for mapping in "${MAPPINGS[@]}"; do
   IFS='|' read -r key path mode <<< "$mapping"
@@ -223,6 +234,7 @@ for mapping in "${MAPPINGS[@]}"; do
       backup_dir="$(dirname "$path")/backup"
       mkdir -p "$backup_dir"
       /bin/cp "$path" "$backup_dir/$(basename "$path")-$(date +%Y%m%d-%H%M%S)-$$"
+      track_backup_dir "$backup_dir"
     fi
   fi
 
@@ -247,6 +259,55 @@ if [ "$DRY_RUN" = false ] && [ "$deployed" -gt 0 ]; then
     printf '%s\n' "${MANIFEST_LINES[@]}"
   } > "$tmp_manifest"
   /bin/mv "$tmp_manifest" "$MANIFEST"
+fi
+
+# ==============================================================================
+# BACKUP PRUNING
+# ==============================================================================
+# For each backup dir we touched, keep max(5, count_under_30d) entries —
+# whichever leaves more. This guarantees a floor of 5 historical copies for
+# rollback (even if all are old) and never drops anything fresher than 30d.
+#
+# Newest-first ordering is by mtime (stat -f %m) since filenames embed
+# timestamps but mtime is what `find -mtime` operates on — keeps the two
+# halves of the formula consistent.
+prune_backup_dir() {
+  local dir="$1"
+  [[ -d "$dir" ]] || return 0
+
+  local floor=5
+  local thirty_days=$(( 30 * 86400 ))
+  local now
+  now=$(date +%s)
+
+  # List entries newest-first as "<mtime>\t<path>"
+  local listing
+  listing=$(/usr/bin/find "$dir" -mindepth 1 -maxdepth 1 -type f \
+    -exec /usr/bin/stat -f '%m	%N' {} + 2>/dev/null \
+    | /usr/bin/sort -rn) || return 0
+
+  [[ -z "$listing" ]] && return 0
+
+  # Count entries with mtime within the last 30 days
+  local recent
+  recent=$(printf '%s\n' "$listing" | awk -F'\t' -v cutoff="$(( now - thirty_days ))" '
+    $1 >= cutoff { c++ } END { print c+0 }')
+
+  local keep="$floor"
+  [[ "$recent" -gt "$keep" ]] && keep="$recent"
+
+  # Drop entries past `keep` (already newest-first)
+  printf '%s\n' "$listing" \
+    | /usr/bin/awk -F'\t' -v k="$keep" 'NR > k { print $2 }' \
+    | while IFS= read -r victim; do
+        [[ -n "$victim" ]] && /bin/rm -f "$victim"
+      done
+}
+
+if [ "$DRY_RUN" = false ] && [ "${#BACKUP_DIRS[@]}" -gt 0 ]; then
+  for bd in "${BACKUP_DIRS[@]}"; do
+    prune_backup_dir "$bd"
+  done
 fi
 
 echo ""

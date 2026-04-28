@@ -18,6 +18,7 @@ in
     ./packages.nix
     ./builders.nix
     ./secrets-watcher.nix
+    ./atuin-wal-checkpoint.nix
   ];
 
   # Disable Nix management - Determinate Nix handles daemon and installation
