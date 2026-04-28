@@ -103,11 +103,14 @@
 
     # Mac App Store apps (requires `mas` to be installed)
     masApps = {
-      "Access" = 6469049274;
+      "AdBlock Pro" = 1018301773;
       "Capital One Shopping" = 1477110326;
       "Consent-O-Matic" = 1606897889;
+      "DarkModeSafari" = 6755151037;
       "Pages" = 409201541;
       "Rakuten Cash Back" = 1451893560;
+      "uBlock Origin Lite" = 6745342698;
+      "Uplock" = 6469049274;     # was published as "Access" before rename
     };
   };
 }
