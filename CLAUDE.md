@@ -423,6 +423,7 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 | Go/Python/NPM downloads fail behind proxy | Enable proxy in `config/user-config.nix` → Uncomment `proxies`, set `enabled = true` for needed types |
 | Go packages fail behind proxy | Alternative: Set `skipGoPackages = true` in `config/machine-config.nix` |
 | Home-manager causing issues | Set `enableHomeManager = false` in `config/machine-config.nix` (disables all user configs) |
+| Shell hangs at prompt after `exec zsh` / new terminal on macOS 15+ | SIGCHLD-loss race in zsh — see [docs/macos-zsh-sigchld.md](docs/macos-zsh-sigchld.md). Never add `$(...)` or `cmd > file` at top-level of zsh init; gate `mkdir` with `[[ -d ]] \|\|`. |
 
 ---
 
