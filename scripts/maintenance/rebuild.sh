@@ -7,6 +7,8 @@
 # 2. Environment setup (FLAKE_ROOT, NH_DARWIN_FLAKE)
 # 3. Proper error handling
 # 4. Sudo management
+# 5. Persisted activation logs (~/.local/state/nix-rebuild/<UTC>.log,
+#    rotated to last 20). Opener: `nix-rebuild-log`.
 #
 # Usage:
 #   rebuild.sh [options]
@@ -26,6 +28,10 @@ set -e
 NIX_DARWIN_DIR="${HOME}/nix-darwin"
 PRE_FLIGHT_SCRIPT="${NIX_DARWIN_DIR}/scripts/maintenance/pre-flight-checks.sh"
 MACHINE_ID=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/machine-config.nix" machineId 2>/dev/null || echo "default")
+
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/nix-rebuild"
+LOG_FILE="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ).log"
+LOG_KEEP=20
 
 # ============================================
 # PARSE ARGUMENTS
@@ -62,95 +68,120 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ============================================
-# PRE-FLIGHT CHECKS
+# REBUILD BODY (runs inside the tee pipe)
 # ============================================
-if [[ "$ROLLBACK" == "false" ]] && [[ "$SKIP_CHECKS" == "false" ]]; then
-  if [[ -f "$PRE_FLIGHT_SCRIPT" ]]; then
-    echo "Running pre-flight checks..."
-    if ! "$PRE_FLIGHT_SCRIPT"; then
-      echo "error: pre-flight checks failed."
-      echo "   Use --skip-checks to force rebuild (use with caution)."
-      exit 1
+# Defined as a function so the entire transcript (pre-flight, sudo prompts,
+# nh output) lands in the log file. Returns the rc the wrapper should exit
+# with on failure. Must NOT `exec zsh` — that would replace the process
+# inside the pipe and leave tee hanging. The wrapper does `exec zsh` after
+# the pipe drains.
+_do_rebuild() {
+  echo "===== nix-rebuild $(date -u +%Y-%m-%dT%H:%M:%SZ) ====="
+  echo "machine: $MACHINE_ID"
+  echo "args:    ${args[*]:-(none)}"
+  echo "flags:   skip_checks=$SKIP_CHECKS debug=$DEBUG_MODE rollback=$ROLLBACK legacy=$USE_LEGACY"
+  echo
+
+  # PRE-FLIGHT
+  if [[ "$ROLLBACK" == "false" ]] && [[ "$SKIP_CHECKS" == "false" ]]; then
+    if [[ -f "$PRE_FLIGHT_SCRIPT" ]]; then
+      echo "Running pre-flight checks..."
+      if ! "$PRE_FLIGHT_SCRIPT"; then
+        echo "error: pre-flight checks failed."
+        echo "   Use --skip-checks to force rebuild (use with caution)."
+        return 1
+      fi
+    else
+      echo "warning: pre-flight script not found: $PRE_FLIGHT_SCRIPT"
     fi
-  else
-    echo "warning: pre-flight script not found: $PRE_FLIGHT_SCRIPT"
-  fi
-fi
-
-# ============================================
-# EXECUTE REBUILD
-# ============================================
-echo "Starting system rebuild for machine: ${MACHINE_ID}..."
-
-if [[ "$ROLLBACK" == "true" ]]; then
-  echo "Rolling back to previous generation..."
-  if sudo darwin-rebuild --rollback; then
-    echo "Rollback successful"
-    echo "Restarting shell..."
-    exec zsh
-  else
-    echo "error: rollback failed"
-    exit 1
-  fi
-fi
-
-# Use nh by default, darwin-rebuild as fallback
-if [[ "$USE_LEGACY" == "true" ]] || ! command -v nh &>/dev/null; then
-  # Legacy mode: use darwin-rebuild directly
-  if [[ "$USE_LEGACY" == "true" ]]; then
-    echo "Using legacy darwin-rebuild (--legacy flag)"
-  else
-    echo "warning: nh not found, falling back to darwin-rebuild"
   fi
 
-  # Export FLAKE_ROOT for gitignored config imports in flake.nix (legacy only)
-  export FLAKE_ROOT="$NIX_DARWIN_DIR"
+  # EXECUTE
+  echo "Starting system rebuild for machine: ${MACHINE_ID}..."
 
-  CMD="darwin-rebuild switch --flake ${NIX_DARWIN_DIR}#${MACHINE_ID} --impure"
-
-  if [[ "$DEBUG_MODE" == "true" ]]; then
-    CMD="$CMD --show-trace --verbose --print-build-logs"
+  if [[ "$ROLLBACK" == "true" ]]; then
+    echo "Rolling back to previous generation..."
+    if sudo darwin-rebuild --rollback; then
+      echo "Rollback successful"
+      return 0
+    else
+      echo "error: rollback failed"
+      return 1
+    fi
   fi
 
-  if [[ ${#args[@]} -gt 0 ]]; then
-    CMD="$CMD ${args[@]}"
+  if [[ "$USE_LEGACY" == "true" ]] || ! command -v nh &>/dev/null; then
+    if [[ "$USE_LEGACY" == "true" ]]; then
+      echo "Using legacy darwin-rebuild (--legacy flag)"
+    else
+      echo "warning: nh not found, falling back to darwin-rebuild"
+    fi
+
+    export FLAKE_ROOT="$NIX_DARWIN_DIR"
+    CMD="darwin-rebuild switch --flake ${NIX_DARWIN_DIR}#${MACHINE_ID} --impure"
+    [[ "$DEBUG_MODE" == "true" ]] && CMD="$CMD --show-trace --verbose --print-build-logs"
+    [[ ${#args[@]} -gt 0 ]] && CMD="$CMD ${args[*]}"
+
+    echo "Running: sudo $CMD"
+    if sudo FLAKE_ROOT="$FLAKE_ROOT" $CMD; then
+      echo "Rebuild successful"
+      return 0
+    else
+      echo "error: rebuild failed"
+      return 1
+    fi
   fi
 
-  echo "Running: sudo $CMD"
-
-  if sudo FLAKE_ROOT="$FLAKE_ROOT" $CMD; then
-    echo "Rebuild successful"
-    echo "Restarting shell..."
-    exec zsh
-  else
-    echo "error: rebuild failed"
-    exit 1
-  fi
-else
-  # Modern mode: use nh (better output, package diff)
-  # cd to flake directory (nh works better from within the flake dir)
-  cd "$NIX_DARWIN_DIR" || exit 1
+  # nh path
+  cd "$NIX_DARWIN_DIR" || return 1
   CMD="nh darwin switch -H ${MACHINE_ID} . --impure"
-
-  if [[ "$DEBUG_MODE" == "true" ]]; then
-    CMD="$CMD --show-trace --print-build-logs --verbose"
-  fi
-
-  if [[ ${#args[@]} -gt 0 ]]; then
-    CMD="$CMD -- ${args[@]}"
-  fi
+  [[ "$DEBUG_MODE" == "true" ]] && CMD="$CMD --show-trace --print-build-logs --verbose"
+  [[ ${#args[@]} -gt 0 ]] && CMD="$CMD -- ${args[*]}"
 
   echo "Running: $CMD"
-
-  # nh resolves the flake from CWD (cd done above), so FLAKE_ROOT is not needed.
-  # Setting FLAKE_ROOT with nh causes double-resolution and build failures.
-  # In legacy mode, FLAKE_ROOT is explicitly exported for flake.nix's getEnv call.
   if $CMD; then
     echo "Rebuild successful"
-    echo "Restarting shell..."
-    exec zsh
+    return 0
   else
     echo "error: rebuild failed"
-    exit 1
+    return 1
   fi
+}
+
+# ============================================
+# LOG ROTATION — keep newest $LOG_KEEP
+# ============================================
+_prune_logs() {
+  [[ -d "$LOG_DIR" ]] || return 0
+  # ls -t prints newest-first; tail -n +$((LOG_KEEP+1)) drops the first
+  # LOG_KEEP entries and lists everything older. xargs is BSD-compatible
+  # (no -r); guard with [[ -n ]] for empty input instead.
+  local victims
+  victims=$(/bin/ls -t "$LOG_DIR"/*.log 2>/dev/null | /usr/bin/tail -n +"$((LOG_KEEP + 1))")
+  [[ -n "$victims" ]] || return 0
+  printf '%s\n' "$victims" | while IFS= read -r f; do
+    [[ -n "$f" ]] && /bin/rm -f -- "$f"
+  done
+}
+
+# ============================================
+# WRAPPER — tee everything to LOG_FILE, then exec zsh on success
+# ============================================
+mkdir -p "$LOG_DIR"
+
+# Run the body inside a `set +e` block so the rc propagates via PIPESTATUS
+# instead of killing the script before we can read it.
+set +e
+_do_rebuild 2>&1 | /usr/bin/tee "$LOG_FILE"
+RC=${PIPESTATUS[0]}
+set -e
+
+_prune_logs
+
+if [[ "$RC" -eq 0 ]]; then
+  echo "Restarting shell..."
+  exec zsh
+else
+  echo "Log: $LOG_FILE"
+  exit "$RC"
 fi

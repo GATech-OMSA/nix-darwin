@@ -99,6 +99,8 @@ in
       nix-rebuild = "${nixDarwinDir}/scripts/maintenance/rebuild.sh";
       nix-rebuild-skip-checks = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --skip-checks";
       nix-rebuild-debug = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --debug";
+      # Open the most recent rebuild log in $PAGER (rotated to last 20).
+      nix-rebuild-log = "${nixDarwinDir}/scripts/maintenance/nix-rebuild-log.sh";
 
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
