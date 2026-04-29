@@ -393,6 +393,21 @@ in
         # Replaces "eval $(tool init zsh)" to save runtime overhead.
         # Generated at build time via pkgs.runCommand.
 
+        # Pre-populate ATUIN_SESSION + ATUIN_SHLVL so atuin.zsh skips the
+        # `export ATUIN_SESSION=$(atuin uuid)` fork on every shell start.
+        #
+        # Why: that $() can race with SIGCHLD on macOS — child exits, sigsuspend
+        # waits forever for a signal that already arrived, hanging shell init
+        # before the welcome message ever prints. Reproduced after
+        # `exec zsh` (= `restart`) where SHLVL changes (parent=1 → child=2)
+        # and atuin.zsh's `ATUIN_SHLVL != $SHLVL` branch fires the fork.
+        # Pure-builtin substitute below uses no fork at all.
+        zmodload zsh/datetime 2>/dev/null
+        if [[ -z "''${ATUIN_SESSION:-}" ]]; then
+          export ATUIN_SESSION="''${EPOCHREALTIME//.}-$$"
+        fi
+        export ATUIN_SHLVL=$SHLVL
+
         source ${shellInitCache}/starship.zsh
         source ${shellInitCache}/zoxide.zsh
         source ${shellInitCache}/atuin.zsh
