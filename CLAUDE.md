@@ -44,32 +44,12 @@ User wants to change system pkg    → Edit: nix-config/modules/darwin/packages.
 
 ## 2️⃣ USE myLib FUNCTIONS (NEVER manual conditionals)
 
-**FORBIDDEN patterns:**
-```nix
-# ❌ DO NOT WRITE THIS
-if hostname == "mbp-work" then
-  ...
-else
-  ...
-```
+Machine-specific values go through `myLib.selectByMachine` — never hand-rolled
+`if hostname == ...` ternaries. Same applies to navigation aliases, package
+groups, and command checks: prefer the `myLib` helper.
 
-**REQUIRED patterns:**
-```nix
-# ✅ WRITE THIS INSTEAD
-{ config, pkgs, myLib, hostname, ... }:
-myLib.selectByMachine hostname {
-  personal = "value1";
-  work = "value2";
-}
-```
-
-**Common myLib functions:**
-- `selectByMachine hostname { personal = X; work = Y; }` – Machine-specific values
-- `mkNavigationAliases "$HOME/Dev" { proj = "Dev/project"; }` – CD aliases
-- `mkPackageGroups { ... } pkgs` – Package grouping
-- `mkCommandCheck "command-name"` – Command existence checks
-
-**Reference:** `lib/README.md` for all 30+ functions
+- **Standard:** [.claude/rules/gen-lang-nix.md](.claude/rules/gen-lang-nix.md) — required patterns + examples.
+- **Catalog:** `nix-config/lib/README.md` — all 30+ helper functions.
 
 ---
 
