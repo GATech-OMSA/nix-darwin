@@ -347,45 +347,41 @@ in
       # Moves ~20ms of processing from shell-start to build-time
       (lib.mkOrder 40 ''
         # DARK/LIGHT MODE DETECTION FOR STARSHIP
-        # Detection waterfall:
-        #   1. COLORFGBG env var (iTerm2 — instant)
-        #   2. macOS appearance (Ghostty/Warp/Terminal — follows system)
-        _nix_starship=$(readlink -f "$HOME/.config/starship.toml" 2>/dev/null)
-        if [[ "$_nix_starship" == /nix/store/* ]]; then
+        #
+        # IMPORTANT: This block must NOT contain any $(...) command substitutions
+        # at top level. On macOS 15+, $() in zshrc can race with SIGCHLD and hang
+        # forever — child exits before zsh enters sigsuspend, signal lost, shell
+        # blocked indefinitely. The user reproduced this with `$(defaults read)`
+        # and `$(atuin uuid)` triggering identical hangs at different lines.
+        #
+        # Strategy: cache the palette decision in a file, refresh once per hour
+        # via a SEPARATE non-blocking process. Shell init only reads the file
+        # (no fork). On cache miss, default to mocha (dark) — user can correct
+        # by running the refresh once, or it'll fix itself on next refresh.
+        if [[ -L "$HOME/.config/starship.toml" ]]; then
+          _palette_cache="$HOME/.cache/starship/.palette"
           _writable_starship="$HOME/.cache/starship/starship.toml"
-          mkdir -p "$(dirname "$_writable_starship")"
-
-          # Detect dark/light mode
-          _palette=""
-          if [[ -n "$COLORFGBG" ]]; then
-            # iTerm2 sets COLORFGBG="fg;bg" — bg < 8 means dark
-            _bg="''${COLORFGBG##*;}"
-            if (( _bg < 8 )); then
-              _palette="catppuccin_mocha"
-            else
-              _palette="catppuccin_latte"
-            fi
-            unset _bg
+          # Read palette from cache (pure builtin, no fork)
+          if [[ -r "$_palette_cache" ]]; then
+            read -r _palette < "$_palette_cache"
+          else
+            # Best-effort default; refresh runs below to fix it
+            _palette="catppuccin_mocha"
           fi
-          # Fallback: macOS system appearance (covers Ghostty, Warp, Terminal.app)
-          if [[ -z "$_palette" ]]; then
-            if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
-              _palette="catppuccin_mocha"
-            else
-              _palette="catppuccin_latte"
-            fi
+          # Read cache palette into config if cache file exists with a value.
+          if [[ -n "''${_palette:-}" ]] && [[ -f "$_writable_starship" ]]; then
+            export STARSHIP_CONFIG="$_writable_starship"
           fi
-
-          # Only rewrite if nix config changed or palette differs
-          if [[ ! -f "$_writable_starship" ]] || \
-             ! diff -q "$_nix_starship" "$_writable_starship" &>/dev/null || \
-             ! grep -q "palette = '$_palette'" "$_writable_starship" 2>/dev/null; then
-            sed "s/^palette = .*/palette = '$_palette'/" "$_nix_starship" > "$_writable_starship"
+          # Background refresh — disowned, fires once per hour at most.
+          # No `wait` ever, so SIGCHLD race can't bite zsh init.
+          _now=$EPOCHSECONDS
+          _last=0
+          [[ -r "$_palette_cache.mtime" ]] && read -r _last < "$_palette_cache.mtime"
+          if (( _now - _last > 3600 )); then
+            ( "$HOME/nix-darwin/scripts/maintenance/refresh-starship-palette.sh" >/dev/null 2>&1 & ) &!
           fi
-          export STARSHIP_CONFIG="$_writable_starship"
-          unset _writable_starship _palette
+          unset _palette_cache _writable_starship _palette _now _last
         fi
-        unset _nix_starship
       '')
 
       (lib.mkOrder 50 ''
@@ -420,7 +416,9 @@ in
         # On a Nix system, paths are immutable, so this is very safe.
         autoload -Uz compinit
         ZCOMPDUMP="$HOME/.cache/zsh/zcompdump-$ZSH_VERSION"
-        mkdir -p "$(dirname "$ZCOMPDUMP")"
+        # Use zsh head modifier (no fork) instead of dirname — see SIGCHLD
+        # race notes near the dark/light block above.
+        mkdir -p "''${ZCOMPDUMP:h}"
         
         # Always use -u (skip permission checks) and -C (skip file validation) if dump exists
         if [[ -s "$ZCOMPDUMP" ]]; then
@@ -536,21 +534,25 @@ in
       [[ -n "$TF_PLUGIN_CACHE_DIR" ]] && mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # ============================================
-      # WELCOME MESSAGE (cached — avoids two subprocess calls per shell)
+      # WELCOME MESSAGE (cached — avoids subprocess calls per shell)
       # ============================================
+      # IMPORTANT: zero $(...) at top level — see SIGCHLD race notes near the
+      # dark/light block. mtime check uses zstat builtin (no fork). Refresh on
+      # cache miss runs in a backgrounded subshell with no wait.
       if [ "$TERM_PROGRAM" != "vscode" ]; then
         _wf="$HOME/.cache/nix-darwin/welcome.$MACHINE_MODE"
-        # Refresh if missing or older than 24h. find -mtime -1 = modified within last day.
-        if [[ ! -s "$_wf" ]] || [[ -z "$(/usr/bin/find "$_wf" -mtime -1 2>/dev/null)" ]]; then
-          /bin/mkdir -p "$(dirname "$_wf")"
-          printf '\033[90m %s · macOS %s · nix %s\033[0m\n' \
-            "$MACHINE_MODE" \
-            "$(sw_vers -productVersion 2>/dev/null)" \
-            "$(nix --version 2>/dev/null | awk '{print $NF}')" \
-            > "$_wf"
+        _wf_mtime=0
+        zmodload -F zsh/stat b:zstat 2>/dev/null && \
+          zstat -A _wf_stat +mtime "$_wf" 2>/dev/null && \
+          _wf_mtime=$_wf_stat[1]
+        # Refresh if missing or older than 24h.
+        if [[ ! -s "$_wf" ]] || (( EPOCHSECONDS - _wf_mtime > 86400 )); then
+          # Disowned background refresh — no wait, no SIGCHLD risk.
+          ( "$HOME/nix-darwin/scripts/maintenance/refresh-welcome.sh" "$_wf" "$MACHINE_MODE" >/dev/null 2>&1 & ) &!
         fi
-        /bin/cat "$_wf"
-        unset _wf
+        # cat the (possibly stale) cache; refresh applies on next shell start.
+        [[ -s "$_wf" ]] && /bin/cat "$_wf"
+        unset _wf _wf_mtime _wf_stat
       fi
 
       # ============================================
