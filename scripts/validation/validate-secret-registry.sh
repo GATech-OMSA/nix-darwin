@@ -65,7 +65,7 @@ fi
 # Load secret paths from registry
 echo "Loading paths from registry..."
 mapfile -t SECRET_PATHS < <(
-  nix eval "$REPO_ROOT#secretPaths" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
+  nix eval "$REPO_ROOT#lib.secrets.paths" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
 )
 
 if [ ${#SECRET_PATHS[@]} -eq 0 ]; then
@@ -78,12 +78,18 @@ echo ""
 
 # Load paths by type
 declare -A PATHS_BY_TYPE
-for type in aws database tokens ssh credentials general; do
-  type_upper=$(echo "$type" | tr '[:lower:]' '[:upper:]')
-  var_name="TYPE_${type_upper}_PATHS"
+mapfile -t SECRET_TYPES < <(
+  nix eval "$REPO_ROOT#lib.secrets.pathsByType" --json 2>/dev/null | jq -r 'keys[]'
+)
 
+if [ ${#SECRET_TYPES[@]} -eq 0 ]; then
+  echo -e "${RED}error: failed to load secret categories from registry${NC}"
+  exit 1
+fi
+
+for type in "${SECRET_TYPES[@]}"; do
   # Load paths into array
-  paths_json=$(nix eval "$REPO_ROOT#secretsByType.$type" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g")
+  paths_json=$(nix eval "$REPO_ROOT#lib.secrets.pathsByType.$type" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g")
   count=$(echo "$paths_json" | wc -l | tr -d ' ')
 
   PATHS_BY_TYPE[$type]=$count
@@ -161,7 +167,7 @@ fi
 # Validate glob patterns
 echo "Validating glob patterns..."
 mapfile -t GLOB_PATTERNS < <(
-  nix eval "$REPO_ROOT#secretGlobPatterns" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
+  nix eval "$REPO_ROOT#lib.secrets.globPatterns" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
 )
 
 pattern_count=${#GLOB_PATTERNS[@]}

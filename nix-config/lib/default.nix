@@ -81,4 +81,87 @@ rec {
   # Import hot reload functions
   # Provides instant configuration updates without full rebuild
   reload = import ./reload-helpers.nix { inherit lib; };
+
+  # ============================================
+  # SECRET REGISTRY
+  # ============================================
+
+  # Central list of local secret targets managed or audited by this repo.
+  # Paths use ${HOME} so flake outputs stay machine-independent.
+  secrets = rec {
+    pathsByType = {
+      aws = [
+        "\${HOME}/.aws/credentials"
+        "\${HOME}/.aws/accounts.json"
+        "\${HOME}/.aws/.last_profile"
+      ];
+
+      ai = [
+        "\${HOME}/.codex/auth.json"
+        "\${HOME}/.codex/config.toml"
+        "\${HOME}/.gemini/oauth_creds.json"
+        "\${HOME}/.gemini/google_accounts.json"
+        "\${HOME}/.claude/settings.local.json"
+      ];
+
+      containers = [
+        "\${HOME}/.docker/config.json"
+        "\${HOME}/.docker/.token_seed"
+      ];
+
+      tokens = [
+        "\${HOME}/.tokens/git_token"
+        "\${HOME}/.tokens/hcp_terraform_token"
+        "\${HOME}/.tokens/jira_api_token"
+        "\${HOME}/.tokens/confluence_token"
+      ];
+
+      ssh = [
+        "\${HOME}/.ssh/id_ed25519"
+        "\${HOME}/.ssh/polymarket-quant"
+        "\${HOME}/.ssh/hft-demo-key.pem"
+        "\${HOME}/.ssh/id_ed25519_work"
+        "\${HOME}/.ssh/known_hosts"
+      ];
+
+      git = [
+        "\${HOME}/.config/gh/hosts.yml"
+      ];
+
+      credentials = [
+        "\${HOME}/.credentials/servicenow"
+        "\${HOME}/.credentials/vpn"
+      ];
+
+      general = [
+        "\${HOME}/.zsh_secrets"
+        "\${HOME}/.zsh_secrets.local"
+        "\${HOME}/.secrets/credentials.env"
+        "\${HOME}/.secrets/credentials.env.enc"
+        "\${HOME}/.config/secrets/local.env"
+        "\${HOME}/.config/sops/age/keys.txt"
+      ];
+    };
+
+    paths = lib.unique (lib.flatten (lib.attrValues pathsByType));
+
+    globPatterns = [
+      "\${HOME}/.ssh/id_*"
+      "\${HOME}/.tokens/*"
+      "\${HOME}/.credentials/*"
+      "\${HOME}/.aws/*"
+      "\${HOME}/backup/.zsh_secrets-*"
+      "\${HOME}/Dev/*/.env"
+      "\${HOME}/Dev/*/*/.env"
+      "\${HOME}/Desktop/*/.env"
+    ];
+
+    meta = {
+      version = 1;
+      description = "Local secret target registry for validation and permission audits";
+      categories = builtins.attrNames pathsByType;
+      pathCount = builtins.length paths;
+      globPatternCount = builtins.length globPatterns;
+    };
+  };
 }
