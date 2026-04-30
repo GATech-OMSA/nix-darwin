@@ -86,7 +86,13 @@ _do_rebuild() {
   if [[ "$ROLLBACK" == "false" ]] && [[ "$SKIP_CHECKS" == "false" ]]; then
     if [[ -f "$PRE_FLIGHT_SCRIPT" ]]; then
       echo "Running pre-flight checks..."
-      if ! "$PRE_FLIGHT_SCRIPT"; then
+      set +e
+      "$PRE_FLIGHT_SCRIPT"
+      preflight_rc=$?
+      set -e
+      if [[ "$preflight_rc" -eq 2 ]]; then
+        echo "warning: pre-flight checks reported warnings; continuing."
+      elif [[ "$preflight_rc" -ne 0 ]]; then
         echo "error: pre-flight checks failed."
         echo "   Use --skip-checks to force rebuild (use with caution)."
         return 1

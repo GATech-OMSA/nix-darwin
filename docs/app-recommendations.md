@@ -180,7 +180,7 @@ _This section is generated from `nix-config/modules/darwin/homebrew.nix` by_
 _`scripts/docs/sync-app-recommendations.sh`. Do not edit by hand —_
 _re-run via `just docs-apps` after editing `homebrew.nix`._
 
-### Casks (40)
+### Casks (41)
 
 | Cask | Note |
 | --- | --- |
@@ -203,6 +203,7 @@ _re-run via `just docs-apps` after editing `homebrew.nix`._
 | `iterm2` |  |
 | `jan` | Local LLM runner |
 | `kaleidoscope` | Best-in-class visual diff/merge for code, folders, images |
+| `karabiner-elements` |  |
 | `keka` |  |
 | `keyclu` |  |
 | `little-snitch` | Outbound firewall — per-app network monitoring |
