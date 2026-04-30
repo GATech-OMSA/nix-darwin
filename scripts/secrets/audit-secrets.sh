@@ -139,11 +139,9 @@ EXCLUDED_DIRS=(
 # Known safe patterns (config files that aren't secrets)
 SAFE_PATTERNS=(
   ".*\.md$"
-  ".*\.txt$"
   ".*\.log$"
   ".*README.*"
   ".*LICENSE.*"
-  ".*\.json$"  # Most JSON files are config, not secrets
   ".*package-lock\.json$"
 )
 
@@ -238,7 +236,7 @@ matches_filename_pattern() {
   local basename_file=$(basename "$file")
 
   for pattern in "${SECRET_FILENAME_PATTERNS[@]}"; do
-    if [[ "$basename_file" =~ $pattern ]]; then
+    if [[ "$basename_file" =~ $pattern ]] || [[ "$file" =~ $pattern ]]; then
       return 0
     fi
   done
@@ -328,11 +326,6 @@ scan_directory() {
       continue
     fi
 
-    # Skip if known safe file
-    if is_safe_file "$file"; then
-      continue
-    fi
-
     # Skip if not readable
     if [[ ! -r "$file" ]]; then
       continue
@@ -345,10 +338,14 @@ scan_directory() {
 
     scanned_files=$(( scanned_files + 1 ))
 
-    # Check filename patterns
     local filename_match=false
     if matches_filename_pattern "$file"; then
       filename_match=true
+    fi
+
+    # Skip known-safe docs/config only after path-based secret checks.
+    if [[ "$filename_match" == false ]] && is_safe_file "$file"; then
+      continue
     fi
 
     # Check content patterns

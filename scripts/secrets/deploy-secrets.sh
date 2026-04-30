@@ -9,7 +9,7 @@
 #   secrets-deploy           # Auto-detect machine ID
 #   secrets-deploy --dry-run # Show what would be deployed
 
-set -uo pipefail
+set -euo pipefail
 
 # Colors
 BLUE='\033[0;34m'
@@ -181,6 +181,40 @@ track_backup_dir() {
   BACKUP_DIRS+=("$d")
 }
 
+deploy_secret_file() {
+  local path="$1"
+  local mode="$2"
+  local value="$3"
+  local dir
+  local tmp_path
+
+  dir="$(dirname "$path")"
+  tmp_path="${path}.tmp.$$"
+
+  if ! mkdir -p "$dir"; then
+    error "Failed to create target directory: $dir"
+    return 1
+  fi
+
+  if ! ( umask 077 && printf '%s\n' "$value" > "$tmp_path" ); then
+    /bin/rm -f "$tmp_path" 2>/dev/null || true
+    error "Failed to write temporary secret file: $tmp_path"
+    return 1
+  fi
+
+  if ! chmod "$mode" "$tmp_path"; then
+    /bin/rm -f "$tmp_path" 2>/dev/null || true
+    error "Failed to set mode $mode on temporary secret file: $tmp_path"
+    return 1
+  fi
+
+  if ! /bin/mv "$tmp_path" "$path"; then
+    /bin/rm -f "$tmp_path" 2>/dev/null || true
+    error "Failed to install secret file: $path"
+    return 1
+  fi
+}
+
 for mapping in "${MAPPINGS[@]}"; do
   IFS='|' read -r key path mode <<< "$mapping"
 
@@ -238,10 +272,7 @@ for mapping in "${MAPPINGS[@]}"; do
     fi
   fi
 
-  mkdir -p "$(dirname "$path")"
-  printf '%s\n' "$VALUE" > "${path}.tmp"
-  /bin/mv "${path}.tmp" "$path"
-  chmod "$mode" "$path"
+  deploy_secret_file "$path" "$mode" "$VALUE"
   success "$key → $path"
   deployed=$(( deployed + 1 ))
   MANIFEST_LINES+=("$path|$mode")
@@ -258,6 +289,7 @@ if [ "$DRY_RUN" = false ] && [ "$deployed" -gt 0 ]; then
     printf '# Format: target_path|mode\n'
     printf '%s\n' "${MANIFEST_LINES[@]}"
   } > "$tmp_manifest"
+  chmod 600 "$tmp_manifest"
   /bin/mv "$tmp_manifest" "$MANIFEST"
 fi
 
