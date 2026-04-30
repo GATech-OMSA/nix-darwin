@@ -908,10 +908,13 @@ in
         source ${fixedAutosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
       '')
 
-      (lib.mkOrder 900 ''
+      (lib.mkOrder 1500 ''
         # FAST SYNTAX HIGHLIGHTING
         # Replaces standard zsh-syntax-highlighting (saves ~700ms)
-        # Sourced at the end to ensure it wraps all widgets correctly.
+        # Sourced at order 1500 — strictly after the default-1000 blocks (fzf,
+        # bindkey overrides, function definitions) so FSH wraps every widget
+        # those blocks bind. Order 900 placed it BEFORE default blocks, which
+        # left fzf and option+arrow bindings without highlighting wrappers.
         # Uses build-time patched copy (fixedFsh) to remove racy
         # `$(uname -a)` command-substitution at source time — the
         # upstream version triggers zsh's SIGCHLD waitforpid race on
