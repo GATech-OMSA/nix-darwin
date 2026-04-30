@@ -171,14 +171,16 @@
       # ============================================
       # LIBRARY EXPORTS
       # ============================================
+      # Includes machine introspection under lib.machine.{profile,id} —
+      # previously top-level `activeProfile`/`activeMachineId`, which
+      # tripped `nix flake check` warnings ("unknown flake output") because
+      # they aren't part of the standard flake schema.
 
-      lib = myLib;
-
-      # ============================================
-      # VALIDATION & INTROSPECTION EXPORTS
-      # ============================================
-
-      activeProfile = machineConfig.profileName or "personal";
-      activeMachineId = machineConfig.machineId or "default";
+      lib = myLib // {
+        machine = {
+          profile = machineConfig.profileName or "personal";
+          id = machineConfig.machineId or "default";
+        };
+      };
     };
 }
