@@ -51,6 +51,13 @@ if [ ! -f "$CONFIG_FILE" ]; then
   exit 1
 fi
 
+# Read machineId before making changes
+MACHINE_ID=$(nix eval --raw --file "$CONFIG_FILE" machineId 2>/dev/null)
+if [ -z "$MACHINE_ID" ]; then
+  echo "error: failed to read machineId from $CONFIG_FILE"
+  exit 1
+fi
+
 # Update machine-config.nix
 echo "Switching to profile: $PROFILE"
 sed -i.bak "s/profileName = \"[^\"]*\"/profileName = \"$PROFILE\"/" "$CONFIG_FILE"
@@ -59,9 +66,9 @@ sed -i.bak "s/profileName = \"[^\"]*\"/profileName = \"$PROFILE\"/" "$CONFIG_FIL
 echo "Configuration change:"
 diff "$CONFIG_FILE.bak" "$CONFIG_FILE" || true
 
-# Rebuild system
+# Rebuild system targeting the specific machine
 echo "Rebuilding system with new profile..."
-if darwin-rebuild switch --flake "$REPO_ROOT"; then
+if sudo FLAKE_ROOT="$REPO_ROOT" darwin-rebuild switch --flake "$REPO_ROOT#$MACHINE_ID" --impure; then
   echo "Successfully switched to $PROFILE profile"
   echo "Restart your shell: exec zsh"
   rm "$CONFIG_FILE.bak"

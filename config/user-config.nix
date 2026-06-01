@@ -11,7 +11,14 @@
   };
 
   # Proxy configuration for corporate environments
+  # Enable on work machine, leave disabled on personal
   proxies = {
+    # Corporate CA bundle — single source of truth
+    # Fanned out to AWS_CA_BUNDLE, NODE_EXTRA_CA_CERTS, PIP_CERT,
+    # REQUESTS_CA_BUNDLE, SSL_CERT_FILE, npm cafile, CARGO_HTTP_CAINFO
+    # Set to "" to disable CA fan-out (uses system defaults)
+    corporateCaBundle = "";  # e.g. "$HOME/.config/certs/cacert.pem"
+
     # Go module proxy (for sops-nix and other Go-based tools)
     go = {
       enabled = false;
@@ -19,17 +26,22 @@
       private = "";
     };
 
-    # Python package proxy (configure if needed)
+    # Python package proxy
     python = {
       enabled = false;
       url = "";
       trustedHost = "";
     };
 
-    # NPM package proxy (configure if needed)
+    # NPM package proxy (corporate Nexus registry)
     npm = {
       enabled = false;
       url = "";
+    };
+
+    # Cargo/Rust proxy
+    cargo = {
+      enabled = false;
     };
   };
 }

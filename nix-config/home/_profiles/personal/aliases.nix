@@ -37,7 +37,7 @@
     # AI/LLM Tools
     cld = "open -a Claude";
     gpt = "open -a ChatGPT";
-    pplx = "open -a Perplexity";
+    pplx = "open -a Perplexity";  # no Homebrew cask; installed via Mac App Store or direct download
     obs = "open -a Obsidian";
     jan = "open -a Jan";
 

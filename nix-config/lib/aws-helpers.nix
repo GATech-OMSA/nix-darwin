@@ -331,9 +331,12 @@ EOF
   # AWS PROFILE AUTO-RESTORE
   # ==================================================
   mkAwsProfileAutoRestore = ''
-    # Auto-restore last AWS profile
+    # Auto-restore last AWS profile.
+    # Uses zsh's `$(<file)` special form (no fork) instead of `$(cat ...)`
+    # — the latter triggers the SIGCHLD waitforpid race on macOS 15+ and
+    # wedges the shell during `exec zsh`. See zsh.nix SIGCHLD-race notes.
     if [ -f ~/.aws/.last_profile ]; then
-      export AWS_PROFILE="$(cat ~/.aws/.last_profile)"
+      export AWS_PROFILE="$(<~/.aws/.last_profile)"
       if [ -n "''${AWS_PROFILE:-}" ]; then
         printf '\033[90m aws: %s (restored)\033[0m\n' "''${AWS_PROFILE}"
       fi

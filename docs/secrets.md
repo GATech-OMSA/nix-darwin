@@ -10,17 +10,50 @@ How secrets encryption works in this repo. For daily commands and workflow, see
 ```
 secrets.yaml (SOPS encrypted, per-host, committed to git)
         |
-  [secrets-deploy]  ← runs on rebuild or manually
-        |
-  ~/.zsh_secrets, ~/.ssh/*, ~/.db/*, ~/.tokens/*  (deployed files)
-        |
-  [secrets-reload]  ← re-source in current shell
+        ├── [secrets-edit] ──┐
+        |                    ▼
+        |          (sops re-encrypt; new inode)
+        |                    │
+        |                    ▼
+        |       ╔═══════════════════════════╗
+        |       ║ launchd LaunchAgent       ║
+        |       ║ WatchPaths: secrets.yaml  ║
+        |       ╚═══════════════════════════╝
+        |                    │
+        ▼                    ▼
+  [secrets-deploy] ◀── (auto-fires on save)
+        │
+        │  writes target files + manifest
+        ▼
+  ~/.zsh_secrets, ~/.ssh/*, ~/.db/*, ~/.tokens/*
+  ~/.local/state/secrets-deploy/manifest
+
+  ─────────────────────────────────────────────
+
+  darwin-rebuild
+        │
+        ▼
+  [verify-secrets]  ← reads manifest, checks each target
+        │             exists + mode + non-empty
+        │             (NEVER decrypts, NEVER writes)
+        ▼
+  pass → activation continues
+  fail → activation aborts with the missing path
 ```
 
 - **Encryption:** SOPS with age keys
-- **Deployment:** `scripts/secrets/deploy-secrets.sh` (single source of truth)
-- **Mappings:** defined in `deploy-secrets.sh` MAPPINGS array
-- **Both profiles** use the same script; keys not in a machine's secrets.yaml are skipped
+- **Deployment writers (the only places that touch deployed files):**
+  - `secrets-deploy` (manual, primary)
+  - launchd watcher on `secrets.yaml` (auto, after `secrets-edit`)
+  - `scripts/setup/activate.sh` (first-boot bootstrap)
+- **Activation only verifies** — moved out of the write path on 2026-04-28
+  to eliminate a corruption class (silent decrypt failure during HM activation).
+- **Mappings:** defined in `deploy-secrets.sh` MAPPINGS array. Keys not in a
+  machine's `secrets.yaml` are skipped, so the same script works for both
+  personal and work profiles.
+- **Manifest:** `~/.local/state/secrets-deploy/manifest` is the contract
+  between `deploy-secrets` and `verify-secrets`. One line per deployed
+  target: `target_path|mode`. Rewritten atomically on every successful deploy.
 
 ---
 
@@ -80,8 +113,19 @@ secrets-reload  # Re-source in current shell
 
 1. `secrets-edit` — add key + value to secrets.yaml
 2. Edit `scripts/secrets/deploy-secrets.sh` — add mapping: `"key|path|mode"`
-3. `secrets-deploy` — deploy to target path
+3. The launchd watcher fires `secrets-deploy` automatically on save. If you
+   skipped step 2 (or want to deploy before the watcher coalesces), run
+   `secrets-deploy` manually.
 4. `secrets-reload` — re-source if it's a shell variable
+
+### Watcher behavior
+
+- Definition: `nix-config/modules/darwin/secrets-watcher.nix`
+- LaunchAgent label: `dev.nixconf.secrets-deploy-watcher`
+- Throttle: 10s — coalesces rapid consecutive saves into one deploy.
+- Logs: `~/.local/state/secrets-deploy/<UTC-timestamp>.log` (newest 10 kept).
+- Inspect: `launchctl list | grep secrets-deploy-watcher`
+- Tail latest: `ls -t ~/.local/state/secrets-deploy/*.log | head -1 | xargs cat`
 
 ---
 
@@ -142,8 +186,8 @@ secrets-deploy
 ## Commands
 
 ```bash
-secrets-edit      # Edit encrypted secrets.yaml
-secrets-deploy    # Decrypt + deploy to target paths
+secrets-edit      # Edit encrypted secrets.yaml (launchd auto-deploys on save)
+secrets-deploy    # Decrypt + deploy to target paths (writes manifest)
 secrets-reload    # Re-source in current shell
 secrets-status    # Show age key, encryption, deployed files
 secrets-rescan    # Discover unmanaged secrets (read-only)
@@ -152,6 +196,10 @@ secrets-backup    # Create timestamped backup
 secrets-audit     # Scan for plaintext credential exposure
 secrets-local     # Manage temporary testing overrides
 zsh-local         # Manage ~/.zshrc.local aliases/overrides
+
+# Read-only verifier (called from HM activation; safe to run manually)
+scripts/secrets/verify-secrets.sh         # Verify each manifest target exists/mode/non-empty
+scripts/secrets/verify-secrets.sh --quiet # Same, only print on failure
 ```
 
 ### Local Overrides
@@ -191,4 +239,20 @@ which sops yq               # Tools installed?
 
 # Permissions wrong
 secrets-deploy              # Re-deploys with correct chmod
+
+# Activation fails with "no secrets manifest"
+secrets-deploy              # First-boot or manifest deleted — re-deploy
+
+# Activation fails with "missing: <path>"
+secrets-deploy              # File got deleted/moved; re-deploy restores it
+
+# Activation fails with "contains SOPS file header"
+# Means the deployed file got the whole decrypted document.
+# This was the 2026-04-28 bug — should not recur, but if it does:
+cat ~/.local/state/secrets-deploy/manifest    # See affected target
+secrets-deploy              # Re-deploy correctly
+
+# Watcher not firing after secrets-edit
+launchctl list | grep secrets-deploy-watcher  # Confirm agent loaded
+ls -t ~/.local/state/secrets-deploy/*.log | head -1 | xargs cat  # Last event log
 ```

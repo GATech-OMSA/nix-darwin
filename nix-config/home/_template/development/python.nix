@@ -10,7 +10,8 @@
     # micromamba  # Build broken - install via Homebrew: brew install micromamba
   ];
 
-  # Micromamba configuration
+  # Micromamba configuration — disabled; uv is the standard (CLAUDE.md)
+  /*
   home.file.".condarc".text = ''
     channels:
       - conda-forge
@@ -20,6 +21,7 @@
     show_channel_urls: true
     changeps1: false  # Don't modify prompt - Starship handles environment display
   '';
+  */
 
   # UV configuration
   home.sessionVariables = {

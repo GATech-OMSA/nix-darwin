@@ -6,7 +6,6 @@ Utility scripts for nix-darwin system maintenance, setup, validation, and testin
 
 ```
 scripts/
-├── app-catalog/      # Homebrew app management
 ├── docs/             # This README
 ├── maintenance/      # System maintenance and diagnostics
 ├── profiles/         # Profile switching
@@ -97,8 +96,9 @@ Additional:
 
 | Script | Purpose |
 |--------|---------|
-| `app-catalog/install-apps.sh` | Manage Homebrew apps from catalog |
 | `profiles/switch-profile.sh` | Switch between personal/work/minimal profiles |
+
+> App recommendations: see `docs/app-recommendations.md` (replaced the old `app-catalog/install-apps.sh`).
 
 ---
 

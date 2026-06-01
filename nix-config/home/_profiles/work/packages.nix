@@ -3,14 +3,14 @@
 # Work-specific packages for corporate development
 # All packages commented out — uncomment as needed
 
-{ pkgs, lib, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
   home.packages = with pkgs; [
     # ============================================
     # API DEVELOPMENT & TESTING
     # ============================================
-    # bruno              # Open-source API client (Git-friendly Postman alternative)
+    bruno                # Open-source API client (Git-friendly Postman alternative)
     # hurl               # Run and test HTTP requests from plain text files
     # posting            # TUI HTTP client
     # xh                 # Fast HTTP request tool (httpie-compatible)
@@ -20,7 +20,7 @@
     # ============================================
     # k9s                # TUI for Kubernetes cluster management
     # kubectx            # Switch kubectl contexts/namespaces quickly
-    # dive               # Explore Docker image layers
+    dive                 # Explore Docker image layers
     # lazydocker         # TUI for Docker management
     # helm               # Kubernetes package manager
     # kustomize          # Kubernetes config customization
@@ -31,7 +31,7 @@
     # ============================================
     # SECURITY & COMPLIANCE
     # ============================================
-    # trivy              # Container/filesystem vulnerability scanner
+    trivy                # Container/filesystem vulnerability scanner
     # grype              # Container image vulnerability scanner
     # syft               # SBOM (software bill of materials) generator
     # cosign             # Container image signing/verification
@@ -45,7 +45,8 @@
     # aws-vault          # Secure AWS credential storage
     # aws-iam-authenticator  # EKS authentication
     # eksctl             # EKS cluster management
-    # granted            # Fast AWS role switching with SSO
+    granted              # Fast AWS role switching with SSO
+    awslogs              # AWS CloudWatch logs for humans (tail/grep from terminal)
     # infracost          # Cloud cost estimates for Terraform
     # steampipe          # Cloud infrastructure queries
 
@@ -64,6 +65,10 @@
     # ============================================
     # DATA ENGINEERING & ETL
     # ============================================
+    # Messaging & streaming
+    kcat                 # Universal Kafka producer/consumer — essential debugging tool
+    # kafkactl           # Modern, friendly Kafka CLI for topic/consumer-group ops
+
     # ETL frameworks
     # airflow            # Workflow orchestration
     # dagster            # Data orchestration
@@ -100,9 +105,17 @@
     # ============================================
     # AI-ASSISTED DEVELOPMENT
     # ============================================
-    kiro-cli            # Command-line interface for Kiro agentic IDE
+    # kiro-cli            # Command-line interface for Kiro agentic IDE
+    inputs.llm-agents.packages.${pkgs.system}.openspec  # Spec-driven development CLI
     # aider-chat         # AI pair programming in terminal
     # fabric-ai          # AI-powered CLI for text processing patterns
+
+    # ============================================
+    # GIT TOOLING
+    # ============================================
+    lazygit              # TUI git client — pairs perfectly with terminal-heavy workflow
+    # delta              # Syntax-highlighted diff viewer (set as git pager)
+    # git-absorb         # Auto-fixup commits into history (--autosquash on rails)
 
     # ============================================
     # CODE ANALYSIS & BENCHMARKING
@@ -114,7 +127,7 @@
     # ============================================
     # NETWORKING & DIAGNOSTICS
     # ============================================
-    # doggo              # Modern DNS client (dig alternative)
+    #doggo              # Modern DNS client (dig alternative)
     # bandwhich          # TUI bandwidth utilization by process
     # trippy             # Modern network diagnostics (traceroute + ping TUI)
 

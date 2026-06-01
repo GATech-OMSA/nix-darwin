@@ -73,7 +73,7 @@ let
 
     # Code Quality & Development
     pre-commit   # Git hooks framework
-    nodePackages.markdown-link-check  # Validate markdown links
+    markdown-link-check  # Validate markdown links (was nodePackages.* — moved to top-level in nixpkgs)
     just         # Command runner
 
     # Code Analysis & Search (enhance Claude Code)
@@ -119,13 +119,13 @@ let
     kubectx      # Fast K8s context/namespace switching (includes kubens)
     k9s
     kubernetes-helm
-    terraform    # Infrastructure as code
+    # terraform    # Infrastructure as code — disabled (BSL since v1.6); use opentofu or work/packages.nix → tenv if needed
 
     # Cloud
     awscli2
 
     # Interview Prep & System Design
-    mermaid-cli  # Text-to-diagram for system design
+    # mermaid-cli  # Text-to-diagram — disabled (pulls in chromium); GitHub/Obsidian/VS Code render natively
     graphviz     # Graph/architecture visualization
   ];
 
@@ -146,27 +146,12 @@ in
   # Machine-specific packages should go in mixins (personal.nix, work.nix, dev.nix)
 
   environment.systemPackages =
-    # Essential packages for all machines
     essentialPackages
-
-    # Development packages for all dev machines
     ++ developmentPackages
-
-    # Work-only packages
-    ++ lib.optionals (profileName == "work") workPackages
-
-    # Personal-only packages (AI/ML)
-    ++ lib.optionals (profileName == "personal") personalPackages
+    ++ (myLib.selectByProfile profileName {
+      work = workPackages;
+      personal = personalPackages;
+      default = [];
+    })
   ;
-
-  # Package Organization:
-  #   - essentialPackages: CLI tools for ALL machines
-  #   - developmentPackages: Dev tools for all dev machines
-  #   - workPackages: Work-only (ghostty, etc.) — gated by profileName == "work"
-  #   - personalPackages: Personal-only — gated by profileName == "personal"
-  #
-  # Profile-specific packages also in:
-  #   - home/_profiles/work/packages.nix (ODBC, DB clients, Python, Node)
-  #   - home/_profiles/personal/packages.nix
-  #   - User programs (bat, eza, fzf, zoxide, direnv, atuin): _template/programs/
 }

@@ -9,6 +9,10 @@
     # Git LFS
     lfs.enable = true;
 
+    # Adopt HM 25.05+ default — silences deprecation warning. We don't sign
+    # commits today; per-profile override (e.g. work/default.nix) when needed.
+    signing.format = null;
+
     settings = {
       # User info
       user = {

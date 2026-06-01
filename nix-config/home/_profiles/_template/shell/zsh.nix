@@ -12,17 +12,67 @@ let
   lazyCredentials = pkgs.writeText "credentials-mgmt.zsh" (builtins.readFile ./functions/credentials-mgmt.zsh);
 
   # Static generation of shell init scripts to improve startup time
-  # This moves ~15-30ms of processing from shell-start to build-time
+  # This moves ~15-30ms of processing from shell-start to build-time.
+  #
+  # SIGCHLD-race patches (macOS 15+):
+  # zsh's getoutput → waitforpid path can lose SIGCHLD when a $()
+  # subshell exits before the parent enters sigsuspend, wedging the shell
+  # in __sigsuspend forever. We patch generated init scripts to replace
+  # racy command-substitutions with foreground redirect (waitjobs path).
   shellInitCache = pkgs.runCommand "shell-init-cache" {} ''
     # Fix for tools attempting to write to locked /homeless-shelter
     export HOME=$(mktemp -d)
-    
+
     mkdir -p $out
     ${pkgs.starship}/bin/starship init zsh > $out/starship.zsh
     ${pkgs.zoxide}/bin/zoxide init zsh > $out/zoxide.zsh
     ${pkgs.atuin}/bin/atuin init zsh > $out/atuin.zsh
     ${pkgs.direnv}/bin/direnv hook zsh > $out/direnv.zsh
     ${pkgs.fzf}/bin/fzf --zsh > $out/fzf.zsh
+
+    # Patch atuin.zsh: replace `$(atuin uuid)` (racy command-substitution)
+    # with a file-redirect pattern that uses zsh's waitjobs path instead of
+    # the racy waitforpid path. Pinned to absolute atuin binary so PATH
+    # changes during init can't break it.
+    ${pkgs.gnused}/bin/sed -i \
+      "s|export ATUIN_SESSION=\$(atuin uuid)|${pkgs.atuin}/bin/atuin uuid > \"\''${TMPDIR:-/tmp}/.atuin-session.\$\$\" 2>/dev/null \&\& export ATUIN_SESSION=\"\$(<\''${TMPDIR:-/tmp}/.atuin-session.\$\$)\" \&\& /bin/rm -f \"\''${TMPDIR:-/tmp}/.atuin-session.\$\$\"|" \
+      $out/atuin.zsh
+
+    # Verify patch applied (build fails if upstream renames the line)
+    if /usr/bin/grep -qF 'export ATUIN_SESSION=$(atuin uuid)' $out/atuin.zsh; then
+      echo "ERROR: atuin.zsh sed patch did not match — upstream changed the line" >&2
+      exit 1
+    fi
+
+    # Patch starship.zsh: replace top-level `PROMPT2="$(starship prompt --continuation)"`
+    # — the $() runs at every shell source (i.e. every `exec zsh`) and triggers
+    # the SIGCHLD waitforpid race. Pre-compute the continuation prompt at build
+    # time and embed the result as a literal string, eliminating the runtime fork.
+    starship_cont=$(${pkgs.starship}/bin/starship prompt --continuation 2>/dev/null || printf '❯ ')
+    # Escape any sed-special chars in the captured string
+    escaped_cont=$(printf '%s' "$starship_cont" | ${pkgs.gnused}/bin/sed -e 's/[\&|]/\\&/g')
+    ${pkgs.gnused}/bin/sed -i \
+      "s|^PROMPT2=\"\$(.*starship.* prompt --continuation)\"|PROMPT2=\"$escaped_cont\"|" \
+      $out/starship.zsh
+
+    # Verify patch applied
+    if /usr/bin/grep -qE '^PROMPT2="\$\(.*starship.*--continuation' $out/starship.zsh; then
+      echo "ERROR: starship.zsh PROMPT2 sed patch did not match — upstream changed the line" >&2
+      exit 1
+    fi
+
+    # Patch fzf.zsh: replace top-level `binding=$(bindkey '^I')` — runs at
+    # source time inside a `{}` block and triggers the SIGCHLD race. Convert
+    # to file-redirect pattern (waitjobs path) instead of $() (waitforpid path).
+    ${pkgs.gnused}/bin/sed -i \
+      "s|binding=\$(bindkey '\\^I')|bindkey '^I' > \"\''${TMPDIR:-/tmp}/.fzf-binding.\$\$\" 2>/dev/null \&\& binding=\"\$(<\''${TMPDIR:-/tmp}/.fzf-binding.\$\$)\" \&\& /bin/rm -f \"\''${TMPDIR:-/tmp}/.fzf-binding.\$\$\"|" \
+      $out/fzf.zsh
+
+    # Verify patch applied
+    if /usr/bin/grep -qF "binding=\$(bindkey '^I')" $out/fzf.zsh; then
+      echo "ERROR: fzf.zsh binding sed patch did not match — upstream changed the line" >&2
+      exit 1
+    fi
 
     # Compile to .zwc for faster loading (using same zsh version)
     # This prevents parsing overhead at runtime
@@ -32,6 +82,51 @@ let
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/direnv.zsh"
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/fzf.zsh"
   '';
+
+  # Build-time patched fast-syntax-highlighting: replaces top-level
+  # `if [[ $(uname -a) = (#i)*darwin* ]]` (racy $() at source-time) with
+  # `$OSTYPE = darwin*` (a parameter test, no fork). Eliminates one of
+  # the largest remaining SIGCHLD-race sites at shell init.
+  fixedFsh = pkgs.runCommand "fsh-patched" {} ''
+    cp -r ${pkgs.zsh-fast-syntax-highlighting} $out
+    chmod -R +w $out
+    ${pkgs.gnused}/bin/sed -i \
+      's|if \[\[ \$(uname -a) = (#i)\*darwin\* \]\]|if [[ $OSTYPE = darwin* ]]|' \
+      $out/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+
+    # Verify patch applied (build fails if upstream changes the pattern)
+    if /usr/bin/grep -qF 'if [[ $(uname -a) = (#i)*darwin* ]]' \
+        $out/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh; then
+      echo "ERROR: fast-syntax-highlighting sed patch did not match — upstream changed the line" >&2
+      exit 1
+    fi
+  '';
+
+  # Build-time patched zsh-autosuggestions: replace `$(builtin zle -la)`
+  # in _zsh_autosuggest_bind_widgets with `${(k)widgets}` — the latter
+  # reads from the `widgets` associative array (provided by zsh/parameter,
+  # already loaded) without forking. The `$()` form forks a subshell to
+  # capture builtin output and waits via the racy waitforpid path, which
+  # on macOS 15+ wedges the shell at the first prompt.
+  fixedAutosuggestions = pkgs.runCommand "zsh-autosuggestions-patched" {} ''
+    cp -r ${pkgs.zsh-autosuggestions} $out
+    chmod -R +w $out
+    # Replace `$(builtin zle -la)` (subshell capture) with `''${(kF)widgets}`
+    # — a parameter expansion that emits keys of the `widgets` associative
+    # array (provided by zsh/parameter) joined by newlines. The surrounding
+    # `''${(f)"..."}` then splits on newlines, producing the same array.
+    # No fork, no SIGCHLD race.
+    ${pkgs.gnused}/bin/sed -i \
+      's|\$(builtin zle -la)|''${(kF)widgets}|' \
+      $out/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+    # Verify patch applied
+    if /usr/bin/grep -qF '$(builtin zle -la)' \
+        $out/share/zsh-autosuggestions/zsh-autosuggestions.zsh; then
+      echo "ERROR: zsh-autosuggestions sed patch did not match — upstream changed the line" >&2
+      exit 1
+    fi
+  '';
 in
 {
   # ENHANCED Zsh configuration - Complete declarative shell setup
@@ -40,7 +135,11 @@ in
   programs.zsh = {
     enable = true;
     enableCompletion = false;
-    autosuggestion.enable = true;
+    # Disable HM's autosuggestion — it sources the unpatched upstream copy
+    # whose precmd hook contains a racy `$(builtin zle -la)`. We source
+    # the build-time patched `fixedAutosuggestions` derivation manually
+    # below (see initContent at mkOrder 875).
+    autosuggestion.enable = false;
     syntaxHighlighting.enable = false; # Replaced by fast-syntax-highlighting (see initContent)
 
     # History configuration
@@ -66,6 +165,14 @@ in
       # Note: NH_DARWIN_FLAKE is the flake path, NH_DARWIN_HOSTNAME is our custom var for -H
       NH_DARWIN_FLAKE = nixDarwinDir;
       NH_DARWIN_HOSTNAME = machineId;
+
+      # Disable zsh-autosuggestions' per-precmd widget rebinding.
+      # By default, `_zsh_autosuggest_start` re-runs `_zsh_autosuggest_bind_widgets`
+      # on every prompt — that function evaluates `$(builtin zle -la)`, which
+      # forks a subshell and waits via the racy waitforpid path. On macOS 15+
+      # that race wedges the shell at the prompt. With MANUAL_REBIND, the
+      # rebind happens once at first precmd then the hook removes itself.
+      ZSH_AUTOSUGGEST_MANUAL_REBIND = "1";
     };
 
     # COMPLETE Shell aliases - merged from all sources
@@ -99,6 +206,8 @@ in
       nix-rebuild = "${nixDarwinDir}/scripts/maintenance/rebuild.sh";
       nix-rebuild-skip-checks = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --skip-checks";
       nix-rebuild-debug = "${nixDarwinDir}/scripts/maintenance/rebuild.sh --debug";
+      # Open the most recent rebuild log in $PAGER (rotated to last 20).
+      nix-rebuild-log = "${nixDarwinDir}/scripts/maintenance/nix-rebuild-log.sh";
 
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
@@ -226,7 +335,7 @@ in
       grest = "git restore --staged";
 
       # ============================================
-      # PYTHON - MULTI-TIER (UV + Micromamba)
+      # PYTHON (UV)  — micromamba aliases disabled below
       # ============================================
       py = "python";
       ipy = "ipython";
@@ -246,12 +355,12 @@ in
       format = "ruff format .";
       "lint-fix" = "ruff check --fix .";
 
-      # Micromamba (Tier 4: abbreviated domain)
+      # Micromamba (Tier 4: abbreviated domain) — disabled; uv is the standard
       # Note: m-act and m-deact use functions (not aliases) to show usage help
-      m-create = "micromamba create";
-      m-list = "micromamba env list";
-      m-install = "micromamba install";
-      m-remove = "micromamba remove";
+      # m-create = "micromamba create";
+      # m-list = "micromamba env list";
+      # m-install = "micromamba install";
+      # m-remove = "micromamba remove";
 
       # ============================================
       # AWS
@@ -331,50 +440,55 @@ in
 
     # Init content (combined: micromamba lazy-load, then main config)
     initContent = lib.mkMerge [
+      # ZPROF GATING — opt-in startup profiling
+      # Run `ZPROF=1 zsh -i -c exit` to print a flat profile of init.
+      # No overhead when unset (zsh/zprof module not loaded).
+      (lib.mkOrder 1 ''
+        if [[ -n "''${ZPROF:-}" ]]; then
+          zmodload zsh/zprof
+        fi
+      '')
+
       # PERFORMANCE OPTIMIZATIONS (The <0.5s Goal)
       # Hybrid Approach: Static generation of init scripts
       # Moves ~20ms of processing from shell-start to build-time
       (lib.mkOrder 40 ''
         # DARK/LIGHT MODE DETECTION FOR STARSHIP
-        # Detection waterfall:
-        #   1. COLORFGBG env var (iTerm2 — instant)
-        #   2. macOS appearance (Ghostty/Warp/Terminal — follows system)
-        _nix_starship=$(readlink -f "$HOME/.config/starship.toml" 2>/dev/null)
-        if [[ "$_nix_starship" == /nix/store/* ]]; then
+        #
+        # IMPORTANT: This block must NOT contain any $(...) command substitutions
+        # at top level. On macOS 15+, $() in zshrc can race with SIGCHLD and hang
+        # forever — child exits before zsh enters sigsuspend, signal lost, shell
+        # blocked indefinitely. The user reproduced this with `$(defaults read)`
+        # and `$(atuin uuid)` triggering identical hangs at different lines.
+        #
+        # Strategy: cache the palette decision in a file, refresh once per hour
+        # via a SEPARATE non-blocking process. Shell init only reads the file
+        # (no fork). On cache miss, default to mocha (dark) — user can correct
+        # by running the refresh once, or it'll fix itself on next refresh.
+        if [[ -L "$HOME/.config/starship.toml" ]]; then
+          _palette_cache="$HOME/.cache/starship/.palette"
           _writable_starship="$HOME/.cache/starship/starship.toml"
-          mkdir -p "$(dirname "$_writable_starship")"
-
-          # Detect dark/light mode
-          _palette=""
-          if [[ -n "$COLORFGBG" ]]; then
-            # iTerm2 sets COLORFGBG="fg;bg" — bg < 8 means dark
-            _bg="''${COLORFGBG##*;}"
-            if (( _bg < 8 )); then
-              _palette="catppuccin_mocha"
-            else
-              _palette="catppuccin_latte"
-            fi
-            unset _bg
+          # Read palette from cache (pure builtin, no fork)
+          if [[ -r "$_palette_cache" ]]; then
+            read -r _palette < "$_palette_cache"
+          else
+            # Best-effort default; refresh runs below to fix it
+            _palette="catppuccin_mocha"
           fi
-          # Fallback: macOS system appearance (covers Ghostty, Warp, Terminal.app)
-          if [[ -z "$_palette" ]]; then
-            if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == "Dark" ]]; then
-              _palette="catppuccin_mocha"
-            else
-              _palette="catppuccin_latte"
-            fi
+          # Read cache palette into config if cache file exists with a value.
+          if [[ -n "''${_palette:-}" ]] && [[ -f "$_writable_starship" ]]; then
+            export STARSHIP_CONFIG="$_writable_starship"
           fi
-
-          # Only rewrite if nix config changed or palette differs
-          if [[ ! -f "$_writable_starship" ]] || \
-             ! diff -q "$_nix_starship" "$_writable_starship" &>/dev/null || \
-             ! grep -q "palette = '$_palette'" "$_writable_starship" 2>/dev/null; then
-            sed "s/^palette = .*/palette = '$_palette'/" "$_nix_starship" > "$_writable_starship"
+          # Background refresh — disowned, fires once per hour at most.
+          # No `wait` ever, so SIGCHLD race can't bite zsh init.
+          _now=$EPOCHSECONDS
+          _last=0
+          [[ -r "$_palette_cache.mtime" ]] && read -r _last < "$_palette_cache.mtime"
+          if (( _now - _last > 3600 )); then
+            ( "$HOME/nix-darwin/scripts/maintenance/refresh-starship-palette.sh" >/dev/null 2>&1 & ) &!
           fi
-          export STARSHIP_CONFIG="$_writable_starship"
-          unset _writable_starship _palette
+          unset _palette_cache _writable_starship _palette _now _last
         fi
-        unset _nix_starship
       '')
 
       (lib.mkOrder 50 ''
@@ -382,19 +496,197 @@ in
         # Replaces "eval $(tool init zsh)" to save runtime overhead.
         # Generated at build time via pkgs.runCommand.
 
+        # Pre-populate ATUIN_SESSION + ATUIN_SHLVL so atuin.zsh skips the
+        # `export ATUIN_SESSION=$(atuin uuid)` fork on every shell start.
+        #
+        # Why: that $() can race with SIGCHLD on macOS — child exits, sigsuspend
+        # waits forever for a signal that already arrived, hanging shell init
+        # before the welcome message ever prints. Reproduced after
+        # `exec zsh` (= `restart`) where SHLVL changes (parent=1 → child=2)
+        # and atuin.zsh's `ATUIN_SHLVL != $SHLVL` branch fires the fork.
+        # Pure-builtin substitute below uses no fork at all.
+        zmodload zsh/datetime 2>/dev/null
+        if [[ -z "''${ATUIN_SESSION:-}" ]]; then
+          export ATUIN_SESSION="''${EPOCHREALTIME//.}-$$"
+        fi
+        export ATUIN_SHLVL=$SHLVL
+
         source ${shellInitCache}/starship.zsh
         source ${shellInitCache}/zoxide.zsh
         source ${shellInitCache}/atuin.zsh
         source ${shellInitCache}/direnv.zsh
+
+        # SIGCHLD-SAFE ATUIN PREEXEC OVERRIDE
+        #
+        # Upstream atuin.zsh does:
+        #   id=$(atuin history start -- "$1" 2>/dev/null)
+        # which uses zsh's racy command-substitution wait path for every
+        # submitted command. Keep the same behavior, but capture through a
+        # per-pid file and read it with the builtin `read`.
+        typeset -g __ATUIN_BIN="${pkgs.atuin}/bin/atuin"
+        typeset -g __ATUIN_HISTORY_START_FILE="''${TMPDIR:-/tmp}/.atuin-history-start.$$"
+
+        _atuin_preexec() {
+          local _cmd="$1"
+          if "$__ATUIN_BIN" history start -- "$_cmd" > "$__ATUIN_HISTORY_START_FILE" 2>/dev/null; then
+            if [[ -s "$__ATUIN_HISTORY_START_FILE" ]]; then
+              read -r ATUIN_HISTORY_ID < "$__ATUIN_HISTORY_START_FILE"
+            else
+              ATUIN_HISTORY_ID=""
+            fi
+          else
+            ATUIN_HISTORY_ID=""
+          fi
+          export ATUIN_HISTORY_ID
+          __atuin_preexec_time=''${EPOCHREALTIME-}
+        }
+
+        _atuin_cleanup_history_start() {
+          [[ -f "$__ATUIN_HISTORY_START_FILE" ]] && /bin/rm -f "$__ATUIN_HISTORY_START_FILE"
+        }
+        autoload -Uz add-zsh-hook 2>/dev/null && \
+          add-zsh-hook zshexit _atuin_cleanup_history_start
+
+        # SIGCHLD-SAFE STARSHIP PROMPT
+        #
+        # The default starship init does:
+        #   setopt promptsubst
+        #   PROMPT='$(starship prompt ...)'
+        #   RPROMPT='$(starship prompt --right ...)'
+        # That $() runs on EVERY prompt redraw — typing chars, mode changes,
+        # widget redraws, autosuggest refreshes. Each invocation goes through
+        # zsh's getoutput → waitforpid → signal_suspend, which races SIGCHLD on
+        # macOS 15+: child exits before parent enters sigsuspend, signal lost,
+        # shell hangs forever in __sigsuspend.
+        #
+        # Fix: render the prompts in precmd via foreground redirect (safe
+        # waitjobs path), stash in parameters, reference those in PROMPT.
+        # `$(<file)` reads the file without forking, so prompt-subst stays
+        # fork-free on every redraw. Vi-mode rerender hooks into
+        # zle-keymap-select.
+        typeset -g __STARSHIP_BIN="${pkgs.starship}/bin/starship"
+        typeset -g __STARSHIP_LEFT_FILE="$HOME/.cache/starship/.left.$$"
+        typeset -g __STARSHIP_RIGHT_FILE="$HOME/.cache/starship/.right.$$"
+        typeset -g STARSHIP_LEFT="" STARSHIP_RIGHT=""
+        # Gate mkdir to avoid fork on every shell init — `/bin/mkdir`
+        # forks an external command and waits via waitjobs, which on
+        # macOS 15+ races with SIGCHLD. Once the dir exists, the test
+        # short-circuits and no fork happens.
+        [[ -d "$HOME/.cache/starship" ]] || /bin/mkdir -p "$HOME/.cache/starship"
+
+        __starship_render() {
+          "$__STARSHIP_BIN" prompt \
+            --terminal-width="$COLUMNS" \
+            --keymap="''${KEYMAP:-}" \
+            --status="''${STARSHIP_CMD_STATUS:-}" \
+            --pipestatus="''${STARSHIP_PIPE_STATUS[*]:-}" \
+            --cmd-duration="''${STARSHIP_DURATION:-}" \
+            --jobs="''${STARSHIP_JOBS_COUNT:-0}" \
+            > "$__STARSHIP_LEFT_FILE" 2>/dev/null
+          STARSHIP_LEFT="$(<$__STARSHIP_LEFT_FILE)"
+          "$__STARSHIP_BIN" prompt --right \
+            --terminal-width="$COLUMNS" \
+            --keymap="''${KEYMAP:-}" \
+            --status="''${STARSHIP_CMD_STATUS:-}" \
+            --pipestatus="''${STARSHIP_PIPE_STATUS[*]:-}" \
+            --cmd-duration="''${STARSHIP_DURATION:-}" \
+            --jobs="''${STARSHIP_JOBS_COUNT:-0}" \
+            > "$__STARSHIP_RIGHT_FILE" 2>/dev/null
+          STARSHIP_RIGHT="$(<$__STARSHIP_RIGHT_FILE)"
+        }
+
+        # NOTE: do NOT call __starship_render at init time. The two
+        # foreground starship invocations (`starship prompt > file`)
+        # use zsh's waitjobs path which on macOS 15+ ALSO races with
+        # SIGCHLD and can wedge `exec zsh`. The precmd hook below
+        # fires before the first prompt displays, so STARSHIP_LEFT
+        # and STARSHIP_RIGHT will be populated in time.
+        autoload -Uz add-zsh-hook
+        add-zsh-hook precmd __starship_render
+
+        # Replace PROMPT/RPROMPT — pure parameter expansion, no fork.
+        # Use $VAR (not ''${VAR}) to dodge Nix indented-string escape pitfalls.
+        PROMPT='$STARSHIP_LEFT'
+        RPROMPT='$STARSHIP_RIGHT'
+
+        # Re-render and redraw when vi keymap changes (insert <-> normal).
+        __starship_keymap_select() {
+          __starship_render
+          zle reset-prompt
+        }
+        zle -N zle-keymap-select __starship_keymap_select
+
+        # Clean up render files on shell exit.
+        __starship_cleanup() {
+          /bin/rm -f "$__STARSHIP_LEFT_FILE" "$__STARSHIP_RIGHT_FILE" 2>/dev/null
+        }
+        add-zsh-hook zshexit __starship_cleanup
+
+        # SIGCHLD-SAFE _direnv_hook OVERRIDE
+        #
+        # The default direnv hook is:
+        #   eval "$(direnv export zsh)"
+        # That $() goes through zsh's getoutput → waitforpid → signal_suspend
+        # path. On macOS 15+ that path races with SIGCHLD: a fast child exits
+        # before the parent enters sigsuspend, the signal is lost, the shell
+        # blocks forever in __sigsuspend.
+        #
+        # This override redirects to a tmp file and sources it. Foreground
+        # commands with `>` redirect use waitjobs (the job-control path), not
+        # waitforpid, so the race doesn't apply.
+        #
+        # Same per-pid temp file is reused across hook calls (cd events fire
+        # this many times) — no $(mktemp) fork, no allocation thrash.
+        typeset -g __DIRENV_BIN="${pkgs.direnv}/bin/direnv"
+        typeset -g __DIRENV_EXPORT_FILE="$HOME/.cache/direnv/.export.$$.zsh"
+        # Gate mkdir to avoid SIGCHLD-race fork on every shell init.
+        [[ -d "$HOME/.cache/direnv" ]] || /bin/mkdir -p "$HOME/.cache/direnv"
+
+        # First-precmd skip: when a shell starts, the parent's direnv state
+        # is already correct (env vars inherited). The first call would
+        # fork direnv just to confirm "nothing changed" — but that fork
+        # uses zsh's waitjobs path which races with SIGCHLD on macOS 15+
+        # and can wedge the shell at the first prompt. Skip the first call;
+        # subsequent calls (after cd or new prompts) work normally.
+        typeset -g __DIRENV_HOOK_PRIMED=
+        _direnv_hook() {
+          if [[ -z "$__DIRENV_HOOK_PRIMED" ]]; then
+            __DIRENV_HOOK_PRIMED=1
+            return 0
+          fi
+          trap -- "" SIGINT
+          if "$__DIRENV_BIN" export zsh > "$__DIRENV_EXPORT_FILE" 2>/dev/null; then
+            [[ -s "$__DIRENV_EXPORT_FILE" ]] && source "$__DIRENV_EXPORT_FILE"
+          fi
+          trap - SIGINT
+        }
+
+        # Clean up the per-pid export file on shell exit.
+        _direnv_cleanup_export() {
+          [[ -f "$__DIRENV_EXPORT_FILE" ]] && /bin/rm -f "$__DIRENV_EXPORT_FILE"
+        }
+        autoload -Uz add-zsh-hook 2>/dev/null && \
+          add-zsh-hook zshexit _direnv_cleanup_export
       '')
 
       (lib.mkOrder 100 ''
         # 1. FASTER COMPLETION INIT (Bypass compaudit on secure Nix paths)
         # We prefer speed (compinit -C) over checking every file on every startup.
         # On a Nix system, paths are immutable, so this is very safe.
+        # Home Manager appends profile completion paths later in .zshrc, but
+        # compinit snapshots fpath when it runs. Seed those paths first so Tab
+        # completion sees Nix package completions.
+        typeset -U path cdpath fpath manpath
+        for profile in ''${(z)NIX_PROFILES}; do
+          fpath+=($profile/share/zsh/site-functions $profile/share/zsh/$ZSH_VERSION/functions $profile/share/zsh/vendor-completions)
+        done
+
         autoload -Uz compinit
         ZCOMPDUMP="$HOME/.cache/zsh/zcompdump-$ZSH_VERSION"
-        mkdir -p "$(dirname "$ZCOMPDUMP")"
+        # Use zsh head modifier (no fork) instead of dirname — see SIGCHLD
+        # race notes near the dark/light block above. Gate with -d to avoid
+        # the mkdir external-fork on every shell init (idempotent stat).
+        [[ -d "''${ZCOMPDUMP:h}" ]] || mkdir -p "''${ZCOMPDUMP:h}"
         
         # Always use -u (skip permission checks) and -C (skip file validation) if dump exists
         if [[ -s "$ZCOMPDUMP" ]]; then
@@ -463,21 +755,21 @@ in
         }}
       '')
 
-      # Micromamba LAZY initialization - only runs when first used
-      # This saves ~100ms on shell startup
+      # Micromamba LAZY initialization — disabled; uv is the standard (CLAUDE.md)
+      # This block previously saved ~100ms on shell startup by lazy-loading micromamba.
       (lib.mkOrder 550 ''
         # Lazy-load micromamba - only initialize when first invoked
-        if command -v micromamba &> /dev/null; then
-          export MAMBA_EXE="${"\${commands[micromamba]}"}"
-          export MAMBA_ROOT_PREFIX="$HOME/micromamba"
-
-          # Wrapper function that initializes micromamba on first use
-          micromamba() {
-            unfunction micromamba  # Remove this wrapper
-            eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
-            micromamba "$@"  # Run the actual command
-          }
-        fi
+        # if command -v micromamba &> /dev/null; then
+        #   export MAMBA_EXE="${"\${commands[micromamba]}"}"
+        #   export MAMBA_ROOT_PREFIX="$HOME/micromamba"
+        #
+        #   # Wrapper function that initializes micromamba on first use
+        #   micromamba() {
+        #     unfunction micromamba  # Remove this wrapper
+        #     eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
+        #     micromamba "$@"  # Run the actual command
+        #   }
+        # fi
       '')
 
       # Main shell configuration (runs after oh-my-zsh)
@@ -510,13 +802,28 @@ in
       [[ -n "$TF_PLUGIN_CACHE_DIR" ]] && mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # ============================================
-      # WELCOME MESSAGE
+      # WELCOME MESSAGE (cached — avoids subprocess calls per shell)
       # ============================================
+      # IMPORTANT: zero $(...) at top level — see SIGCHLD race notes near the
+      # dark/light block. mtime check uses zstat builtin (no fork). Refresh on
+      # cache miss runs in a backgrounded subshell with no wait.
       if [ "$TERM_PROGRAM" != "vscode" ]; then
-        _nix_ver=$(nix --version 2>/dev/null | awk '{print $NF}')
-        _os_ver=$(sw_vers -productVersion 2>/dev/null)
-        printf '\033[90m %s · macOS %s · nix %s\033[0m\n' "$MACHINE_MODE" "$_os_ver" "$_nix_ver"
-        unset _nix_ver _os_ver
+        _wf="$HOME/.cache/nix-darwin/welcome.$MACHINE_MODE"
+        _wf_mtime=0
+        zmodload -F zsh/stat b:zstat 2>/dev/null && \
+          zstat -A _wf_stat +mtime "$_wf" 2>/dev/null && \
+          _wf_mtime=$_wf_stat[1]
+        # Refresh if missing or older than 24h.
+        if [[ ! -s "$_wf" ]] || (( EPOCHSECONDS - _wf_mtime > 86400 )); then
+          # Disowned background refresh — no wait, no SIGCHLD risk.
+          ( "$HOME/nix-darwin/scripts/maintenance/refresh-welcome.sh" "$_wf" "$MACHINE_MODE" >/dev/null 2>&1 & ) &!
+        fi
+        # Print the (possibly stale) cache; refresh applies on next shell start.
+        # Use zsh's `$(<file)` special form (no fork) + `print -r --` (builtin)
+        # instead of `/bin/cat` — the cat fork triggers waitjobs which on
+        # macOS 15+ can race with SIGCHLD and wedge `exec zsh`.
+        [[ -s "$_wf" ]] && print -r -- "$(<$_wf)"
+        unset _wf _wf_mtime _wf_stat
       fi
 
       # ============================================
@@ -590,11 +897,26 @@ in
       alias zz="z -"
       ''
       
+      (lib.mkOrder 875 ''
+        # ZSH-AUTOSUGGESTIONS (build-time patched)
+        # HM's `programs.zsh.autosuggestion.enable` sources the upstream
+        # copy whose precmd hook (`_zsh_autosuggest_bind_widgets`) evaluates
+        # `$(builtin zle -la)` — that $() forks and waits via the racy
+        # waitforpid path on macOS 15+. Our patched copy replaces it with
+        # `''${(k)widgets}` (parameter expansion, no fork).
+        ZSH_AUTOSUGGEST_STRATEGY=(history)
+        source ${fixedAutosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+      '')
+
       (lib.mkOrder 900 ''
         # FAST SYNTAX HIGHLIGHTING
         # Replaces standard zsh-syntax-highlighting (saves ~700ms)
-        # Sourced at the end to ensure it wraps all widgets correctly
-        source ${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+        # Sourced at the end to ensure it wraps all widgets correctly.
+        # Uses build-time patched copy (fixedFsh) to remove racy
+        # `$(uname -a)` command-substitution at source time — the
+        # upstream version triggers zsh's SIGCHLD waitforpid race on
+        # macOS 15+ and wedges the shell during `exec zsh`.
+        source ${fixedFsh}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
       '')
 
       (lib.mkOrder 950 ''
@@ -607,25 +929,77 @@ in
         } &!
       '')
 
+      # Debug instrumentation for precmd / preexec / chpwd hooks. Opt-in via
+      # either:
+      #   - ZSH_DEBUG_PRECMD=1 in the env  (one-shot)
+      #   - touch ~/.cache/zsh-debug-precmd  (persistent across all new shells)
+      #
+      # Each hook is wrapped with a timestamped logger that appends ENTER/EXIT
+      # lines to a per-pid log file. If the shell hangs, the last ENTER line
+      # without a matching EXIT names the offending hook.
+      #
+      # Why this exists: the SIGCHLD race in zsh's waitforpid bites any $() in
+      # the hot path. We've eliminated all top-level $() in init blocks, but
+      # third-party precmd hooks (direnv, starship, atuin, autosuggestions) can
+      # still fork at prompt time. This instrumentation tells us which one.
+      #
+      # Cost when enabled: ~5ms per shell start (writes to tmpfs).
+      # Cost when disabled: zero (single env-var test).
+      (lib.mkOrder 9000 ''
+        if [[ -n "''${ZSH_DEBUG_PRECMD:-}" ]] || [[ -f "$HOME/.cache/zsh-debug-precmd" ]]; then
+          zmodload zsh/datetime 2>/dev/null
+          export _ZSH_DEBUG_LOG="''${TMPDIR:-/tmp}/zsh-precmd-debug.$$.log"
+          : > "$_ZSH_DEBUG_LOG"
+          print -- "=== zsh debug pid=$$ tty=$TTY started $EPOCHREALTIME ===" >> "$_ZSH_DEBUG_LOG"
+          print -- "precmd_functions:  $precmd_functions" >> "$_ZSH_DEBUG_LOG"
+          print -- "preexec_functions: $preexec_functions" >> "$_ZSH_DEBUG_LOG"
+          print -- "chpwd_functions:   $chpwd_functions" >> "$_ZSH_DEBUG_LOG"
+          print -- "log: $_ZSH_DEBUG_LOG" >&2
+
+          __zsh_wrap_hooks() {
+            local label=$1; shift
+            local hook
+            for hook in "$@"; do
+              # Skip wrappers, missing functions, already-wrapped names.
+              [[ "$hook" == __dbg_orig_* ]] && continue
+              (( ''${+functions[$hook]} )) || continue
+              if (( ''${+functions[__dbg_orig_$hook]} )); then
+                unfunction "__dbg_orig_$hook"
+              fi
+              functions -c "$hook" "__dbg_orig_$hook"
+              eval "
+                $hook() {
+                  print -- \"[\$EPOCHREALTIME] ENTER ''${label}::$hook\" >> \"\$_ZSH_DEBUG_LOG\"
+                  __dbg_orig_$hook \"\$@\"
+                  local _rc=\$?
+                  print -- \"[\$EPOCHREALTIME] EXIT  ''${label}::$hook rc=\$_rc\" >> \"\$_ZSH_DEBUG_LOG\"
+                  return \$_rc
+                }
+              "
+            done
+          }
+
+          __zsh_wrap_hooks precmd  "''${precmd_functions[@]}"
+          __zsh_wrap_hooks preexec "''${preexec_functions[@]}"
+          __zsh_wrap_hooks chpwd   "''${chpwd_functions[@]}"
+          unfunction __zsh_wrap_hooks
+
+          print -- "[debug] hooks instrumented; tail -f $_ZSH_DEBUG_LOG to watch" >&2
+        fi
+      '')
+
       # Source local overrides (not Nix-managed, no rebuild needed)
       # __ensure_zshrc_local creates the file with default aliases on first shell start
       (lib.mkOrder 9999 ''
         __ensure_zshrc_local
         [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+        # Print zprof report at end of init (opt-in via env var, see top of file).
+        if [[ -n "''${ZPROF:-}" ]]; then
+          zprof
+        fi
       '')
     ];
-
-    # Login shell init
-    loginExtra = ''
-      # Performance profiling (uncomment to use)
-      # zmodload zsh/zprof
-    '';
-
-    # Logout shell
-    logoutExtra = ''
-      # Performance profiling (uncomment to use)
-      # zprof
-    '';
   };
 
   # Starship prompt configuration - Override any conflicting settings
@@ -639,4 +1013,20 @@ in
   programs.zoxide.enableZshIntegration = lib.mkForce false;
   programs.atuin.enableZshIntegration = lib.mkForce false;
   programs.direnv.enableZshIntegration = lib.mkForce false;
+
+  # Patch the HM-emitted history block to remove a SIGCHLD-racy
+  # `mkdir -p "$(dirname "$HISTFILE")"` at zshrc top-level. The $()
+  # forks `dirname`, which on macOS 15+ can race with zsh's waitforpid
+  # path and wedge the shell during `exec zsh`. We replace it with a
+  # zsh `:h` head-modifier (parameter expansion, no fork).
+  #
+  # Reads `config.programs.zsh.initContent` (the merged string) and
+  # overrides `home.file.".zshrc".text` with mkForce — no circularity
+  # since the source is initContent, not the file's own text.
+  home.file.".zshrc".text = lib.mkForce (
+    builtins.replaceStrings
+      [ ''mkdir -p "$(dirname "$HISTFILE")"'' ]
+      [ ''[[ -d "''${HISTFILE:h}" ]] || /bin/mkdir -p "''${HISTFILE:h}"'' ]
+      config.programs.zsh.initContent
+  );
 }

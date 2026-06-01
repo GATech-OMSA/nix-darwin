@@ -134,52 +134,53 @@ function update-brew() {
   fi
 }
 
-function update-mamba() {
-  echo "→ Updating Micromamba..."
-  local errors=0
-
-  if command -v micromamba &> /dev/null; then
-    echo "  → Updating micromamba environments..."
-    # Update all environments dynamically using JSON for robust parsing
-    local env_list=""
-    if command -v jq &>/dev/null; then
-      # Try JSON parsing first (more robust)
-      local json_output
-      if json_output=$(micromamba env list --json 2>/dev/null) && [[ -n "$json_output" ]]; then
-        env_list=$(echo "$json_output" | jq -r '.envs[]' 2>/dev/null | xargs -I{} basename {} 2>/dev/null)
-      fi
-    fi
-    # Fallback to text parsing if jq not available or JSON parsing failed
-    if [[ -z "$env_list" ]]; then
-      env_list=$(micromamba env list 2>/dev/null | tail -n +3 | awk '{print $1}')
-    fi
-    if [ -n "$env_list" ]; then
-      for env in $env_list; do
-        if [ "$env" != "base" ]; then  # Skip the base installation
-          echo "    • Updating $env..."
-          if micromamba update -n "$env" --all -y 2>/dev/null; then
-            echo "    ✓ $env updated"
-          else
-            echo "    ▸ $env skipped or failed" >&2
-            ((errors++))
-          fi
-        fi
-      done
-    else
-      echo "    → No environments to update"
-    fi
-  else
-    echo "  ▸ Micromamba not found"
-    return 1
-  fi
-
-  if [ $errors -eq 0 ]; then
-    echo "✓ Micromamba update completed successfully"
-  else
-    echo "▸ Micromamba update completed with $errors error(s)"
-    return 1
-  fi
-}
+# update-mamba — disabled; uv is the standard (CLAUDE.md)
+# function update-mamba() {
+#   echo "→ Updating Micromamba..."
+#   local errors=0
+#
+#   if command -v micromamba &> /dev/null; then
+#     echo "  → Updating micromamba environments..."
+#     # Update all environments dynamically using JSON for robust parsing
+#     local env_list=""
+#     if command -v jq &>/dev/null; then
+#       # Try JSON parsing first (more robust)
+#       local json_output
+#       if json_output=$(micromamba env list --json 2>/dev/null) && [[ -n "$json_output" ]]; then
+#         env_list=$(echo "$json_output" | jq -r '.envs[]' 2>/dev/null | xargs -I{} basename {} 2>/dev/null)
+#       fi
+#     fi
+#     # Fallback to text parsing if jq not available or JSON parsing failed
+#     if [[ -z "$env_list" ]]; then
+#       env_list=$(micromamba env list 2>/dev/null | tail -n +3 | awk '{print $1}')
+#     fi
+#     if [ -n "$env_list" ]; then
+#       for env in $env_list; do
+#         if [ "$env" != "base" ]; then  # Skip the base installation
+#           echo "    • Updating $env..."
+#           if micromamba update -n "$env" --all -y 2>/dev/null; then
+#             echo "    ✓ $env updated"
+#           else
+#             echo "    ▸ $env skipped or failed" >&2
+#             ((errors++))
+#           fi
+#         fi
+#       done
+#     else
+#       echo "    → No environments to update"
+#     fi
+#   else
+#     echo "  ▸ Micromamba not found"
+#     return 1
+#   fi
+#
+#   if [ $errors -eq 0 ]; then
+#     echo "✓ Micromamba update completed successfully"
+#   else
+#     echo "▸ Micromamba update completed with $errors error(s)"
+#     return 1
+#   fi
+# }
 
 function update-vscode() {
   echo "→ Updating VS Code extensions..."
@@ -230,8 +231,8 @@ function update-dev() {
 
   update-nix || ((errors++))
   echo ""
-  update-mamba || ((errors++))
-  echo ""
+  # update-mamba || ((errors++))  # disabled; uv is the standard
+  # echo ""
   update-vscode || ((errors++))
 
   local end_time=$(date +%s)
@@ -284,8 +285,8 @@ function update-all() {
   echo ""
   update-brew || ((total_errors++))
   echo ""
-  update-mamba || ((total_errors++))
-  echo ""
+  # update-mamba || ((total_errors++))  # disabled; uv is the standard
+  # echo ""
   update-vscode || ((total_errors++))
   echo ""
   update-mas || ((total_errors++))

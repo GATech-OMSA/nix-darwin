@@ -1,17 +1,12 @@
 { config, pkgs, lib, username, hostname, profileName, ... }:
 
 {
-  # Host-specific configuration template
-  # Copy this directory and customize for your new machine
+  # Host-specific configuration for macbook-pro-m1-personal
   #
-  # Secrets are loaded based on profileName (personal/work):
-  #   - personal: loads secrets-personal.nix
-  #   - work: loads secrets-work.nix
+  # Secrets are loaded based on profileName (personal/work/minimal)
 
-  # Conditional secret imports based on profile
   imports =
-    lib.optional (profileName == "personal") ./secrets-personal.nix ++
-    lib.optional (profileName == "work") ./secrets-work.nix;
+    lib.optional (profileName == "personal") ./secrets-personal.nix;
 
   networking = {
     hostName = hostname;

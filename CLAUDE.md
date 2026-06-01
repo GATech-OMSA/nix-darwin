@@ -35,7 +35,7 @@ nix-rebuild && exec zsh
 ```
 User wants to change shell config  → Edit: nix-config/home/_profiles/_template/shell/zsh.nix
 User wants to change Git config    → Edit: nix-config/home/_profiles/_template/programs/git.nix
-User wants to change system pkg    → Edit: nix-config/modules/shared/packages.nix
+User wants to change system pkg    → Edit: nix-config/modules/darwin/packages.nix
 ```
 
 **Rebuild requirement:** `nix-rebuild && exec zsh`
@@ -44,32 +44,12 @@ User wants to change system pkg    → Edit: nix-config/modules/shared/packages.
 
 ## 2️⃣ USE myLib FUNCTIONS (NEVER manual conditionals)
 
-**FORBIDDEN patterns:**
-```nix
-# ❌ DO NOT WRITE THIS
-if hostname == "mbp-work" then
-  ...
-else
-  ...
-```
+Machine-specific values go through `myLib.selectByMachine` — never hand-rolled
+`if hostname == ...` ternaries. Same applies to navigation aliases, package
+groups, and command checks: prefer the `myLib` helper.
 
-**REQUIRED patterns:**
-```nix
-# ✅ WRITE THIS INSTEAD
-{ config, pkgs, myLib, hostname, ... }:
-myLib.selectByMachine hostname {
-  personal = "value1";
-  work = "value2";
-}
-```
-
-**Common myLib functions:**
-- `selectByMachine hostname { personal = X; work = Y; }` – Machine-specific values
-- `mkNavigationAliases "$HOME/Dev" { proj = "Dev/project"; }` – CD aliases
-- `mkPackageGroups { ... } pkgs` – Package grouping
-- `mkCommandCheck "command-name"` – Command existence checks
-
-**Reference:** `lib/README.md` for all 30+ functions
+- **Standard:** [.claude/rules/gen-lang-nix.md](.claude/rules/gen-lang-nix.md) — required patterns + examples.
+- **Catalog:** `nix-config/lib/README.md` — all 30+ helper functions.
 
 ---
 
@@ -300,7 +280,7 @@ sudo nix run nix-darwin -- switch --flake .#macbook-pro-m3-work      # Work
 ```
 nix-darwin/
 ├── flake.nix              # Entry point, reads config/machine-config.nix
-├── config/                # Machine and user configuration (gitignored)
+├── config/                # Machine and user configuration (tracked for flake evaluation)
 │   ├── machine-config.nix # machineId, profileName, enableHomeManager, skipGoPackages
 │   └── user-config.nix    # username + email (user-specific)
 ├── nix-config/            # All Nix configuration files
@@ -320,7 +300,6 @@ nix-darwin/
 │   ├── overlays/         # Package customizations
 │   └── pkgs/             # Custom packages
 ├── scripts/               # Utility scripts
-│   ├── app-catalog/      # Homebrew app management
 │   ├── setup/            # Initial setup scripts (configure.sh, activate.sh)
 │   ├── profiles/         # Profile switching
 │   ├── maintenance/      # System maintenance
@@ -396,7 +375,7 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 
 | Goal | Edit This File |
 |------|----------------|
-| Add system package | `nix-config/modules/shared/packages.nix` |
+| Add system package | `nix-config/modules/darwin/packages.nix` |
 | Add GUI app | `nix-config/modules/darwin/homebrew.nix` |
 | Add shell alias (universal) | `nix-config/home/_profiles/_template/shell/zsh.nix` |
 | Add shell alias (profile-specific) | `nix-config/home/_profiles/personal/aliases.nix` or `work/aliases.nix` |
@@ -424,6 +403,7 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 | Go/Python/NPM downloads fail behind proxy | Enable proxy in `config/user-config.nix` → Uncomment `proxies`, set `enabled = true` for needed types |
 | Go packages fail behind proxy | Alternative: Set `skipGoPackages = true` in `config/machine-config.nix` |
 | Home-manager causing issues | Set `enableHomeManager = false` in `config/machine-config.nix` (disables all user configs) |
+| Shell hangs at prompt after `exec zsh` / new terminal on macOS 15+ | SIGCHLD-loss race in zsh — see [docs/macos-zsh-sigchld.md](docs/macos-zsh-sigchld.md). Never add `$(...)` or `cmd > file` at top-level of zsh init; gate `mkdir` with `[[ -d ]] \|\|`. |
 
 ---
 
@@ -484,6 +464,8 @@ COMPLETED.md (chronological index)
 | Scope | Rule | Purpose |
 |-------|------|---------|
 | `**/*.nix` | [Nix Standards](.claude/rules/gen-lang-nix.md) | myLib patterns, file headers, state versions |
+| `**/*.sh` | [Shell Scripts](.claude/rules/gen-lang-shell.md) | Headers, error handling, script organization |
+| `nix-config/**/*.zsh` | [ZSH Functions](.claude/rules/gen-lang-zsh.md) | Sourced functions, no exit/shebang, naming |
 | `.github/workflows/**` | [GitHub Actions](.claude/rules/gen-ci-github-actions.md) | Nix CI, dry-run builds, config templates |
 <!-- RULES-INDEX-END -->
 

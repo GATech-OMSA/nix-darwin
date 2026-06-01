@@ -298,7 +298,25 @@ $SCRIPT_DIR/integration/test-rollback.sh"
     # Run each test in category
     while IFS= read -r test_script; do
       [[ -z "$test_script" ]] && continue
-      [[ ! -f "$test_script" ]] && continue
+
+      if [[ ! -f "$test_script" ]]; then
+        ((SUITES_TOTAL++))
+        ((SUITES_FAILED++))
+        local missing_name
+        missing_name=$(basename "$test_script" .sh)
+        if [[ $CI_MODE -eq 0 ]]; then
+          echo -e "${RED}✗ MISSING:${NC} $missing_name"
+          echo -e "  ${YELLOW}→${NC} Declared test file not found: $test_script"
+        else
+          echo "MISSING: $missing_name"
+        fi
+
+        if [[ $STOP_ON_FAIL -eq 1 ]]; then
+          generate_report
+          exit 1
+        fi
+        continue
+      fi
 
       run_test_suite "$test_script" || true
     done <<< "$(get_tests_for_category "$category")"

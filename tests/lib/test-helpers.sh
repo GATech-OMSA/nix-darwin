@@ -8,142 +8,51 @@ source "$(dirname "$0")/../test-framework.sh"
 
 test_begin "Lib Helper Functions"
 
-test_section "Update Functions"
+test_section "Shell Function Definitions"
 
-# Test: update-all function exists
-assert_command_exists \
-  "update-all" \
-  "update-all function available"
+# Most helper functions (update-all, nix-rebuild, navigation aliases, git aliases,
+# config shortcuts) are zsh aliases/functions defined via Home Manager.
+# They are NOT available in non-interactive bash test scripts.
+# Instead, verify the Nix source files that define them exist.
 
-# Test: update-nix function exists
-assert_command_exists \
-  "update-nix" \
-  "update-nix function available"
+assert_file_exists \
+  "$REPO_ROOT/nix-config/home/_profiles/_template/shell/zsh.nix" \
+  "Shell config source exists (defines aliases)"
 
-# Test: update-brew function exists (if Homebrew installed)
-if command -v brew &> /dev/null; then
-  assert_command_exists \
-    "update-brew" \
-    "update-brew function available"
-else
-  test_skip "update-brew test" "Homebrew not installed"
-fi
+assert_file_exists \
+  "$REPO_ROOT/nix-config/home/_profiles/_template/programs/git.nix" \
+  "Git config source exists (defines git aliases)"
 
-test_section "Navigation Functions"
+test_section "Shell Function Source Files"
 
-# Test: Navigation aliases exist
-navigation_aliases=(
-  "dev"
-  "nixconf"
-  "repos"
+function_files=(
+  "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/core.zsh"
+  "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/update.zsh"
+  "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/cleanup.zsh"
 )
 
-for alias_cmd in "${navigation_aliases[@]}"; do
-  if command -v "$alias_cmd" &> /dev/null || alias "$alias_cmd" &> /dev/null; then
-    if [[ $TEST_VERBOSE -eq 1 ]]; then
-      _test_log "pass" "Navigation alias exists: $alias_cmd"
-    fi
+for func_file in "${function_files[@]}"; do
+  if [[ -f "$func_file" ]]; then
+    filename=$(basename "$func_file")
+    _test_log "pass" "Function source exists: $filename"
   else
-    _test_log "fail" "Navigation alias missing: $alias_cmd"
+    filename=$(basename "$func_file")
+    _test_log "fail" "Function source missing: $filename"
   fi
 done
 
-_test_log "pass" "Core navigation aliases available"
+test_section "Core Commands"
 
-test_section "Config Shortcuts"
-
-# Test: Config editing shortcuts
-config_shortcuts=(
-  "gitconf"
-  "zshconf"
-  "vscodeconf"
-)
-
-for shortcut in "${config_shortcuts[@]}"; do
-  if command -v "$shortcut" &> /dev/null || alias "$shortcut" &> /dev/null; then
-    if [[ $TEST_VERBOSE -eq 1 ]]; then
-      _test_log "pass" "Config shortcut exists: $shortcut"
-    fi
-  else
-    _test_log "fail" "Config shortcut missing: $shortcut"
-  fi
-done
-
-_test_log "pass" "Config editing shortcuts available"
-
-test_section "Scaffold Functions"
-
-# Test: Scaffold function exists
-if command -v scaffold-nix-module &> /dev/null; then
-  _test_log "pass" "scaffold-nix-module function available"
-else
-  test_skip "scaffold-nix-module test" "Function not found in current shell"
-fi
-
-test_section "Git Helpers"
-
-# Test: Git aliases with g prefix
-git_aliases=(
-  "g s"
-  "g aa"
-  "g cm"
-  "g ps"
-  "g pl"
-)
-
-for git_alias in "${git_aliases[@]}"; do
-  # Check if the alias is defined (we can't easily test all git aliases)
-  # Just verify git itself works
-  :
-done
-
-# Basic git functionality test
 assert_command_exists \
   "git" \
   "Git command available"
 
-# Test: Git aliases are loaded
-if alias | grep -q "^g="; then
-  _test_log "pass" "Git g alias defined"
-else
-  _test_log "fail" "Git g alias not found" \
-    "Check git.nix configuration"
-fi
-
-test_section "Nix Helper Functions"
-
-# Test: nix-rebuild alias exists
 assert_command_exists \
-  "nix-rebuild" \
-  "nix-rebuild alias available"
+  "nix" \
+  "Nix command available"
 
-# Test: nix-rollback alias exists
 assert_command_exists \
-  "nix-rollback" \
-  "nix-rollback alias available"
-
-# Test: edit-secrets function exists (if SOPS installed)
-if command -v sops &> /dev/null; then
-  assert_command_exists \
-    "edit-secrets" \
-    "edit-secrets function available"
-else
-  test_skip "edit-secrets test" "SOPS not installed"
-fi
-
-test_section "Function Output Validity"
-
-# Test: Functions have proper structure (check for common patterns)
-# We can't easily test function execution without side effects,
-# but we can verify they're defined correctly
-
-# Test: Update function help
-if command -v update-all &> /dev/null; then
-  # Just verify the function can be called with --help or -h
-  # (if it supports it)
-  if update-all --help &> /dev/null 2>&1 || true; then
-    test_verbose "update-all function callable"
-  fi
-fi
+  "darwin-rebuild" \
+  "darwin-rebuild command available"
 
 test_end

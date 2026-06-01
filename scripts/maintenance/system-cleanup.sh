@@ -105,14 +105,52 @@ if confirm "Empty Trash?"; then
   success "Trash emptied"
 fi
 
-# ============================================ 
+# ============================================
 # DOCKER CLEANUP
-# ============================================ 
+# ============================================
 if command -v docker &> /dev/null; then
   header "Docker Maintenance"
   if confirm "Prune unused Docker data (containers, images, networks)?"; then
     docker system prune -f
     success "Docker system pruned"
+  fi
+fi
+
+# ============================================
+# ATUIN DATABASE MAINTENANCE (safety net)
+# ============================================
+# Primary mechanism: launchd LaunchAgent `dev.nixconf.atuin-wal-checkpoint`
+# runs `PRAGMA wal_checkpoint(PASSIVE)` every 6h (see
+# nix-config/modules/darwin/atuin-wal-checkpoint.nix). PASSIVE never blocks
+# other connections, so it's safe to run while shells are open, but it can
+# only checkpoint pages no one is reading.
+#
+# This block remains as a manual escape hatch using the heavier TRUNCATE
+# pragma — it CAN block/fail if a shell holds an atuin connection, hence
+# user-prompted only. Should normally find nothing to do.
+if [[ -d "$HOME/.local/share/atuin" ]] && command -v sqlite3 &> /dev/null; then
+  header "Atuin History Maintenance"
+
+  wal_size_mb() {
+    local wal="$1"
+    [[ -f "$wal" ]] && du -m "$wal" | awk '{print $1}' || echo 0
+  }
+
+  history_wal_mb=$(wal_size_mb "$HOME/.local/share/atuin/history.db-wal")
+  records_wal_mb=$(wal_size_mb "$HOME/.local/share/atuin/records.db-wal")
+  total_wal_mb=$((history_wal_mb + records_wal_mb))
+
+  if (( total_wal_mb > 1 )); then
+    echo "Atuin WAL is ${total_wal_mb}MB (history=${history_wal_mb}M records=${records_wal_mb}M)"
+    if confirm "Checkpoint atuin databases (clears WAL bloat that slows shell init)?"; then
+      for db in history.db records.db; do
+        path="$HOME/.local/share/atuin/$db"
+        [[ -f "$path" ]] && sqlite3 "$path" 'PRAGMA wal_checkpoint(TRUNCATE);' > /dev/null
+      done
+      success "Atuin WAL checkpointed"
+    fi
+  else
+    success "Atuin WAL is healthy (${total_wal_mb}MB)"
   fi
 fi
 

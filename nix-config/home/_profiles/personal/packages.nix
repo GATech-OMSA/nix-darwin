@@ -11,14 +11,14 @@
     # CREATIVE & MEDIA TOOLS
     # ============================================
     # Video & audio
-    # ffmpeg             # Video/audio converter
-    # yt-dlp             # Video/audio downloader (youtube-dl successor)
+    ffmpeg             # Video/audio converter
+    yt-dlp             # Video/audio downloader (youtube-dl successor)
     # obs-studio         # Screen recording/streaming
     # handbrake          # Video transcoder
     # sox                # Sound processing
 
     # Image
-    # imagemagick        # Image manipulation CLI
+    imagemagick        # Image manipulation CLI
     # darktable          # Photo workflow
     # inkscape           # Vector graphics editor
 
@@ -38,7 +38,7 @@
     # television         # Fuzzy finder TUI for files/text/git
 
     # Rendering & display
-    # glow               # Terminal Markdown renderer
+    glow               # Terminal Markdown renderer
     # onefetch           # Git repo info (neofetch for repos)
 
     # Shells & multiplexers
@@ -107,9 +107,9 @@
     # ============================================
     # BACKUP & SYNC
     # ============================================
-    # rclone             # Cloud storage sync
+    rclone             # Cloud storage sync
     # syncthing          # P2P file sync
-    # restic             # Incremental backup tool
+    restic             # Incremental backup tool
     # borgbackup         # Deduplicating backup program
 
     # ============================================

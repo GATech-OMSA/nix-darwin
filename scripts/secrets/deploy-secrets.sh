@@ -29,6 +29,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DRY_RUN=false
 AGE_KEY="$HOME/.config/sops/age/keys.txt"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/secrets-deploy"
+MANIFEST="$STATE_DIR/manifest"
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -51,13 +53,31 @@ for nixpath in /run/current-system/sw/bin /nix/var/nix/profiles/default/bin "$HO
   [[ -d "$nixpath" ]] && [[ ":$PATH:" != *":$nixpath:"* ]] && PATH="$nixpath:$PATH"
 done
 
-# Check required tools
-for tool in sops yq; do
-  if ! command -v "$tool" &>/dev/null; then
-    error "Required tool not found: $tool"
-    exit 1
-  fi
-done
+# Resolve required tools to absolute paths and verify identity.
+# Activation hooks have an unstable PATH (which yq/sops gets found can vary by
+# generation-swap timing or stray binaries elsewhere). A wrong or older yq
+# silently returns the whole document instead of a single key value, leaving
+# secret files containing raw YAML — caught here.
+resolve_bin() {
+  local name="$1"
+  local found
+  found=$(command -v "$name" 2>/dev/null) || { error "Required tool not found: $name"; exit 1; }
+  # Ensure it actually lives in the nix store (not a stray system binary)
+  case "$found" in
+    /nix/store/*|/run/current-system/*|/nix/var/nix/profiles/*) ;;
+    *) error "Tool '$name' resolves outside nix store: $found"; exit 1 ;;
+  esac
+  printf '%s' "$found"
+}
+SOPS=$(resolve_bin sops)
+YQ=$(resolve_bin yq)
+
+# Verify yq is mikefarah/yq (Go), not kislyuk/yq (Python) — they have
+# different path syntax and the wrong one returns garbage silently.
+if ! "$YQ" --version 2>&1 | grep -q 'mikefarah'; then
+  error "yq at $YQ is not mikefarah/yq (Go). Got: $($YQ --version 2>&1 | head -1)"
+  exit 1
+fi
 
 # Auto-detect machine ID
 if [ -f "$REPO_ROOT/config/machine-config.nix" ]; then
@@ -88,13 +108,13 @@ echo ""
 info "Decrypting secrets..."
 DECRYPTED_FILE=$(mktemp)
 trap '/bin/rm -f "$DECRYPTED_FILE"' EXIT
-if ! SOPS_AGE_KEY_FILE="$AGE_KEY" sops -d "$SECRETS_FILE" > "$DECRYPTED_FILE" 2>/dev/null; then
+if ! SOPS_AGE_KEY_FILE="$AGE_KEY" "$SOPS" -d "$SECRETS_FILE" > "$DECRYPTED_FILE" 2>/dev/null; then
   error "Failed to decrypt secrets file"
   exit 1
 fi
 
 # Get available keys
-AVAILABLE_KEYS=$(yq 'keys | .[]' "$DECRYPTED_FILE" 2>/dev/null)
+AVAILABLE_KEYS=$("$YQ" 'keys | .[]' "$DECRYPTED_FILE" 2>/dev/null)
 
 if [ -z "$AVAILABLE_KEYS" ]; then
   error "No keys found in secrets file (yq returned empty)"
@@ -148,6 +168,18 @@ MAPPINGS=(
 
 deployed=0
 skipped=0
+declare -a MANIFEST_LINES=()
+declare -a BACKUP_DIRS=()
+
+# Track backup directory uniquely (bash 3-compatible — no associative array)
+track_backup_dir() {
+  local d="$1"
+  local existing
+  for existing in "${BACKUP_DIRS[@]:-}"; do
+    [[ "$existing" == "$d" ]] && return 0
+  done
+  BACKUP_DIRS+=("$d")
+}
 
 for mapping in "${MAPPINGS[@]}"; do
   IFS='|' read -r key path mode <<< "$mapping"
@@ -158,12 +190,37 @@ for mapping in "${MAPPINGS[@]}"; do
   fi
 
   # Read from temp file to preserve multiline values (SSH keys, etc.)
-  VALUE=$(yq -r ".$key" "$DECRYPTED_FILE" 2>/dev/null)
+  VALUE=$("$YQ" -r ".$key" "$DECRYPTED_FILE" 2>/dev/null)
 
   if [[ -z "$VALUE" || "$VALUE" == "null" ]]; then
     skipped=$(( skipped + 1 ))
     continue
   fi
+
+  # Sanity: extracted value must not contain other top-level YAML keys from
+  # the file (would indicate yq returned the whole document instead of one
+  # key's value — the bug we previously hit during activation).
+  #
+  # Belt-and-suspenders: the decrypted YAML starts with the literal comment
+  # "# Edit with: sops" — if that string appears in any extracted value, yq
+  # returned the entire document. This catches the failure mode even when the
+  # per-key regex below misses (e.g. unforeseen YAML scalar markers).
+  if printf '%s' "$VALUE" | grep -qF "# Edit with: sops"; then
+    error "Extracted value for '$key' contains the YAML file header — yq returned the whole document. Aborting to avoid corrupting $path."
+    exit 1
+  fi
+
+  for other_key in $AVAILABLE_KEYS; do
+    [[ "$other_key" == "$key" ]] && continue
+    # Match real YAML key syntax: "key:" optionally followed by whitespace and
+    # a scalar style indicator (| or >). The previous "-qxF" guard required an
+    # exact full-line match for "key:" but real YAML uses "key: |" for
+    # multiline scalars, so the check never fired.
+    if printf '%s' "$VALUE" | grep -qE "^${other_key}:[[:space:]]*[|>]?[[:space:]]*$"; then
+      error "Extracted value for '$key' contains another top-level key '$other_key:' — yq returned wrong content. Aborting to avoid corrupting $path."
+      exit 1
+    fi
+  done
 
   if [ "$DRY_RUN" = true ]; then
     echo -e "  ${DIM}would deploy${NC} $key → $path ($mode)"
@@ -177,6 +234,7 @@ for mapping in "${MAPPINGS[@]}"; do
       backup_dir="$(dirname "$path")/backup"
       mkdir -p "$backup_dir"
       /bin/cp "$path" "$backup_dir/$(basename "$path")-$(date +%Y%m%d-%H%M%S)-$$"
+      track_backup_dir "$backup_dir"
     fi
   fi
 
@@ -186,7 +244,71 @@ for mapping in "${MAPPINGS[@]}"; do
   chmod "$mode" "$path"
   success "$key → $path"
   deployed=$(( deployed + 1 ))
+  MANIFEST_LINES+=("$path|$mode")
 done
+
+# Write manifest atomically — verify-secrets.sh (called from HM activation)
+# reads this to know what targets must exist. Keeps activation off the
+# decryption path entirely.
+if [ "$DRY_RUN" = false ] && [ "$deployed" -gt 0 ]; then
+  mkdir -p "$STATE_DIR"
+  tmp_manifest="$MANIFEST.tmp"
+  {
+    printf '# secrets-deploy manifest — written %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf '# Format: target_path|mode\n'
+    printf '%s\n' "${MANIFEST_LINES[@]}"
+  } > "$tmp_manifest"
+  /bin/mv "$tmp_manifest" "$MANIFEST"
+fi
+
+# ==============================================================================
+# BACKUP PRUNING
+# ==============================================================================
+# For each backup dir we touched, keep max(5, count_under_30d) entries —
+# whichever leaves more. This guarantees a floor of 5 historical copies for
+# rollback (even if all are old) and never drops anything fresher than 30d.
+#
+# Newest-first ordering is by mtime (stat -f %m) since filenames embed
+# timestamps but mtime is what `find -mtime` operates on — keeps the two
+# halves of the formula consistent.
+prune_backup_dir() {
+  local dir="$1"
+  [[ -d "$dir" ]] || return 0
+
+  local floor=5
+  local thirty_days=$(( 30 * 86400 ))
+  local now
+  now=$(date +%s)
+
+  # List entries newest-first as "<mtime>\t<path>"
+  local listing
+  listing=$(/usr/bin/find "$dir" -mindepth 1 -maxdepth 1 -type f \
+    -exec /usr/bin/stat -f '%m	%N' {} + 2>/dev/null \
+    | /usr/bin/sort -rn) || return 0
+
+  [[ -z "$listing" ]] && return 0
+
+  # Count entries with mtime within the last 30 days
+  local recent
+  recent=$(printf '%s\n' "$listing" | awk -F'\t' -v cutoff="$(( now - thirty_days ))" '
+    $1 >= cutoff { c++ } END { print c+0 }')
+
+  local keep="$floor"
+  [[ "$recent" -gt "$keep" ]] && keep="$recent"
+
+  # Drop entries past `keep` (already newest-first)
+  printf '%s\n' "$listing" \
+    | /usr/bin/awk -F'\t' -v k="$keep" 'NR > k { print $2 }' \
+    | while IFS= read -r victim; do
+        [[ -n "$victim" ]] && /bin/rm -f "$victim"
+      done
+}
+
+if [ "$DRY_RUN" = false ] && [ "${#BACKUP_DIRS[@]}" -gt 0 ]; then
+  for bd in "${BACKUP_DIRS[@]}"; do
+    prune_backup_dir "$bd"
+  done
+fi
 
 echo ""
 if [ "$DRY_RUN" = true ]; then

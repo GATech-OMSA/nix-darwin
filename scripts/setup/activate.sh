@@ -347,6 +347,24 @@ build_and_activate() {
     exit 1
   fi
 
+  # First-boot bootstrap: deploy secrets BEFORE darwin-rebuild so the
+  # activation-time verifier (verify-secrets.sh) finds a manifest. This is
+  # idempotent — re-running activate.sh on an existing system just re-deploys.
+  # Skipped silently if no secrets.yaml exists yet (fresh-checkout, no host
+  # secrets) or no age key (verifier will surface the real error later).
+  SECRETS_FILE="$REPO_ROOT/nix-config/hosts/${machine_id}/secrets.yaml"
+  AGE_KEY="$HOME/.config/sops/age/keys.txt"
+  if [ -f "$SECRETS_FILE" ] && [ -f "$AGE_KEY" ]; then
+    info "Bootstrap: running secrets-deploy before activation..."
+    if "$REPO_ROOT/scripts/secrets/deploy-secrets.sh"; then
+      success "Secrets deployed (manifest written)"
+    else
+      warning "secrets-deploy failed — activation will likely fail at verify step"
+      warning "fix the underlying secret issue and re-run activate.sh"
+    fi
+    echo ""
+  fi
+
   # Run darwin-rebuild with flake (requires sudo for system activation)
   # --impure flag is required because we use builtins.getEnv for gitignored configs
   # Explicitly specify configuration name to avoid hostname mismatch issues

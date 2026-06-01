@@ -24,13 +24,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # AI coding tools (openspec, claude-code, etc.)
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   # ============================================
   # OUTPUTS - System Configurations
   # ============================================
 
-  outputs = inputs@{ self, nix-darwin, home-manager, nixpkgs, sops-nix }:
+  outputs = inputs@{ self, nix-darwin, home-manager, nixpkgs, sops-nix, llm-agents }:
     let
       # ============================================
       # HELPER IMPORTS
@@ -38,25 +44,25 @@
 
       myLib = import ./nix-config/lib { inherit inputs; };
 
-      # User config (gitignored, must exist before building)
+      # User config (tracked, must exist before building)
       userConfig = import ./config/user-config.nix;
 
-      # Overlays (reads userConfig for proxy settings)
-      overlays = import ./nix-config/overlays { inherit inputs userConfig; };
+      # Overlays (reads userConfig for proxy settings, machineConfig for profile-aware gates)
+      overlays = import ./nix-config/overlays { inherit inputs userConfig machineConfig; };
 
-      # Active machine config (gitignored, for local builds)
+      # Active machine config (tracked, overrides registry for local builds)
       machineConfig = import ./config/machine-config.nix;
 
       # ============================================
       # MACHINE REGISTRY
       # ============================================
-      # Static list of all machines. Enables CI to test all configs
-      # and `nix build .#darwinConfigurations.<id>.system --dry-run` from any machine.
-      # Local builds use machineConfig.machineId to select which one to activate.
+      # Static defaults for all machines. CI uses these as-is.
+      # Local builds merge overrides from config/machine-config.nix
+      # for the matching machineId (e.g. profileName from switch-profile.sh).
 
       validProfiles = [ "personal" "work" "minimal" ];
 
-      machines = [
+      machineDefaults = [
         {
           machineId = "macbook-pro-m1-personal";
           profileName = "personal";
@@ -74,6 +80,15 @@
           skipGoPackages = false;
         }
       ];
+
+      # Merge local overrides for the active machine.
+      # intersectAttrs keeps only keys present in both, so machineConfig
+      # can't inject unexpected fields into the registry entry.
+      machines = map (m:
+        if m.machineId == (machineConfig.machineId or "")
+        then m // (builtins.intersectAttrs m machineConfig)
+        else m
+      ) machineDefaults;
 
       # ============================================
       # DARWIN SYSTEM BUILDER
@@ -95,6 +110,7 @@
 
           modules = [
             { nixpkgs.overlays = overlays; }
+            { system.configurationRevision = self.rev or self.dirtyRev or null; }
             sops-nix.darwinModules.sops
             ./nix-config/hosts/${machine.machineId}
             ./nix-config/modules/darwin

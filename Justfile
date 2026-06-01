@@ -15,15 +15,16 @@ default:
 # SYSTEM MANAGEMENT
 # ============================================================================
 
-# Build and switch to the configuration
+# Build and switch to the configuration (uses smart rebuild with pre-flight checks)
 switch:
-    @echo "🚀 Rebuilding system..."
-    darwin-rebuild switch --flake .
+    ./scripts/maintenance/rebuild.sh
 
-# Build only (don't switch)
+# Build only (don't switch) — validates the config compiles
 build:
-    @echo "🏗️  Building system (no switch)..."
-    darwin-rebuild build --flake .
+    #!/usr/bin/env bash
+    MACHINE_ID=$(nix eval --raw --file config/machine-config.nix machineId 2>/dev/null || echo "default")
+    echo "Building system for $MACHINE_ID (no switch)..."
+    nix build ".#darwinConfigurations.$MACHINE_ID.system" --impure
 
 # Rollback to previous generation
 rollback:
@@ -108,6 +109,10 @@ check:
     @echo "✅ Checking flake..."
     nix flake check
 
+# Benchmark zsh interactive startup (TTY-driven). Reports p50/p95 ms.
+bench-shell *ARGS:
+    @./scripts/maintenance/bench-shell.sh {{ARGS}}
+
 # ============================================================================
 # DOCUMENTATION
 # ============================================================================
@@ -117,3 +122,13 @@ docs:
     @echo "📚 Generating documentation..."
     # Placeholder for future doc generation
     @echo "See docs/README.md"
+
+# Regenerate the installed-apps section of docs/app-recommendations.md
+# from nix-config/modules/darwin/homebrew.nix.
+docs-apps:
+    ./scripts/docs/sync-app-recommendations.sh
+
+# Verify docs/app-recommendations.md is in sync with homebrew.nix.
+# Used by the pre-commit hook to detect drift.
+docs-apps-check:
+    ./scripts/docs/sync-app-recommendations.sh --check
