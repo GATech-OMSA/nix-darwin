@@ -58,6 +58,16 @@ function update-nix() {
     git stash pop --quiet
   fi
 
+  # Security pre-flight ("y"): scan the candidate closure before switching.
+  # Builds the new system (the switch below reuses that cached build), shows the
+  # CVE delta, and prompts on findings. Skippable via SKIP_SECURITY_PREFLIGHT=1.
+  # A non-zero return means the user declined — abort before touching the system.
+  if ! FLAKE_ROOT="$nix_dir" bash "$nix_dir/scripts/maintenance/security-preflight.sh"; then
+    echo "  Update aborted at security pre-flight (nothing switched)."
+    cd - > /dev/null
+    return 1
+  fi
+
   echo "  Rebuilding darwin configuration..."
   if sudo FLAKE_ROOT="$nix_dir" darwin-rebuild switch --flake "$nix_dir#$machine_id" --impure; then
     echo "  Darwin rebuild completed"
@@ -98,17 +108,15 @@ function update-brew() {
       ((errors++))
     fi
 
+    # Greedy cask upgrade (incl. apps with auto_updates true) via brew's built-in
+    # --greedy — replaces the third-party buo/cask-upgrade tap (`brew cu`), which
+    # is now an untrusted tap and redundant. One less external dependency.
     echo "  Upgrading all casks (including auto-update apps)..."
-    if brew commands | grep -q "^cu$"; then
-      if brew cu -afy; then
-        echo "  All casks upgraded"
-      else
-        echo "  error: cask upgrade failed" >&2
-        ((errors++))
-      fi
+    if brew upgrade --cask --greedy; then
+      echo "  All casks upgraded"
     else
-      echo "  warning: brew-cask-upgrade not installed, skipping"
-      echo "     Install: brew tap buo/cask-upgrade && brew install brew-cask-upgrade"
+      echo "  error: cask upgrade failed" >&2
+      ((errors++))
     fi
 
     echo "  Cleaning up..."

@@ -25,9 +25,11 @@ in
     # Save exact versions (no ^ or ~)
     save-exact=true
 
-    # Supply chain protection: reject packages published less than 7 days ago
-    # Gives community time to detect and remove malicious releases
-    min-release-age=7
+    # Supply chain protection: reject packages published less than 14 days ago.
+    # Gives the community time to detect and pull malicious releases — widened
+    # from 7d given elevated supply-chain risk. Trade-off: legit patches also
+    # wait 14d, so urgent security bumps may need a manual --before override.
+    min-release-age=14
   ''
   + lib.optionalString npmProxyEnabled ''
 

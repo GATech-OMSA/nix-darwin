@@ -101,4 +101,11 @@ in
   (_final: prev: {
     direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
   })
+
+  # ============================================
+  # CUSTOM PACKAGES (nix-config/pkgs)
+  # ============================================
+  # Inject this repo's own derivations so they're available as pkgs.<name>
+  # (e.g. pkgs.security-scan) and can go into environment.systemPackages.
+  (final: _prev: import ../pkgs { pkgs = final; })
 ]

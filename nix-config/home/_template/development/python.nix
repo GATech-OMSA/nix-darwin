@@ -28,9 +28,9 @@
     UV_PYTHON_PREFERENCE = "only-managed";
   };
 
-  # UV supply chain protection: reject packages published less than 7 days ago
-  # Gives community time to detect and remove malicious releases
+  # UV supply chain protection: reject packages published less than 14 days ago.
+  # Widened from 7d alongside the npm quarantine given elevated supply-chain risk.
   xdg.configFile."uv/uv.toml".text = ''
-    exclude-newer = "7 days"
+    exclude-newer = "14 days"
   '';
 }

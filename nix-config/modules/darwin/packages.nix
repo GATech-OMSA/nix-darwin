@@ -83,6 +83,7 @@ let
 
     # Security
     gitleaks     # Secret scanning for git repos (pre-commit integration)
+    security-scan  # Custom (nix-config/pkgs): CVE scan of system closure + brew cask drift; bundles vulnix
 
     # macOS Specific
     mkalias

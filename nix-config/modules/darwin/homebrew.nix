@@ -8,6 +8,14 @@
 {
   # CLI tools are managed by Nix for better reproducibility
 
+  # Supply-chain hardening for the brew CLI itself (download-time defenses).
+  # Tap-trust enforcement is left ON (do NOT set HOMEBREW_NO_REQUIRE_TAP_TRUST).
+  environment.variables = {
+    HOMEBREW_NO_INSECURE_REDIRECT = "1";  # refuse http/insecure redirects on downloads
+    HOMEBREW_NO_ANALYTICS = "1";          # no telemetry
+    HOMEBREW_NO_AUTO_UPDATE = "1";        # no implicit metadata pulls; update-brew runs `brew update` explicitly
+  };
+
   homebrew = {
     # enable is set in host-specific configs
 
@@ -24,8 +32,10 @@
     };
 
     taps = [
-      "buo/cask-upgrade"
-      "anomalyco/tap"     # OpenCode AI coding agent
+      # buo/cask-upgrade removed: now an untrusted third-party tap, and its `brew cu`
+      # is redundant with brew's built-in `brew upgrade --cask --greedy` (used in
+      # update-brew). One fewer external code source in the supply chain.
+      "anomalyco/tap"     # OpenCode AI coding agent (trust the formula, not whole tap)
     ];
 
     # Only brew formulae that MUST be from Homebrew

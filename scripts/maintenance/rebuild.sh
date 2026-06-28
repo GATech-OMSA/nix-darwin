@@ -100,6 +100,21 @@ _do_rebuild() {
     else
       echo "warning: pre-flight script not found: $PRE_FLIGHT_SCRIPT"
     fi
+
+    # Security pre-flight ("y"): scan the candidate closure before switching.
+    # Same --skip-checks gate as above (nix-rebuild-skip-checks bypasses it);
+    # also honors SKIP_SECURITY_PREFLIGHT=1. A non-zero return = user declined.
+    SECURITY_PREFLIGHT="${NIX_DARWIN_DIR}/scripts/maintenance/security-preflight.sh"
+    if [[ -x "$SECURITY_PREFLIGHT" ]]; then
+      set +e
+      FLAKE_ROOT="$NIX_DARWIN_DIR" "$SECURITY_PREFLIGHT"
+      sec_rc=$?
+      set -e
+      if [[ "$sec_rc" -ne 0 ]]; then
+        echo "Rebuild aborted at security pre-flight (nothing switched)."
+        return 1
+      fi
+    fi
   fi
 
   # EXECUTE

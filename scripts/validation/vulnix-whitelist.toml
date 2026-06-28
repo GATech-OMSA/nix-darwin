@@ -1,0 +1,28 @@
+# vulnix-whitelist.toml — accepted / triaged CVEs for scan-vulnerabilities.sh
+#
+# Entries here are filtered OUT of the CVE scan so the report stays actionable
+# (a full closure scan flags ~20+ packages, most unexploitable in this context).
+# Whitelist a CVE only after triage: confirm it's a false version-match, not
+# reachable in how the package is used, or already patched in nixpkgs despite
+# the NVD version string.
+#
+# Format (one table per affected derivation; key is the exact pname-version):
+#
+#   ["openssl-3.6.2"]
+#   cve = [ "CVE-2026-7383", "CVE-2026-9076" ]
+#   comment = "false match: linked statically, vuln path not compiled in"
+#
+# A single CVE may be a bare string instead of a list:
+#
+#   ["libxml2-2.15.2"]
+#   cve = "CVE-2026-6732"
+#   comment = "DoS only, not network-exposed on this host"
+#
+# Regenerate a full snapshot of *current* matches (then prune to what you
+# actually accept) with:
+#   vulnix -C /run/current-system -W /tmp/wl.toml
+#
+# Keep this list short and dated in comments. An over-broad whitelist silently
+# re-hides the exact regressions this scan exists to catch.
+
+# --- Triaged entries below (none yet — populate after first review) ---

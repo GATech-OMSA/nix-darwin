@@ -212,6 +212,17 @@ in
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
 
+      # ── Security scanning ──────────────────────────────────────────────
+      # secnow ("x"): CVE scan of what's INSTALLED now (live system closure).
+      #   secnow --explain  → show which top-level package pulls each CVE in.
+      # secnext ("y"): scan what WOULD be installed before switching (builds the
+      #   candidate, shows the delta, prompts on findings).
+      #   secnext --fast    → eval-only pre-download peek (build-closure superset).
+      # The same secnext gate runs automatically before nix-rebuild / update-nix
+      # (bypass: nix-rebuild-skip-checks, or SKIP_SECURITY_PREFLIGHT=1).
+      secnow = "security-scan";  # packaged tool (bundles vulnix); see nix-config/pkgs/security-scan
+      secnext = "${nixDarwinDir}/scripts/maintenance/security-preflight.sh";
+
       # Run pre-flight checks manually (without rebuilding, no shell restart needed)
       nix-preflight = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh";
 
