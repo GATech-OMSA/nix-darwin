@@ -25,4 +25,66 @@
 # Keep this list short and dated in comments. An over-broad whitelist silently
 # re-hides the exact regressions this scan exists to catch.
 
-# --- Triaged entries below (none yet — populate after first review) ---
+# ── Triaged 2026-06-28 (lock 89570f2, nixpkgs ~5 days old) ─────────────────
+# Accepted below: essential/ubiquitous libs (get fixed via `update-nix` when
+# nixpkgs bumps the version — the version-pinned key auto-invalidates the entry
+# on a bump, forcing re-triage) and direct CLI tools whose CVEs require a crafted
+# local file to trigger.
+#
+# Deliberately NOT whitelisted (still flagged by secnow) — removal candidates,
+# pending a keep-vs-remove decision: imagemagick, libraw, openexr, libheif,
+# libde265 (imaging stack ← fastfetch + yazi), unbound (← yazi + yt-dlp), and
+# ada (← repomix + markdown-link-check). Co-owned, so removal needs ALL owners.
+
+# Essential transport/crypto/base libs — pulled by openssh/curl, not removable.
+["openssl-3.6.2"]
+cve = [ "CVE-2026-34180", "CVE-2026-34181", "CVE-2026-34182", "CVE-2026-34183", "CVE-2026-35188", "CVE-2026-42764", "CVE-2026-42765", "CVE-2026-42766", "CVE-2026-42767", "CVE-2026-42768", "CVE-2026-42769", "CVE-2026-42770", "CVE-2026-45445", "CVE-2026-45446", "CVE-2026-45447", "CVE-2026-7383", "CVE-2026-9076" ]
+
+["zlib-1.3.2"]
+cve = [ "CVE-2023-6992", "CVE-2026-27820" ]
+
+["libssh2-1.11.1"]
+cve = [ "CVE-2025-15661", "CVE-2026-55199", "CVE-2026-55200" ]
+
+["ldns-1.9.0"]
+cve = "CVE-2026-10846"
+
+# Ubiquitous libs — pulled by dozens of packages, effectively unremovable.
+["sqlite-3.51.2"]
+cve = [ "CVE-2026-11822", "CVE-2026-11824" ]
+
+["libxml2-2.15.2"]
+cve = "CVE-2026-6732"
+
+["openmp-21.1.8"]
+cve = "CVE-2022-26345"
+
+["ffmpeg-8.1"]
+cve = [ "CVE-2025-25468", "CVE-2025-25469" ]
+
+# Build/interp toolchain.
+["perl-5.42.0"]
+cve = [ "CVE-2026-4176", "CVE-2026-8376" ]
+
+["perl-5.42.0-env"]
+cve = [ "CVE-2026-4176", "CVE-2026-8376" ]
+
+# Direct CLI tools in active use — CVEs need a crafted file/local vector.
+["git-2.54.0"]
+cve = [ "CVE-2021-21684", "CVE-2022-30947", "CVE-2022-36882", "CVE-2022-36883", "CVE-2022-36884", "CVE-2022-38663" ]
+
+["go-1.26.3"]
+cve = "CVE-2023-49292"
+
+["jq-1.8.1"]
+cve = [ "CVE-2026-40612", "CVE-2026-41256", "CVE-2026-41257", "CVE-2026-43894", "CVE-2026-43895", "CVE-2026-43896", "CVE-2026-44777", "CVE-2026-47770", "CVE-2026-49839", "CVE-2026-54679" ]
+
+["rsync-3.4.1"]
+cve = [ "CVE-2026-29518", "CVE-2026-41035", "CVE-2026-43617", "CVE-2026-43618", "CVE-2026-43619", "CVE-2026-43620", "CVE-2026-45232" ]
+
+["vim-9.2.0389"]
+cve = [ "CVE-2026-44656", "CVE-2026-45130", "CVE-2026-46483", "CVE-2026-47162", "CVE-2026-47167", "CVE-2026-52858", "CVE-2026-52859", "CVE-2026-52860", "CVE-2026-55693", "CVE-2026-55892", "CVE-2026-55895", "CVE-2026-57451", "CVE-2026-57452", "CVE-2026-57453", "CVE-2026-57454", "CVE-2026-57455", "CVE-2026-57456" ]
+
+# giflib ← graphviz (diagram rendering); image-parse CVEs need a crafted GIF.
+["giflib-5.2.2"]
+cve = [ "CVE-2024-45993", "CVE-2026-23868", "CVE-2026-26740" ]
