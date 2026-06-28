@@ -76,22 +76,19 @@ fi
 echo "   Loaded ${#SECRET_PATHS[@]} paths from registry"
 echo ""
 
-# Load paths by type
+# Load paths by type — single eval, slice per-type with jq
 declare -A PATHS_BY_TYPE
-mapfile -t SECRET_TYPES < <(
-  nix eval "$REPO_ROOT#lib.secrets.pathsByType" --json 2>/dev/null | jq -r 'keys[]'
-)
+paths_by_type_json=$(nix eval "$REPO_ROOT#lib.secrets.pathsByType" --json 2>/dev/null)
 
-if [ ${#SECRET_TYPES[@]} -eq 0 ]; then
+if [ -z "$paths_by_type_json" ]; then
   echo -e "${RED}error: failed to load secret categories from registry${NC}"
   exit 1
 fi
 
-for type in "${SECRET_TYPES[@]}"; do
-  # Load paths into array
-  paths_json=$(nix eval "$REPO_ROOT#lib.secrets.pathsByType.$type" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g")
-  count=$(echo "$paths_json" | wc -l | tr -d ' ')
+mapfile -t SECRET_TYPES < <(jq -r 'keys[]' <<< "$paths_by_type_json")
 
+for type in "${SECRET_TYPES[@]}"; do
+  count=$(jq -r --arg t "$type" '.[$t] | length' <<< "$paths_by_type_json")
   PATHS_BY_TYPE[$type]=$count
 
   if [ "$VERBOSE" = true ]; then

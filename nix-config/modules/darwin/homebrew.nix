@@ -31,7 +31,6 @@
     # Only brew formulae that MUST be from Homebrew
     brews = [
       "mas"         # Mac App Store CLI
-      # "micromamba"  # Conda replacement — disabled; uv is the standard (CLAUDE.md)
       "gemini-cli"  # Google Gemini CLI
       "gh"          # GitHub CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)

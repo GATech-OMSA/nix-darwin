@@ -590,7 +590,9 @@ check_system_resources() {
   print_category "SYSTEM RESOURCES"
 
   # Uptime — long uptimes accumulate stale memory/swap and slow new processes
-  if uptime_days=$(uptime | sed -nE 's/.*up ([0-9]+) day.*/\1/p') && [[ -n "$uptime_days" ]]; then
+  local uptime_out
+  uptime_out=$(uptime)
+  if uptime_days=$(sed -nE 's/.*up ([0-9]+) day.*/\1/p' <<< "$uptime_out") && [[ -n "$uptime_days" ]]; then
     if (( uptime_days < 14 )); then
       check_pass "Uptime healthy" "${uptime_days} days"
     elif (( uptime_days < 30 )); then
@@ -602,7 +604,7 @@ check_system_resources() {
 
   # Load average — sustained > num-cores indicates contention
   cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 8)
-  load_5min=$(uptime | sed -nE 's/.*load averages?: [^ ]+ +([0-9.]+).*/\1/p')
+  load_5min=$(sed -nE 's/.*load averages?: [^ ]+ +([0-9.]+).*/\1/p' <<< "$uptime_out")
   if [[ -n "$load_5min" ]]; then
     is_high=$(awk -v l="$load_5min" -v c="$cores" 'BEGIN { print (l > c * 0.75) ? 1 : 0 }')
     if [[ "$is_high" -eq 0 ]]; then

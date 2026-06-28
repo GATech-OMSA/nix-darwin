@@ -335,7 +335,7 @@ in
       grest = "git restore --staged";
 
       # ============================================
-      # PYTHON (UV)  — micromamba aliases disabled below
+      # PYTHON (UV)
       # ============================================
       py = "python";
       ipy = "ipython";
@@ -354,13 +354,6 @@ in
       lint = "ruff check .";
       format = "ruff format .";
       "lint-fix" = "ruff check --fix .";
-
-      # Micromamba (Tier 4: abbreviated domain) — disabled; uv is the standard
-      # Note: m-act and m-deact use functions (not aliases) to show usage help
-      # m-create = "micromamba create";
-      # m-list = "micromamba env list";
-      # m-install = "micromamba install";
-      # m-remove = "micromamba remove";
 
       # ============================================
       # AWS
@@ -485,7 +478,7 @@ in
           _last=0
           [[ -r "$_palette_cache.mtime" ]] && read -r _last < "$_palette_cache.mtime"
           if (( _now - _last > 3600 )); then
-            ( "$HOME/nix-darwin/scripts/maintenance/refresh-starship-palette.sh" >/dev/null 2>&1 & ) &!
+            ( "${nixDarwinDir}/scripts/maintenance/refresh-starship-palette.sh" >/dev/null 2>&1 & ) &!
           fi
           unset _palette_cache _writable_starship _palette _now _last
         fi
@@ -755,23 +748,6 @@ in
         }}
       '')
 
-      # Micromamba LAZY initialization — disabled; uv is the standard (CLAUDE.md)
-      # This block previously saved ~100ms on shell startup by lazy-loading micromamba.
-      (lib.mkOrder 550 ''
-        # Lazy-load micromamba - only initialize when first invoked
-        # if command -v micromamba &> /dev/null; then
-        #   export MAMBA_EXE="${"\${commands[micromamba]}"}"
-        #   export MAMBA_ROOT_PREFIX="$HOME/micromamba"
-        #
-        #   # Wrapper function that initializes micromamba on first use
-        #   micromamba() {
-        #     unfunction micromamba  # Remove this wrapper
-        #     eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
-        #     micromamba "$@"  # Run the actual command
-        #   }
-        # fi
-      '')
-
       # Main shell configuration (runs after oh-my-zsh)
       ''
       # ============================================
@@ -816,7 +792,7 @@ in
         # Refresh if missing or older than 24h.
         if [[ ! -s "$_wf" ]] || (( EPOCHSECONDS - _wf_mtime > 86400 )); then
           # Disowned background refresh — no wait, no SIGCHLD risk.
-          ( "$HOME/nix-darwin/scripts/maintenance/refresh-welcome.sh" "$_wf" "$MACHINE_MODE" >/dev/null 2>&1 & ) &!
+          ( "${nixDarwinDir}/scripts/maintenance/refresh-welcome.sh" "$_wf" "$MACHINE_MODE" >/dev/null 2>&1 & ) &!
         fi
         # Print the (possibly stale) cache; refresh applies on next shell start.
         # Use zsh's `$(<file)` special form (no fork) + `print -r --` (builtin)

@@ -15,7 +15,7 @@
 # producing a new inode every time, so this triggers reliably.
 
 let
-  homeDir = "/Users/${username}";
+  homeDir = config.users.users.${username}.home;
   repoDir = "${homeDir}/nix-darwin";
   secretsFile = "${repoDir}/nix-config/hosts/${machineId}/secrets.yaml";
   stateDir = "${homeDir}/.local/state/secrets-deploy";

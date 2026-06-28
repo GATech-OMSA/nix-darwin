@@ -4,7 +4,7 @@ let
   proxies = userConfig.proxies or {};
   # Only apply corporate npm settings on the work profile to prevent
   # Nexus registry and writable prefix leaking into personal/minimal
-  isWorkProfile = profileName == "work";
+  isWorkProfile = myLib.isWorkProfile profileName;
   npmProxyEnabled = isWorkProfile && (proxies.npm.enabled or false);
   npmRegistryUrl = proxies.npm.url or "https://registry.npmjs.org";
   npmGlobalPrefix = proxies.npm.globalPrefix or "$HOME/.npm-global";
