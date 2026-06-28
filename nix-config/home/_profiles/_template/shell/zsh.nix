@@ -561,6 +561,10 @@ in
         typeset -g __STARSHIP_LEFT_FILE="$HOME/.cache/starship/.left.$$"
         typeset -g __STARSHIP_RIGHT_FILE="$HOME/.cache/starship/.right.$$"
         typeset -g STARSHIP_LEFT="" STARSHIP_RIGHT=""
+        # Set once the first precmd render has run — gates the chpwd hook below
+        # so a `cd` during shell init can't fork starship inside the SIGCHLD
+        # window before the first prompt.
+        typeset -g __STARSHIP_READY=
         # Gate mkdir to avoid fork on every shell init — `/bin/mkdir`
         # forks an external command and waits via waitjobs, which on
         # macOS 15+ races with SIGCHLD. Once the dir exists, the test
@@ -586,6 +590,7 @@ in
             --jobs="''${STARSHIP_JOBS_COUNT:-0}" \
             > "$__STARSHIP_RIGHT_FILE" 2>/dev/null
           STARSHIP_RIGHT="$(<$__STARSHIP_RIGHT_FILE)"
+          __STARSHIP_READY=1
         }
 
         # NOTE: do NOT call __starship_render at init time. The two
@@ -608,6 +613,23 @@ in
           zle reset-prompt
         }
         zle -N zle-keymap-select __starship_keymap_select
+
+        # Re-render on directory change made from inside a ZLE widget.
+        #
+        # Widgets that cd then redraw via `zle reset-prompt` — fzf-cd-widget
+        # (Alt-C), zoxide's `zi` — never fire precmd, so the frozen
+        # STARSHIP_LEFT/RIGHT would still show the OLD directory until the next
+        # real command. Refresh them here so the widget's own reset-prompt (and
+        # ours) draws the current dir. Typed `cd` is already covered by precmd,
+        # so this only acts inside a widget ($WIDGET set) — no double render on
+        # ordinary cd. Gated on __STARSHIP_READY to stay clear of the init
+        # SIGCHLD window.
+        __starship_chpwd() {
+          [[ -n "$__STARSHIP_READY" && -n "''${WIDGET:-}" ]] || return
+          __starship_render
+          zle reset-prompt 2>/dev/null
+        }
+        add-zsh-hook chpwd __starship_chpwd
 
         # Clean up render files on shell exit.
         __starship_cleanup() {
