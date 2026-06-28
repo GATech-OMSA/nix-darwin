@@ -96,6 +96,16 @@ rec {
         "\${HOME}/.aws/.last_profile"
       ];
 
+      # Database connection strings deployed by scripts/secrets/deploy-secrets.sh
+      # (the prod targets in its MAPPINGS array). Kept in sync with that list so
+      # validation/audit coverage matches what is actually written to disk.
+      database = [
+        "\${HOME}/.db/mssql/prod"
+        "\${HOME}/.db/postgres/prod"
+        "\${HOME}/.db/ods/prod"
+        "\${HOME}/.db/dw/prod"
+      ];
+
       ai = [
         "\${HOME}/.codex/auth.json"
         "\${HOME}/.codex/config.toml"

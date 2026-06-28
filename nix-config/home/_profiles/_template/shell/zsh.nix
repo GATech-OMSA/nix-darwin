@@ -83,50 +83,50 @@ let
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/fzf.zsh"
   '';
 
+  # Copy a zsh plugin out of the store, apply one sed substitution to a single
+  # file, and fail the build if the original pattern is no longer present (so an
+  # upstream rename can never silently ship the racy `$()` form). Used for the
+  # two standalone plugin patches below; the three inline patches in
+  # shellInitCache stay inline because they're entangled with zcompile and
+  # build-time-precomputed values.
+  mkForkRacePatch = { name, src, file, sedExpr, verify }:
+    pkgs.runCommand name {} ''
+      cp -r ${src} $out
+      chmod -R +w $out
+      ${pkgs.gnused}/bin/sed -i ${lib.escapeShellArg sedExpr} "$out/${file}"
+
+      # Verify patch applied (build fails if upstream changes the pattern).
+      if /usr/bin/grep -qF ${lib.escapeShellArg verify} "$out/${file}"; then
+        echo "ERROR: ${name} sed patch did not match — upstream changed the line" >&2
+        exit 1
+      fi
+    '';
+
   # Build-time patched fast-syntax-highlighting: replaces top-level
   # `if [[ $(uname -a) = (#i)*darwin* ]]` (racy $() at source-time) with
   # `$OSTYPE = darwin*` (a parameter test, no fork). Eliminates one of
   # the largest remaining SIGCHLD-race sites at shell init.
-  fixedFsh = pkgs.runCommand "fsh-patched" {} ''
-    cp -r ${pkgs.zsh-fast-syntax-highlighting} $out
-    chmod -R +w $out
-    ${pkgs.gnused}/bin/sed -i \
-      's|if \[\[ \$(uname -a) = (#i)\*darwin\* \]\]|if [[ $OSTYPE = darwin* ]]|' \
-      $out/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
-
-    # Verify patch applied (build fails if upstream changes the pattern)
-    if /usr/bin/grep -qF 'if [[ $(uname -a) = (#i)*darwin* ]]' \
-        $out/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh; then
-      echo "ERROR: fast-syntax-highlighting sed patch did not match — upstream changed the line" >&2
-      exit 1
-    fi
-  '';
+  fixedFsh = mkForkRacePatch {
+    name = "fsh-patched";
+    src = pkgs.zsh-fast-syntax-highlighting;
+    file = "share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh";
+    sedExpr = ''s|if \[\[ \$(uname -a) = (#i)\*darwin\* \]\]|if [[ $OSTYPE = darwin* ]]|'';
+    verify = ''if [[ $(uname -a) = (#i)*darwin* ]]'';
+  };
 
   # Build-time patched zsh-autosuggestions: replace `$(builtin zle -la)`
-  # in _zsh_autosuggest_bind_widgets with `${(k)widgets}` — the latter
+  # in _zsh_autosuggest_bind_widgets with `${(kF)widgets}` — the latter
   # reads from the `widgets` associative array (provided by zsh/parameter,
   # already loaded) without forking. The `$()` form forks a subshell to
   # capture builtin output and waits via the racy waitforpid path, which
   # on macOS 15+ wedges the shell at the first prompt.
-  fixedAutosuggestions = pkgs.runCommand "zsh-autosuggestions-patched" {} ''
-    cp -r ${pkgs.zsh-autosuggestions} $out
-    chmod -R +w $out
-    # Replace `$(builtin zle -la)` (subshell capture) with `''${(kF)widgets}`
-    # — a parameter expansion that emits keys of the `widgets` associative
-    # array (provided by zsh/parameter) joined by newlines. The surrounding
-    # `''${(f)"..."}` then splits on newlines, producing the same array.
-    # No fork, no SIGCHLD race.
-    ${pkgs.gnused}/bin/sed -i \
-      's|\$(builtin zle -la)|''${(kF)widgets}|' \
-      $out/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-    # Verify patch applied
-    if /usr/bin/grep -qF '$(builtin zle -la)' \
-        $out/share/zsh-autosuggestions/zsh-autosuggestions.zsh; then
-      echo "ERROR: zsh-autosuggestions sed patch did not match — upstream changed the line" >&2
-      exit 1
-    fi
-  '';
+  fixedAutosuggestions = mkForkRacePatch {
+    name = "zsh-autosuggestions-patched";
+    src = pkgs.zsh-autosuggestions;
+    file = "share/zsh-autosuggestions/zsh-autosuggestions.zsh";
+    sedExpr = ''s|\$(builtin zle -la)|''${(kF)widgets}|'';
+    verify = ''$(builtin zle -la)'';
+  };
 in
 {
   # ENHANCED Zsh configuration - Complete declarative shell setup
