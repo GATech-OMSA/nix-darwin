@@ -11,72 +11,80 @@
     enableDefaultConfig = false;
 
     # Host-specific configurations
-    matchBlocks = {
-      # Default configuration for all hosts
-      "*" = {
-        extraOptions = {
-          # Security settings
-          AddKeysToAgent = "yes";
-          UseKeychain = "yes";
-          IdentityFile = "~/.ssh/id_ed25519";
-
-          # Performance
-          Compression = "yes";
-          ServerAliveInterval = "60";
-          ServerAliveCountMax = "3";
-
-          # Security
-          HashKnownHosts = "yes";
-          StrictHostKeyChecking = "ask";
-          VerifyHostKeyDNS = "yes";
-
-          # Modern ciphers only
-          Ciphers = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com";
-          MACs = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com";
-          KexAlgorithms = "curve25519-sha256,curve25519-sha256@libssh.org";
-        };
-      };
+    settings = {
       # GitHub
       "github.com" = {
-        hostname = "github.com";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519";
-        identitiesOnly = true;
+        HostName = "github.com";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = "yes";
       };
 
       # GitLab (if needed)
       "gitlab.com" = {
-        hostname = "gitlab.com";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519";
-        identitiesOnly = true;
+        HostName = "gitlab.com";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = "yes";
       };
 
       # Example: Personal server
       # Uncomment and customize as needed
       # "personal-server" = {
-      #   hostname = "example.com";
-      #   user = "jimmy";
-      #   port = 22;
-      #   identityFile = "~/.ssh/id_ed25519";
-      #   forwardAgent = true;
+      #   HostName = "example.com";
+      #   User = "jimmy";
+      #   Port = 22;
+      #   IdentityFile = "~/.ssh/id_ed25519";
+      #   ForwardAgent = true;
       # };
 
-      # Work-specific SSH configurations (only on work Mac)
+      # Default configuration for all hosts — must come last in SSH config
+      "*" = {
+        # Key management (macOS-specific)
+        AddKeysToAgent = "yes";
+        UseKeychain = "yes";
+        IdentityFile = "~/.ssh/id_ed25519";
+
+        # Performance
+        Compression = true;
+        ServerAliveInterval = 60;
+        ServerAliveCountMax = 3;
+
+        # Security
+        HashKnownHosts = true;
+        StrictHostKeyChecking = "ask";
+        VerifyHostKeyDNS = "yes";
+
+        # Modern ciphers only
+        Ciphers = [
+          "chacha20-poly1305@openssh.com"
+          "aes256-gcm@openssh.com"
+          "aes128-gcm@openssh.com"
+        ];
+        MACs = [
+          "hmac-sha2-512-etm@openssh.com"
+          "hmac-sha2-256-etm@openssh.com"
+        ];
+        KexAlgorithms = [
+          "curve25519-sha256"
+          "curve25519-sha256@libssh.org"
+        ];
+      };
     } // lib.optionalAttrs (myLib.isWorkProfile profileName) {
+      # Work-specific SSH configurations (only on work Mac)
       # Example: Work bastion host
       # "work-bastion" = {
-      #   hostname = "bastion.company.com";
-      #   user = "jimmy";
-      #   identityFile = "~/.ssh/id_rsa_work";
-      #   forwardAgent = true;
+      #   HostName = "bastion.company.com";
+      #   User = "jimmy";
+      #   IdentityFile = "~/.ssh/id_rsa_work";
+      #   ForwardAgent = true;
       # };
 
       # Example: Work servers via bastion (ProxyJump)
       # "work-server-*" = {
-      #   proxyJump = "work-bastion";
-      #   user = "jimmy";
-      #   identityFile = "~/.ssh/id_rsa_work";
+      #   ProxyJump = "work-bastion";
+      #   User = "jimmy";
+      #   IdentityFile = "~/.ssh/id_rsa_work";
       # };
     };
   };
