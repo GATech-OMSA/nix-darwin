@@ -180,7 +180,7 @@ _This section is generated from `nix-config/modules/darwin/homebrew.nix` by_
 _`scripts/docs/sync-app-recommendations.sh`. Do not edit by hand —_
 _re-run via `just docs-apps` after editing `homebrew.nix`._
 
-### Casks (41)
+### Casks (40)
 
 | Cask | Note |
 | --- | --- |
@@ -193,7 +193,6 @@ _re-run via `just docs-apps` after editing `homebrew.nix`._
 | `claude-code@latest` | rolling channel; stable `claude-code` cask lags behind |
 | `codex` |  |
 | `codex-app` | OpenAI Codex GUI (separate from codex CLI) |
-| `conductor` |  |
 | `cursor` |  |
 | `firefox` |  |
 | `fork` |  |

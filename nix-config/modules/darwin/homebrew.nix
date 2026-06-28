@@ -33,6 +33,7 @@
       "mas"         # Mac App Store CLI
       # "micromamba"  # Conda replacement — disabled; uv is the standard (CLAUDE.md)
       "gemini-cli"  # Google Gemini CLI
+      "gh"          # GitHub CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
       "opencode"    # Open source AI coding agent (anomalyco/tap)
     ];
@@ -76,7 +77,6 @@
       "ollama-app"
 
       # Utilities
-      "conductor"
       "appcleaner"
       "keka"
       "keyclu"
