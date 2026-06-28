@@ -113,6 +113,14 @@ check:
 bench-shell *ARGS:
     @./scripts/maintenance/bench-shell.sh {{ARGS}}
 
+# Check shell startup latency against the committed budget (warn-only).
+perf-check *ARGS:
+    @./scripts/maintenance/check-shell-perf.sh {{ARGS}}
+
+# Re-baseline the shell startup budget from a fresh measurement on THIS machine.
+perf-calibrate:
+    @./scripts/maintenance/check-shell-perf.sh --calibrate
+
 # ============================================================================
 # DOCUMENTATION
 # ============================================================================

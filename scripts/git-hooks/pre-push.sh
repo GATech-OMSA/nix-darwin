@@ -56,4 +56,33 @@ if [ $error_found -eq 1 ]; then
 fi
 
 echo "✓ All security checks passed - safe to push"
+
+# ============================================================================
+# SHELL STARTUP-PERF GATE — only when shell-init files changed in this push
+# ============================================================================
+# The bench is TTY-bound and takes ~15-20s, so it must not run on every push.
+# Gate it on a diff touching the shell init surface; skip when there's no TTY
+# (scripted pushes), or when SKIP_PERF_GATE=1. Warn-only unless
+# SHELL_PERF_ENFORCE=1 — startup latency is environmental, so blocking by
+# default would be too noisy.
+if [ "${SKIP_PERF_GATE:-0}" != "1" ] && [ -t 1 ]; then
+  # Range being pushed: prefer the upstream delta, fall back to the last commit.
+  perf_range="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)"
+  if [ -n "$perf_range" ]; then
+    changed="$(git diff --name-only "$perf_range"..HEAD 2>/dev/null)"
+  else
+    changed="$(git diff --name-only HEAD~1..HEAD 2>/dev/null)"
+  fi
+
+  if echo "$changed" | grep -qE 'nix-config/home/_profiles/_template/shell/'; then
+    echo ""
+    echo "→ Shell init changed — checking startup-perf budget..."
+    PERF="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/maintenance/check-shell-perf.sh"
+    if [ -x "$PERF" ]; then
+      # Honors SHELL_PERF_ENFORCE; non-zero exit (enforce + regression) blocks the push.
+      "$PERF" || exit 1
+    fi
+  fi
+fi
+
 exit 0
