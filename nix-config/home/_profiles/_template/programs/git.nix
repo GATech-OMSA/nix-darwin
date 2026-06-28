@@ -24,6 +24,15 @@
         editor = "code --wait";
         autocrlf = "input";
         # pager is set by programs.delta module
+
+        # Keep the index hot so `git status` is fast AND the prompt's git module
+        # reflects current state immediately. Starship runs git with
+        # GIT_OPTIONAL_LOCKS=0 (no index writeback), so without fsmonitor the
+        # prompt can show stale git state until a normal `git status` refreshes
+        # the index. The built-in fsmonitor daemon (git 2.37+) + untracked cache
+        # keep that view current. Git falls back gracefully where unsupported.
+        fsmonitor = true;
+        untrackedCache = true;
       };
 
       # Colors
