@@ -35,12 +35,9 @@
         untrackedCache = true;
       };
 
-      # Colors
+      # Colors — `ui = auto` is the umbrella switch; per-command toggles inherit it.
       color = {
-        diff = "auto";
         ui = "auto";
-        status = "auto";
-        branch = "auto";
       };
 
       # Delta configuration is handled by programs.delta module
@@ -61,23 +58,41 @@
       # Rebase settings
       rebase = {
         autoStash = true;
+        updateRefs = true;  # Keep stacked branches pointing at the right commits when rebasing the base (git 2.38+)
       };
 
       # Pull settings
       pull = {
-        rebase = true;
-        ff = "only";
+        rebase = true;  # ff has no effect here — rebase pulls never fast-forward-merge
+      };
+
+      # Reuse recorded conflict resolutions across rebases/merges — big win for a rebase-heavy workflow.
+      rerere = {
+        enabled = true;
+      };
+
+      # Commit UX — show the full diff in the message editor so you write against what you're committing.
+      commit = {
+        verbose = true;
+      };
+
+      # Supply-chain hardening — reject malformed/malicious objects on transfer.
+      # Complements the secnow/secnext + quarantine layers.
+      transfer = {
+        fsckObjects = true;
+      };
+      fetch = {
+        prune = true;
+        fsckObjects = true;
+      };
+      receive = {
+        fsckObjects = true;
       };
 
       # Push settings
       push = {
         default = "current";
         autoSetupRemote = true;
-      };
-
-      # Fetch settings
-      fetch = {
-        prune = true;
       };
 
       # Credential helper
@@ -87,7 +102,7 @@
 
       # Init settings
       init = {
-        defaultBranch = "master";
+        defaultBranch = "main";  # Matches GitHub's default and the main-assuming workflow aliases (bclean/bdone/gone)
       };
 
       # Modern Git 2.x features
@@ -160,11 +175,10 @@
 
       # Stash
       pop = "stash pop";
-      stp = "stash pop";
 
       # Miscellaneous
       changes = "log -p --follow --";
-      blame = "blame -c";
+      blame = "blame -w";  # Ignore whitespace-only changes so reformat commits don't mask the real author
       fp = "fetch --all --prune";
       remotes = "remote -v";
       aliases = "config --get-regexp alias";
@@ -218,8 +232,7 @@
       snapshot = "!git stash push -u -m \"snapshot: $(date)\"";  # Quick snapshot
 
       # Diff helpers
-      changed = "diff --name-only";  # List changed files
-      unstaged = "diff --name-only";  # Unstaged files
+      unstaged = "diff --name-only";  # Unstaged (working-tree) files
       staged = "diff --cached --name-only";  # Staged files
       untracked = "ls-files --others --exclude-standard";  # Untracked files
       ignored = "ls-files --ignored --exclude-standard --others";  # Ignored files
