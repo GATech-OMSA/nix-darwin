@@ -18,7 +18,7 @@
     # sox                # Sound processing
 
     # Image
-    imagemagick        # Image manipulation CLI
+    # imagemagick        # Image manipulation CLI — removed 2026-06-28: pulled libraw/openexr/libheif/libde265 CVEs (use `nix run nixpkgs#imagemagick`)
     # darktable          # Photo workflow
     # inkscape           # Vector graphics editor
 
