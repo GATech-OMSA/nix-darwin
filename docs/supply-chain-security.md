@@ -44,6 +44,39 @@ commands. A failed/offline scan never blocks a rebuild (it warns and proceeds). 
 update (`update-nix`), remove unused owners (`secnow --explain`), whitelist triaged
 false-matches (`scripts/validation/vulnix-whitelist.toml`), or overlay-patch (rare).
 
+### Walkthrough
+
+```bash
+# 1. See what's vulnerable right now (first run downloads NVD data, ~1 min)
+secnow
+
+# 2. For each flagged package, find the top-level tool that drags it in
+secnow --explain            # e.g. "libheif ← imagemagick", "unbound ← yazi"
+
+# 3a. Don't need that tool? Comment it out of packages.nix / profile, then:
+nix-rebuild                 # secnext gates the switch automatically
+
+# 3b. Need it (or it's an unexploitable/essential lib)? Whitelist with a reason:
+#     edit scripts/validation/vulnix-whitelist.toml — add:
+#       ["openssl-3.6.2"]
+#       cve = [ "CVE-2026-..." ]
+#     (version-pinned key auto-expires the entry on the next nixpkgs bump)
+
+# 4. Preview the security impact of an update WITHOUT downloading everything:
+secnext --fast              # eval-only; note: BUILD closure (noisier superset)
+
+# 5. Routine: just rebuild/update — the gate runs itself
+nix-rebuild                 # builds candidate → diff → scan → switch if clean,
+                            # prompts [y/N] if new CVEs appear
+```
+
+**Reading `secnow` output:** packages are bucketed CRITICAL → HIGH → MEDIUM → LOW by max
+CVSS, with a CVE count and the highest score per package, followed by the remediation playbook.
+A clean closure prints "No known CVEs … Excellent."
+
+**Exit codes** (for scripting / the gate): `0` clean · `2` findings (with `--strict`) ·
+`1` could-not-run (missing tool / offline NVD).
+
 ---
 
 ## Protections by Layer
@@ -56,7 +89,7 @@ false-matches (`scripts/validation/vulnix-whitelist.toml`), or overlay-patch (ra
 | **uv** | `exclude-newer = "14 days"` — same quarantine for Python | `nix-config/home/_template/development/python.nix` |
 | **Nix** | `flake.lock` pins exact revisions; hermetic builds | `flake.nix` + `flake.lock` |
 | **Go** | Sum database (`sum.golang.org`) verifies module integrity; **disabled on work profile** (`GOSUMDB=off`) when corporate proxy is enabled — proxy provides its own integrity checks | Built-in to Go toolchain; proxy override in `work/default.nix` |
-| **Homebrew** | No age-gate; mitigated by disabling auto-upgrade | `nix-config/modules/darwin/homebrew.nix` |
+| **Homebrew** | No age-gate; mitigated by manual-update + `HOMEBREW_NO_INSECURE_REDIRECT` / `NO_ANALYTICS` / `NO_AUTO_UPDATE`; tap-trust enforced (no untrusted third-party taps); cask drift surfaced by `secnow` | `nix-config/modules/darwin/homebrew.nix` |
 
 ### CI/CD Pipeline
 
