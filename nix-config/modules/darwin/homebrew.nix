@@ -8,6 +8,14 @@
 {
   # CLI tools are managed by Nix for better reproducibility
 
+  # Supply-chain hardening for the brew CLI itself (download-time defenses).
+  # Tap-trust enforcement is left ON (do NOT set HOMEBREW_NO_REQUIRE_TAP_TRUST).
+  environment.variables = {
+    HOMEBREW_NO_INSECURE_REDIRECT = "1";  # refuse http/insecure redirects on downloads
+    HOMEBREW_NO_ANALYTICS = "1";          # no telemetry
+    HOMEBREW_NO_AUTO_UPDATE = "1";        # no implicit metadata pulls; update-brew runs `brew update` explicitly
+  };
+
   homebrew = {
     # enable is set in host-specific configs
 
@@ -24,15 +32,19 @@
     };
 
     taps = [
-      "buo/cask-upgrade"
-      "anomalyco/tap"     # OpenCode AI coding agent
+      # buo/cask-upgrade removed: now an untrusted third-party tap, and its `brew cu`
+      # is redundant with brew's built-in `brew upgrade --cask --greedy` (used in
+      # update-brew). One fewer external code source in the supply chain.
+      "anomalyco/tap"     # OpenCode AI coding agent (trust the formula, not whole tap)
     ];
 
     # Only brew formulae that MUST be from Homebrew
     brews = [
       "mas"         # Mac App Store CLI
-      # "micromamba"  # Conda replacement — disabled; uv is the standard (CLAUDE.md)
-      "gemini-cli"  # Google Gemini CLI
+      # gemini-cli removed 2026-06-28: brew formula deprecated (disabled 2026-12-18).
+      # Replaced by the antigravity-cli cask below (command: agy). NOTE: this changes
+      # the `gemini` command to `agy` — reconfigure the peers@arc gemini integration.
+      "gh"          # GitHub CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
       "opencode"    # Open source AI coding agent (anomalyco/tap)
     ];
@@ -40,7 +52,7 @@
     # GUI applications only
     casks = [
       # Browsers
-      "firefox"
+      # "firefox"
       "orion"
       "google-chrome"
 
@@ -50,33 +62,33 @@
       # "antigravity"
       "visual-studio-code"
       "claude-code@latest"    # rolling channel; stable `claude-code` cask lags behind
+      "antigravity-cli"     # Google Antigravity agentic CLI (command: agy) — replaces deprecated gemini-cli; cask auto_updates
       "ghostty"             # Terminal emulator (Homebrew for personal, Nix for work)
       "iterm2"
       # "dash"
-      "warp"
+      # "warp"
       "fork"
       "microsoft-word"
       "microsoft-excel"        # migrated from MAS — `mas uninstall 462058435` first
       "microsoft-powerpoint"   # migrated from MAS — `mas uninstall 462062816` first
-      "bruno"                  # Git-friendly local API client (modern Postman) — also on nix
+      # "bruno"                  # Git-friendly local API client (modern Postman) — also on nix
       "proxyman"               # Native HTTP/HTTPS debugging proxy with SSL inspection
-      "kaleidoscope"           # Best-in-class visual diff/merge for code, folders, images
+      # "kaleidoscope"           # Best-in-class visual diff/merge for code, folders, images
 
       # Productivity
       "alfred"
       "raycast"
-      # "karabiner-elements"   # disabled — re-enable + uncomment ./karabiner.nix in _template/programs/default.nix
+      # "karabiner-elements"
 
       # AI/LLM
       "chatgpt"
       "claude"
       "codex"
       "codex-app"       # OpenAI Codex GUI (separate from codex CLI)
-      "jan"             # Local LLM runner
-      "ollama-app"
+      # "jan"             # Local LLM runner
+      # "ollama-app"
 
       # Utilities
-      "conductor"
       "appcleaner"
       "keka"
       "keyclu"
@@ -84,15 +96,15 @@
       "obsidian"
       "hush"                # migrated from MAS — `mas uninstall 1544743900` first
       "betterdisplay"       # HiDPI/brightness for external monitors on Apple Silicon
-      "little-snitch"       # Outbound firewall — per-app network monitoring
+      # "little-snitch"       # Outbound firewall — per-app network monitoring
 
       # Communication
-      "slack"
-      "whatsapp"
-      "zoom"
+      # "slack"
+      # "whatsapp"
+      # "zoom"
 
       # Finance
-      "tradingview"
+      # "tradingview"
 
       # Other
       "pdf-expert"

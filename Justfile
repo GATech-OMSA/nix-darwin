@@ -113,6 +113,22 @@ check:
 bench-shell *ARGS:
     @./scripts/maintenance/bench-shell.sh {{ARGS}}
 
+# Check shell startup latency against the committed budget (warn-only).
+perf-check *ARGS:
+    @./scripts/maintenance/check-shell-perf.sh {{ARGS}}
+
+# Re-baseline the shell startup budget from a fresh measurement on THIS machine.
+perf-calibrate:
+    @./scripts/maintenance/check-shell-perf.sh --calibrate
+
+# Scan the live system closure for known CVEs (vulnix) + brew cask drift.
+# Prefers the packaged `security-scan` (vulnix bundled); falls back to the repo
+# script (which uses `nix run nixpkgs#vulnix` when vulnix isn't on PATH).
+# if/else (not `A && B || C`) so a non-zero scan exit isn't mistaken for
+# "tool absent" and re-run via the fallback.
+security-scan *ARGS:
+    @if command -v security-scan >/dev/null 2>&1; then security-scan {{ARGS}}; else ./scripts/validation/scan-vulnerabilities.sh {{ARGS}}; fi
+
 # ============================================================================
 # DOCUMENTATION
 # ============================================================================

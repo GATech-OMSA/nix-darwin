@@ -83,50 +83,50 @@ let
     ${pkgs.zsh}/bin/zsh -c "zcompile $out/fzf.zsh"
   '';
 
+  # Copy a zsh plugin out of the store, apply one sed substitution to a single
+  # file, and fail the build if the original pattern is no longer present (so an
+  # upstream rename can never silently ship the racy `$()` form). Used for the
+  # two standalone plugin patches below; the three inline patches in
+  # shellInitCache stay inline because they're entangled with zcompile and
+  # build-time-precomputed values.
+  mkForkRacePatch = { name, src, file, sedExpr, verify }:
+    pkgs.runCommand name {} ''
+      cp -r ${src} $out
+      chmod -R +w $out
+      ${pkgs.gnused}/bin/sed -i ${lib.escapeShellArg sedExpr} "$out/${file}"
+
+      # Verify patch applied (build fails if upstream changes the pattern).
+      if /usr/bin/grep -qF ${lib.escapeShellArg verify} "$out/${file}"; then
+        echo "ERROR: ${name} sed patch did not match — upstream changed the line" >&2
+        exit 1
+      fi
+    '';
+
   # Build-time patched fast-syntax-highlighting: replaces top-level
   # `if [[ $(uname -a) = (#i)*darwin* ]]` (racy $() at source-time) with
   # `$OSTYPE = darwin*` (a parameter test, no fork). Eliminates one of
   # the largest remaining SIGCHLD-race sites at shell init.
-  fixedFsh = pkgs.runCommand "fsh-patched" {} ''
-    cp -r ${pkgs.zsh-fast-syntax-highlighting} $out
-    chmod -R +w $out
-    ${pkgs.gnused}/bin/sed -i \
-      's|if \[\[ \$(uname -a) = (#i)\*darwin\* \]\]|if [[ $OSTYPE = darwin* ]]|' \
-      $out/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
-
-    # Verify patch applied (build fails if upstream changes the pattern)
-    if /usr/bin/grep -qF 'if [[ $(uname -a) = (#i)*darwin* ]]' \
-        $out/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh; then
-      echo "ERROR: fast-syntax-highlighting sed patch did not match — upstream changed the line" >&2
-      exit 1
-    fi
-  '';
+  fixedFsh = mkForkRacePatch {
+    name = "fsh-patched";
+    src = pkgs.zsh-fast-syntax-highlighting;
+    file = "share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh";
+    sedExpr = ''s|if \[\[ \$(uname -a) = (#i)\*darwin\* \]\]|if [[ $OSTYPE = darwin* ]]|'';
+    verify = ''if [[ $(uname -a) = (#i)*darwin* ]]'';
+  };
 
   # Build-time patched zsh-autosuggestions: replace `$(builtin zle -la)`
-  # in _zsh_autosuggest_bind_widgets with `${(k)widgets}` — the latter
+  # in _zsh_autosuggest_bind_widgets with `${(kF)widgets}` — the latter
   # reads from the `widgets` associative array (provided by zsh/parameter,
   # already loaded) without forking. The `$()` form forks a subshell to
   # capture builtin output and waits via the racy waitforpid path, which
   # on macOS 15+ wedges the shell at the first prompt.
-  fixedAutosuggestions = pkgs.runCommand "zsh-autosuggestions-patched" {} ''
-    cp -r ${pkgs.zsh-autosuggestions} $out
-    chmod -R +w $out
-    # Replace `$(builtin zle -la)` (subshell capture) with `''${(kF)widgets}`
-    # — a parameter expansion that emits keys of the `widgets` associative
-    # array (provided by zsh/parameter) joined by newlines. The surrounding
-    # `''${(f)"..."}` then splits on newlines, producing the same array.
-    # No fork, no SIGCHLD race.
-    ${pkgs.gnused}/bin/sed -i \
-      's|\$(builtin zle -la)|''${(kF)widgets}|' \
-      $out/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-    # Verify patch applied
-    if /usr/bin/grep -qF '$(builtin zle -la)' \
-        $out/share/zsh-autosuggestions/zsh-autosuggestions.zsh; then
-      echo "ERROR: zsh-autosuggestions sed patch did not match — upstream changed the line" >&2
-      exit 1
-    fi
-  '';
+  fixedAutosuggestions = mkForkRacePatch {
+    name = "zsh-autosuggestions-patched";
+    src = pkgs.zsh-autosuggestions;
+    file = "share/zsh-autosuggestions/zsh-autosuggestions.zsh";
+    sedExpr = ''s|\$(builtin zle -la)|''${(kF)widgets}|'';
+    verify = ''$(builtin zle -la)'';
+  };
 in
 {
   # ENHANCED Zsh configuration - Complete declarative shell setup
@@ -211,6 +211,17 @@ in
 
       # Check configuration without building (no shell restart needed)
       nix-check = "nix flake check ${nixDarwinDir}";
+
+      # ── Security scanning ──────────────────────────────────────────────
+      # secnow ("x"): CVE scan of what's INSTALLED now (live system closure).
+      #   secnow --explain  → show which top-level package pulls each CVE in.
+      # secnext ("y"): scan what WOULD be installed before switching (builds the
+      #   candidate, shows the delta, prompts on findings).
+      #   secnext --fast    → eval-only pre-download peek (build-closure superset).
+      # The same secnext gate runs automatically before nix-rebuild / update-nix
+      # (bypass: nix-rebuild-skip-checks, or SKIP_SECURITY_PREFLIGHT=1).
+      secnow = "security-scan";  # packaged tool (bundles vulnix); see nix-config/pkgs/security-scan
+      secnext = "${nixDarwinDir}/scripts/maintenance/security-preflight.sh";
 
       # Run pre-flight checks manually (without rebuilding, no shell restart needed)
       nix-preflight = "${nixDarwinDir}/scripts/maintenance/pre-flight-checks.sh";
@@ -335,7 +346,7 @@ in
       grest = "git restore --staged";
 
       # ============================================
-      # PYTHON (UV)  — micromamba aliases disabled below
+      # PYTHON (UV)
       # ============================================
       py = "python";
       ipy = "ipython";
@@ -354,13 +365,6 @@ in
       lint = "ruff check .";
       format = "ruff format .";
       "lint-fix" = "ruff check --fix .";
-
-      # Micromamba (Tier 4: abbreviated domain) — disabled; uv is the standard
-      # Note: m-act and m-deact use functions (not aliases) to show usage help
-      # m-create = "micromamba create";
-      # m-list = "micromamba env list";
-      # m-install = "micromamba install";
-      # m-remove = "micromamba remove";
 
       # ============================================
       # AWS
@@ -485,7 +489,7 @@ in
           _last=0
           [[ -r "$_palette_cache.mtime" ]] && read -r _last < "$_palette_cache.mtime"
           if (( _now - _last > 3600 )); then
-            ( "$HOME/nix-darwin/scripts/maintenance/refresh-starship-palette.sh" >/dev/null 2>&1 & ) &!
+            ( "${nixDarwinDir}/scripts/maintenance/refresh-starship-palette.sh" >/dev/null 2>&1 & ) &!
           fi
           unset _palette_cache _writable_starship _palette _now _last
         fi
@@ -568,6 +572,10 @@ in
         typeset -g __STARSHIP_LEFT_FILE="$HOME/.cache/starship/.left.$$"
         typeset -g __STARSHIP_RIGHT_FILE="$HOME/.cache/starship/.right.$$"
         typeset -g STARSHIP_LEFT="" STARSHIP_RIGHT=""
+        # Set once the first precmd render has run — gates the chpwd hook below
+        # so a `cd` during shell init can't fork starship inside the SIGCHLD
+        # window before the first prompt.
+        typeset -g __STARSHIP_READY=
         # Gate mkdir to avoid fork on every shell init — `/bin/mkdir`
         # forks an external command and waits via waitjobs, which on
         # macOS 15+ races with SIGCHLD. Once the dir exists, the test
@@ -593,6 +601,7 @@ in
             --jobs="''${STARSHIP_JOBS_COUNT:-0}" \
             > "$__STARSHIP_RIGHT_FILE" 2>/dev/null
           STARSHIP_RIGHT="$(<$__STARSHIP_RIGHT_FILE)"
+          __STARSHIP_READY=1
         }
 
         # NOTE: do NOT call __starship_render at init time. The two
@@ -615,6 +624,23 @@ in
           zle reset-prompt
         }
         zle -N zle-keymap-select __starship_keymap_select
+
+        # Re-render on directory change made from inside a ZLE widget.
+        #
+        # Widgets that cd then redraw via `zle reset-prompt` — fzf-cd-widget
+        # (Alt-C), zoxide's `zi` — never fire precmd, so the frozen
+        # STARSHIP_LEFT/RIGHT would still show the OLD directory until the next
+        # real command. Refresh them here so the widget's own reset-prompt (and
+        # ours) draws the current dir. Typed `cd` is already covered by precmd,
+        # so this only acts inside a widget ($WIDGET set) — no double render on
+        # ordinary cd. Gated on __STARSHIP_READY to stay clear of the init
+        # SIGCHLD window.
+        __starship_chpwd() {
+          [[ -n "$__STARSHIP_READY" && -n "''${WIDGET:-}" ]] || return
+          __starship_render
+          zle reset-prompt 2>/dev/null
+        }
+        add-zsh-hook chpwd __starship_chpwd
 
         # Clean up render files on shell exit.
         __starship_cleanup() {
@@ -755,23 +781,6 @@ in
         }}
       '')
 
-      # Micromamba LAZY initialization — disabled; uv is the standard (CLAUDE.md)
-      # This block previously saved ~100ms on shell startup by lazy-loading micromamba.
-      (lib.mkOrder 550 ''
-        # Lazy-load micromamba - only initialize when first invoked
-        # if command -v micromamba &> /dev/null; then
-        #   export MAMBA_EXE="${"\${commands[micromamba]}"}"
-        #   export MAMBA_ROOT_PREFIX="$HOME/micromamba"
-        #
-        #   # Wrapper function that initializes micromamba on first use
-        #   micromamba() {
-        #     unfunction micromamba  # Remove this wrapper
-        #     eval "$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2>/dev/null)"
-        #     micromamba "$@"  # Run the actual command
-        #   }
-        # fi
-      '')
-
       # Main shell configuration (runs after oh-my-zsh)
       ''
       # ============================================
@@ -816,7 +825,7 @@ in
         # Refresh if missing or older than 24h.
         if [[ ! -s "$_wf" ]] || (( EPOCHSECONDS - _wf_mtime > 86400 )); then
           # Disowned background refresh — no wait, no SIGCHLD risk.
-          ( "$HOME/nix-darwin/scripts/maintenance/refresh-welcome.sh" "$_wf" "$MACHINE_MODE" >/dev/null 2>&1 & ) &!
+          ( "${nixDarwinDir}/scripts/maintenance/refresh-welcome.sh" "$_wf" "$MACHINE_MODE" >/dev/null 2>&1 & ) &!
         fi
         # Print the (possibly stale) cache; refresh applies on next shell start.
         # Use zsh's `$(<file)` special form (no fork) + `print -r --` (builtin)
@@ -908,10 +917,13 @@ in
         source ${fixedAutosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
       '')
 
-      (lib.mkOrder 900 ''
+      (lib.mkOrder 1500 ''
         # FAST SYNTAX HIGHLIGHTING
         # Replaces standard zsh-syntax-highlighting (saves ~700ms)
-        # Sourced at the end to ensure it wraps all widgets correctly.
+        # Sourced at order 1500 — strictly after the default-1000 blocks (fzf,
+        # bindkey overrides, function definitions) so FSH wraps every widget
+        # those blocks bind. Order 900 placed it BEFORE default blocks, which
+        # left fzf and option+arrow bindings without highlighting wrappers.
         # Uses build-time patched copy (fixedFsh) to remove racy
         # `$(uname -a)` command-substitution at source time — the
         # upstream version triggers zsh's SIGCHLD waitforpid race on

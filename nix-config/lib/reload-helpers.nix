@@ -311,9 +311,14 @@ alias cc='claude'
 alias ccr='claude --resume'
 alias ccc='claude --continue'
 alias cca='claude --add-dir'
-alias 'cc!'='claude --dangerously-skip-permissions'
-alias 'ccr!'='claude --dangerously-skip-permissions --resume'
-alias 'ccc!'='claude --dangerously-skip-permissions --continue'
+
+# --dangerously-skip-permissions variants are intentionally NOT seeded.
+# A typo (cc! vs cc) silently runs Claude with all guardrails off, including
+# permission prompts for shell exec and file writes. If you want them, add
+# the three-line block below to ~/.zshrc.local manually:
+#   alias 'cc!'='claude --dangerously-skip-permissions'
+#   alias 'ccr!'='claude --dangerously-skip-permissions --resume'
+#   alias 'ccc!'='claude --dangerously-skip-permissions --continue'
 
 # Variants
 alias ccw='claude -w'

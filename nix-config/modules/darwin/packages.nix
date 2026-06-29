@@ -48,9 +48,9 @@ let
 
     # System Utilities
     watch
-    tealdeer  # Fast tldr client (Rust, same pages, offline cache)
-    fastfetch  # System info (modern replacement for neofetch)
-    glow  # Terminal markdown viewer
+    # tealdeer  # Fast tldr client (Rust, same pages, offline cache)
+    # fastfetch  # System info — removed 2026-06-28: pulled imagemagick (libraw/openexr/libheif/libde265 CVEs) for the logo
+    # glow  # Terminal markdown viewer
 
     # File Utilities
     rsync
@@ -69,20 +69,21 @@ let
     # TUI Tools (Terminal User Interfaces)
     lazygit      # Beautiful TUI for git operations
     lazydocker   # Beautiful TUI for Docker management
-    yazi         # Blazing fast terminal file manager
+    # yazi         # Terminal file manager — removed 2026-06-28: pulled imagemagick + ffmpeg→unbound (CVSS 10.0) for previews
 
     # Code Quality & Development
     pre-commit   # Git hooks framework
-    markdown-link-check  # Validate markdown links (was nodePackages.* — moved to top-level in nixpkgs)
+    # markdown-link-check  # Validate markdown links — removed 2026-06-28: pulled nodejs→ada CVE (use `npx markdown-link-check`)
     just         # Command runner
 
     # Code Analysis & Search (enhance Claude Code)
-    ast-grep     # Structural code search (AST-based, better than regex)
-    tokei        # Fast code statistics (lines, languages, etc.)
-    repomix      # Pack entire repo into single AI-friendly file
+    # ast-grep     # Structural code search (AST-based, better than regex)
+    # tokei        # Fast code statistics (lines, languages, etc.)
+    # repomix      # Pack repo into one AI-friendly file — removed 2026-06-28: pulled nodejs→ada CVE (use `npx repomix`)
 
     # Security
     gitleaks     # Secret scanning for git repos (pre-commit integration)
+    security-scan  # Custom (nix-config/pkgs): CVE scan of system closure + brew cask drift; bundles vulnix
 
     # macOS Specific
     mkalias

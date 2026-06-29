@@ -4,7 +4,7 @@ let
   proxies = userConfig.proxies or {};
   # Only apply corporate npm settings on the work profile to prevent
   # Nexus registry and writable prefix leaking into personal/minimal
-  isWorkProfile = profileName == "work";
+  isWorkProfile = myLib.isWorkProfile profileName;
   npmProxyEnabled = isWorkProfile && (proxies.npm.enabled or false);
   npmRegistryUrl = proxies.npm.url or "https://registry.npmjs.org";
   npmGlobalPrefix = proxies.npm.globalPrefix or "$HOME/.npm-global";
@@ -25,9 +25,11 @@ in
     # Save exact versions (no ^ or ~)
     save-exact=true
 
-    # Supply chain protection: reject packages published less than 7 days ago
-    # Gives community time to detect and remove malicious releases
-    min-release-age=7
+    # Supply chain protection: reject packages published less than 14 days ago.
+    # Gives the community time to detect and pull malicious releases — widened
+    # from 7d given elevated supply-chain risk. Trade-off: legit patches also
+    # wait 14d, so urgent security bumps may need a manual --before override.
+    min-release-age=14
   ''
   + lib.optionalString npmProxyEnabled ''
 

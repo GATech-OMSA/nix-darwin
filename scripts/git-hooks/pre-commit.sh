@@ -7,6 +7,16 @@
 
 echo "→ Validating secrets and credentials..."
 
+# Resolve repo root: works both as the installed .git/hooks/pre-commit copy
+# (.git/hooks/../.. = repo root) and standalone scripts/git-hooks/pre-commit.sh
+# (scripts/git-hooks/../.. = repo root). Fail closed if the shared SOPS helper
+# can't be loaded — a security hook that can't check must not pass silently.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+if ! source "$REPO_ROOT/scripts/git-hooks/lib-sops-check.sh" 2>/dev/null; then
+  echo "✗ ERROR: could not load lib-sops-check.sh (expected at scripts/git-hooks/)" >&2
+  exit 1
+fi
+
 SECRETS_PATHS=(
   "$HOME/nix-darwin/nix-config/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/hosts/*/secrets.yaml"
@@ -51,21 +61,8 @@ for pattern in "${SECRETS_PATHS[@]}"; do
     # Check if staged for commit
     rel_path="${secrets_file#$HOME/nix-darwin/}"
     if echo "$STAGED_FILES" | grep -q "$rel_path"; then
-      # Check for binary format
-      if ! file "$secrets_file" | grep -q "ASCII text"; then
-        echo "  ✓ Encrypted (binary): $rel_path"
-        continue
-      fi
-
-      # Check for SOPS YAML format (has sops: metadata section)
-      if grep -q "^sops:" "$secrets_file" && grep -q "mac:" "$secrets_file"; then
-        echo "  ✓ Encrypted (YAML): $rel_path"
-        continue
-      fi
-
-      # Check for SOPS encrypted values (ENC[AES256_GCM pattern)
-      if grep -q "ENC\[AES256_GCM" "$secrets_file"; then
-        echo "  ✓ Encrypted (YAML): $rel_path"
+      if is_sops_encrypted "$secrets_file"; then
+        echo "  ✓ Encrypted: $rel_path"
         continue
       fi
 
@@ -98,8 +95,7 @@ echo "✓ All security checks passed"
 # commits pay zero overhead.
 if echo "$STAGED_FILES" | grep -qE '(\.nix$|^flake\.lock$)'; then
   echo "→ Validating nix flake..."
-  REPO_ROOT_NX="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
-  if [ -f "$REPO_ROOT_NX/flake.nix" ] && command -v nix >/dev/null 2>&1; then
+  if [ -f "$REPO_ROOT/flake.nix" ] && command -v nix >/dev/null 2>&1; then
     nix_err=/tmp/.nix-precommit-err.$$
     trap 'rm -f "$nix_err"' EXIT
 
@@ -111,7 +107,7 @@ if echo "$STAGED_FILES" | grep -qE '(\.nix$|^flake\.lock$)'; then
     fi
 
     # Force-eval the active darwinConfiguration so module-tree errors fail here.
-    machine_id=$(grep 'machineId' "$REPO_ROOT_NX/config/machine-config.nix" 2>/dev/null \
+    machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" 2>/dev/null \
       | sed 's/.*"\(.*\)".*/\1/')
     if [ -z "$machine_id" ]; then
       echo "  ▸ skipping deep eval: could not determine machineId" >&2
@@ -136,7 +132,6 @@ fi
 # Only runs when homebrew.nix is staged; otherwise skipped (zero overhead).
 if echo "$STAGED_FILES" | grep -qE '^nix-config/modules/darwin/homebrew\.nix$'; then
   echo "→ Checking docs/app-recommendations.md is up to date..."
-  REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
   SYNC="$REPO_ROOT/scripts/docs/sync-app-recommendations.sh"
   if [ -x "$SYNC" ]; then
     if ! "$SYNC" --check; then

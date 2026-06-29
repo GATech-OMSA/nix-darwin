@@ -7,6 +7,15 @@
 
 echo "→ Final security check before push..."
 
+# Resolve repo root: works both as the installed .git/hooks/pre-push copy and
+# standalone scripts/git-hooks/pre-push.sh (both .../../ = repo root). Fail
+# closed if the shared SOPS helper can't be loaded.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+if ! source "$REPO_ROOT/scripts/git-hooks/lib-sops-check.sh" 2>/dev/null; then
+  echo "✗ ERROR: could not load lib-sops-check.sh (expected at scripts/git-hooks/)" >&2
+  exit 1
+fi
+
 SECRETS_PATHS=(
   "$HOME/nix-darwin/nix-config/hosts/*/secrets.yaml"
   "$HOME/nix-darwin/hosts/*/secrets.yaml"
@@ -21,18 +30,7 @@ for pattern in "${SECRETS_PATHS[@]}"; do
   for secrets_file in $pattern; do
     [ -f "$secrets_file" ] || continue
 
-    # Check for binary format (skip ASCII text check if binary)
-    if ! file "$secrets_file" | grep -q "ASCII text"; then
-      continue
-    fi
-
-    # Check for SOPS YAML format (has sops: metadata section)
-    if grep -q "^sops:" "$secrets_file" && grep -q "mac:" "$secrets_file"; then
-      continue
-    fi
-
-    # Check for SOPS encrypted values (ENC[AES256_GCM pattern)
-    if grep -q "ENC\[AES256_GCM" "$secrets_file"; then
+    if is_sops_encrypted "$secrets_file"; then
       continue
     fi
 
@@ -58,4 +56,33 @@ if [ $error_found -eq 1 ]; then
 fi
 
 echo "✓ All security checks passed - safe to push"
+
+# ============================================================================
+# SHELL STARTUP-PERF GATE — only when shell-init files changed in this push
+# ============================================================================
+# The bench is TTY-bound and takes ~15-20s, so it must not run on every push.
+# Gate it on a diff touching the shell init surface; skip when there's no TTY
+# (scripted pushes), or when SKIP_PERF_GATE=1. Warn-only unless
+# SHELL_PERF_ENFORCE=1 — startup latency is environmental, so blocking by
+# default would be too noisy.
+if [ "${SKIP_PERF_GATE:-0}" != "1" ] && [ -t 1 ]; then
+  # Range being pushed: prefer the upstream delta, fall back to the last commit.
+  perf_range="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)"
+  if [ -n "$perf_range" ]; then
+    changed="$(git diff --name-only "$perf_range"..HEAD 2>/dev/null)"
+  else
+    changed="$(git diff --name-only HEAD~1..HEAD 2>/dev/null)"
+  fi
+
+  if echo "$changed" | grep -qE 'nix-config/home/_profiles/_template/shell/'; then
+    echo ""
+    echo "→ Shell init changed — checking startup-perf budget..."
+    PERF="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/maintenance/check-shell-perf.sh"
+    if [ -x "$PERF" ]; then
+      # Honors SHELL_PERF_ENFORCE; non-zero exit (enforce + regression) blocks the push.
+      "$PERF" || exit 1
+    fi
+  fi
+fi
+
 exit 0

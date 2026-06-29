@@ -106,11 +106,15 @@ verbose_output() {
 check_nix_daemon() {
   print_category "NIX DAEMON & CORE"
 
-  # Check if nix-daemon is running (check process, not just launchctl)
+  # Check if nix-daemon is running — traditional nix-daemon or Determinate Nix daemon
   if pgrep -x nix-daemon &> /dev/null; then
     check_pass "Nix daemon is running"
-  elif launchctl list | grep -q "org.nixos.nix-daemon"; then
+  elif pgrep -x determinate-nixd &> /dev/null; then
+    check_pass "Nix daemon is running (Determinate Nix)"
+  elif launchctl list 2>/dev/null | grep -q "org.nixos.nix-daemon\|systems.determinate"; then
     check_pass "Nix daemon is running"
+  elif [[ -S /run/nix-daemon.socket || -S /private/run/nix-daemon.socket ]]; then
+    check_pass "Nix daemon is running (socket active)"
   else
     check_fail "Nix daemon is not running" "Run: sudo launchctl load /Library/LaunchDaemons/org.nixos.nix-daemon.plist"
   fi
@@ -151,9 +155,11 @@ check_nix_daemon() {
 check_darwin_activation() {
   print_category "DARWIN SYSTEM"
 
-  # Check darwin-rebuild availability
+  # Check darwin-rebuild availability — falls back to nix profiles path when /run/current-system is missing
   if command -v darwin-rebuild &> /dev/null; then
     check_pass "darwin-rebuild command available"
+  elif [[ -x /nix/var/nix/profiles/system/sw/bin/darwin-rebuild ]]; then
+    check_pass "darwin-rebuild available (not in PATH)" "Run: sudo /nix/var/nix/profiles/system/sw/bin/darwin-rebuild switch --flake ~/nix-darwin"
   else
     check_fail "darwin-rebuild command not found"
   fi
@@ -166,20 +172,22 @@ check_darwin_activation() {
     check_fail "System activation symlink missing"
   fi
 
-  # Check launchd services
+  # Check launchd services — includes Determinate Nix service labels
   local services=(
     "org.nixos.nix-daemon"
+    "systems.determinate.nix-daemon"
+    "systems.determinate.determinate-nixd"
   )
 
   local service_count=0
   for service in "${services[@]}"; do
-    if launchctl list | grep -q "$service"; then
+    if launchctl list 2>/dev/null | grep -q "$service"; then
       ((service_count++))
     fi
   done
 
   if [[ $service_count -gt 0 ]]; then
-    check_pass "LaunchD services active" "$service_count/${#services[@]} services running"
+    check_pass "LaunchD services active" "$service_count service(s) running"
   else
     check_warn "No LaunchD services detected" "Some services may not be configured"
   fi
@@ -347,10 +355,13 @@ check_git_config() {
 check_secrets() {
   print_category "SECRETS & ENCRYPTION"
 
-  # Check SOPS availability
+  # Check SOPS availability — falls back to nix profiles path when /run/current-system is missing
   if command -v sops &> /dev/null; then
     sops_version=$(sops --version 2>&1 | head -n1)
     check_pass "SOPS command available" "$sops_version"
+  elif [[ -x /nix/var/nix/profiles/system/sw/bin/sops ]]; then
+    sops_version=$(/nix/var/nix/profiles/system/sw/bin/sops --version 2>&1 | head -n1)
+    check_pass "SOPS available (not in PATH)" "$sops_version"
   else
     check_fail "SOPS command not found"
   fi
@@ -579,7 +590,9 @@ check_system_resources() {
   print_category "SYSTEM RESOURCES"
 
   # Uptime — long uptimes accumulate stale memory/swap and slow new processes
-  if uptime_days=$(uptime | sed -nE 's/.*up ([0-9]+) day.*/\1/p') && [[ -n "$uptime_days" ]]; then
+  local uptime_out
+  uptime_out=$(uptime)
+  if uptime_days=$(sed -nE 's/.*up ([0-9]+) day.*/\1/p' <<< "$uptime_out") && [[ -n "$uptime_days" ]]; then
     if (( uptime_days < 14 )); then
       check_pass "Uptime healthy" "${uptime_days} days"
     elif (( uptime_days < 30 )); then
@@ -591,7 +604,7 @@ check_system_resources() {
 
   # Load average — sustained > num-cores indicates contention
   cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 8)
-  load_5min=$(uptime | sed -nE 's/.*load averages?: [^ ]+ +([0-9.]+).*/\1/p')
+  load_5min=$(sed -nE 's/.*load averages?: [^ ]+ +([0-9.]+).*/\1/p' <<< "$uptime_out")
   if [[ -n "$load_5min" ]]; then
     is_high=$(awk -v l="$load_5min" -v c="$cores" 'BEGIN { print (l > c * 0.75) ? 1 : 0 }')
     if [[ "$is_high" -eq 0 ]]; then

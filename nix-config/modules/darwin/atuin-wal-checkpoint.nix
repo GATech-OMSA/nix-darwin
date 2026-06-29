@@ -15,7 +15,7 @@
 # as a user-initiated last resort.
 
 let
-  homeDir = "/Users/${username}";
+  homeDir = config.users.users.${username}.home;
   atuinDir = "${homeDir}/.local/share/atuin";
 
   checkpointScript = pkgs.writeShellScript "atuin-wal-checkpoint" ''

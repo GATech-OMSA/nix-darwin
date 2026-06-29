@@ -180,37 +180,31 @@ _This section is generated from `nix-config/modules/darwin/homebrew.nix` by_
 _`scripts/docs/sync-app-recommendations.sh`. Do not edit by hand —_
 _re-run via `just docs-apps` after editing `homebrew.nix`._
 
-### Casks (40)
+### Casks (29)
 
 | Cask | Note |
 | --- | --- |
 | `alfred` |  |
+| `antigravity-cli` | Google Antigravity agentic CLI (command: agy) — replaces deprecated gemini-cli; cask auto_updates |
 | `appcleaner` |  |
 | `betterdisplay` | HiDPI/brightness for external monitors on Apple Silicon |
-| `bruno` | Git-friendly local API client (modern Postman) — also on nix |
 | `chatgpt` |  |
 | `claude` |  |
 | `claude-code@latest` | rolling channel; stable `claude-code` cask lags behind |
 | `codex` |  |
 | `codex-app` | OpenAI Codex GUI (separate from codex CLI) |
-| `conductor` |  |
 | `cursor` |  |
-| `firefox` |  |
 | `fork` |  |
 | `ghostty` | Terminal emulator (Homebrew for personal, Nix for work) |
 | `google-chrome` |  |
 | `hush` | migrated from MAS — `mas uninstall 1544743900` first |
 | `iterm2` |  |
-| `jan` | Local LLM runner |
-| `kaleidoscope` | Best-in-class visual diff/merge for code, folders, images |
 | `keka` |  |
 | `keyclu` |  |
-| `little-snitch` | Outbound firewall — per-app network monitoring |
 | `microsoft-excel` | migrated from MAS — `mas uninstall 462058435` first |
 | `microsoft-powerpoint` | migrated from MAS — `mas uninstall 462062816` first |
 | `microsoft-word` |  |
 | `obsidian` |  |
-| `ollama-app` |  |
 | `orbstack` | Docker & Linux VMs (fast, lightweight) |
 | `orion` |  |
 | `pdf-expert` |  |
@@ -218,12 +212,7 @@ _re-run via `just docs-apps` after editing `homebrew.nix`._
 | `proxyman` | Native HTTP/HTTPS debugging proxy with SSL inspection |
 | `raycast` |  |
 | `shottr` |  |
-| `slack` |  |
-| `tradingview` |  |
 | `visual-studio-code` |  |
-| `warp` |  |
-| `whatsapp` |  |
-| `zoom` |  |
 
 ### Mac App Store (8)
 

@@ -58,6 +58,16 @@ function update-nix() {
     git stash pop --quiet
   fi
 
+  # Security pre-flight ("y"): scan the candidate closure before switching.
+  # Builds the new system (the switch below reuses that cached build), shows the
+  # CVE delta, and prompts on findings. Skippable via SKIP_SECURITY_PREFLIGHT=1.
+  # A non-zero return means the user declined — abort before touching the system.
+  if ! FLAKE_ROOT="$nix_dir" bash "$nix_dir/scripts/maintenance/security-preflight.sh"; then
+    echo "  Update aborted at security pre-flight (nothing switched)."
+    cd - > /dev/null
+    return 1
+  fi
+
   echo "  Rebuilding darwin configuration..."
   if sudo FLAKE_ROOT="$nix_dir" darwin-rebuild switch --flake "$nix_dir#$machine_id" --impure; then
     echo "  Darwin rebuild completed"
@@ -98,17 +108,15 @@ function update-brew() {
       ((errors++))
     fi
 
+    # Greedy cask upgrade (incl. apps with auto_updates true) via brew's built-in
+    # --greedy — replaces the third-party buo/cask-upgrade tap (`brew cu`), which
+    # is now an untrusted tap and redundant. One less external dependency.
     echo "  Upgrading all casks (including auto-update apps)..."
-    if brew commands | grep -q "^cu$"; then
-      if brew cu -afy; then
-        echo "  All casks upgraded"
-      else
-        echo "  error: cask upgrade failed" >&2
-        ((errors++))
-      fi
+    if brew upgrade --cask --greedy; then
+      echo "  All casks upgraded"
     else
-      echo "  warning: brew-cask-upgrade not installed, skipping"
-      echo "     Install: brew tap buo/cask-upgrade && brew install brew-cask-upgrade"
+      echo "  error: cask upgrade failed" >&2
+      ((errors++))
     fi
 
     echo "  Cleaning up..."
@@ -133,54 +141,6 @@ function update-brew() {
     return 1
   fi
 }
-
-# update-mamba — disabled; uv is the standard (CLAUDE.md)
-# function update-mamba() {
-#   echo "→ Updating Micromamba..."
-#   local errors=0
-#
-#   if command -v micromamba &> /dev/null; then
-#     echo "  → Updating micromamba environments..."
-#     # Update all environments dynamically using JSON for robust parsing
-#     local env_list=""
-#     if command -v jq &>/dev/null; then
-#       # Try JSON parsing first (more robust)
-#       local json_output
-#       if json_output=$(micromamba env list --json 2>/dev/null) && [[ -n "$json_output" ]]; then
-#         env_list=$(echo "$json_output" | jq -r '.envs[]' 2>/dev/null | xargs -I{} basename {} 2>/dev/null)
-#       fi
-#     fi
-#     # Fallback to text parsing if jq not available or JSON parsing failed
-#     if [[ -z "$env_list" ]]; then
-#       env_list=$(micromamba env list 2>/dev/null | tail -n +3 | awk '{print $1}')
-#     fi
-#     if [ -n "$env_list" ]; then
-#       for env in $env_list; do
-#         if [ "$env" != "base" ]; then  # Skip the base installation
-#           echo "    • Updating $env..."
-#           if micromamba update -n "$env" --all -y 2>/dev/null; then
-#             echo "    ✓ $env updated"
-#           else
-#             echo "    ▸ $env skipped or failed" >&2
-#             ((errors++))
-#           fi
-#         fi
-#       done
-#     else
-#       echo "    → No environments to update"
-#     fi
-#   else
-#     echo "  ▸ Micromamba not found"
-#     return 1
-#   fi
-#
-#   if [ $errors -eq 0 ]; then
-#     echo "✓ Micromamba update completed successfully"
-#   else
-#     echo "▸ Micromamba update completed with $errors error(s)"
-#     return 1
-#   fi
-# }
 
 function update-vscode() {
   echo "→ Updating VS Code extensions..."
@@ -231,8 +191,6 @@ function update-dev() {
 
   update-nix || ((errors++))
   echo ""
-  # update-mamba || ((errors++))  # disabled; uv is the standard
-  # echo ""
   update-vscode || ((errors++))
 
   local end_time=$(date +%s)
@@ -285,8 +243,6 @@ function update-all() {
   echo ""
   update-brew || ((total_errors++))
   echo ""
-  # update-mamba || ((total_errors++))  # disabled; uv is the standard
-  # echo ""
   update-vscode || ((total_errors++))
   echo ""
   update-mas || ((total_errors++))

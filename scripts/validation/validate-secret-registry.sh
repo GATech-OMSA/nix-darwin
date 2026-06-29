@@ -65,7 +65,7 @@ fi
 # Load secret paths from registry
 echo "Loading paths from registry..."
 mapfile -t SECRET_PATHS < <(
-  nix eval "$REPO_ROOT#secretPaths" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
+  nix eval "$REPO_ROOT#lib.secrets.paths" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
 )
 
 if [ ${#SECRET_PATHS[@]} -eq 0 ]; then
@@ -76,16 +76,19 @@ fi
 echo "   Loaded ${#SECRET_PATHS[@]} paths from registry"
 echo ""
 
-# Load paths by type
+# Load paths by type — single eval, slice per-type with jq
 declare -A PATHS_BY_TYPE
-for type in aws database tokens ssh credentials general; do
-  type_upper=$(echo "$type" | tr '[:lower:]' '[:upper:]')
-  var_name="TYPE_${type_upper}_PATHS"
+paths_by_type_json=$(nix eval "$REPO_ROOT#lib.secrets.pathsByType" --json 2>/dev/null)
 
-  # Load paths into array
-  paths_json=$(nix eval "$REPO_ROOT#secretsByType.$type" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g")
-  count=$(echo "$paths_json" | wc -l | tr -d ' ')
+if [ -z "$paths_by_type_json" ]; then
+  echo -e "${RED}error: failed to load secret categories from registry${NC}"
+  exit 1
+fi
 
+mapfile -t SECRET_TYPES < <(jq -r 'keys[]' <<< "$paths_by_type_json")
+
+for type in "${SECRET_TYPES[@]}"; do
+  count=$(jq -r --arg t "$type" '.[$t] | length' <<< "$paths_by_type_json")
   PATHS_BY_TYPE[$type]=$count
 
   if [ "$VERBOSE" = true ]; then
@@ -161,7 +164,7 @@ fi
 # Validate glob patterns
 echo "Validating glob patterns..."
 mapfile -t GLOB_PATTERNS < <(
-  nix eval "$REPO_ROOT#secretGlobPatterns" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
+  nix eval "$REPO_ROOT#lib.secrets.globPatterns" --json 2>/dev/null | jq -r '.[]' | sed "s|\${HOME}|$HOME|g"
 )
 
 pattern_count=${#GLOB_PATTERNS[@]}

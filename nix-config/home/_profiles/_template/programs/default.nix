@@ -17,7 +17,7 @@ in
     ./eza.nix
     ./fzf.nix
     ./git.nix
-    # ./karabiner.nix   # disabled — re-enable + uncomment "karabiner-elements" cask in modules/darwin/homebrew.nix
+    ./karabiner.nix
     ./nix-index.nix
     ./node.nix
     ./ssh.nix

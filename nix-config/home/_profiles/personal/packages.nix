@@ -11,14 +11,14 @@
     # CREATIVE & MEDIA TOOLS
     # ============================================
     # Video & audio
-    ffmpeg             # Video/audio converter
-    yt-dlp             # Video/audio downloader (youtube-dl successor)
+    # ffmpeg             # Video/audio converter
+    # yt-dlp             # Video/audio downloader — removed 2026-06-28: co-pulled ffmpeg→unbound (use `nix run nixpkgs#yt-dlp`)
     # obs-studio         # Screen recording/streaming
     # handbrake          # Video transcoder
     # sox                # Sound processing
 
     # Image
-    imagemagick        # Image manipulation CLI
+    # imagemagick        # Image manipulation CLI — removed 2026-06-28: pulled libraw/openexr/libheif/libde265 CVEs (use `nix run nixpkgs#imagemagick`)
     # darktable          # Photo workflow
     # inkscape           # Vector graphics editor
 

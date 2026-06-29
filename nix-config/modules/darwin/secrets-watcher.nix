@@ -15,14 +15,21 @@
 # producing a new inode every time, so this triggers reliably.
 
 let
-  homeDir = "/Users/${username}";
+  homeDir = config.users.users.${username}.home;
   repoDir = "${homeDir}/nix-darwin";
   secretsFile = "${repoDir}/nix-config/hosts/${machineId}/secrets.yaml";
   stateDir = "${homeDir}/.local/state/secrets-deploy";
 
   # Wrapper script: run deploy-secrets, capture per-event log, rotate to last 10.
+  #
+  # launchd hands agents a minimal PATH, so deploy-secrets.sh would otherwise
+  # have to hunt for sops/yq (and could pick a wrong/stray yq). Prepend the
+  # exact nix-store sops + mikefarah yq this build pins, then the system dirs
+  # for the coreutils (grep/sed/awk/diff/find/...) the script also relies on.
+  # Nix bins go first so they win deploy-secrets' "must live in /nix/store" guard.
   watchScript = pkgs.writeShellScript "secrets-deploy-watcher" ''
     set -uo pipefail
+    export PATH="${lib.makeBinPath [ pkgs.sops pkgs.yq-go ]}:/usr/bin:/bin"
     /bin/mkdir -p "${stateDir}"
     ts=$(/bin/date -u +%Y%m%dT%H%M%SZ)
     log_file="${stateDir}/$ts.log"

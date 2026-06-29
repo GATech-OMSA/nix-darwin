@@ -254,6 +254,8 @@ deprecate/docs/                 # Archived guides (git history)
 | Reload secrets | `secrets-reload` | Re-source in current shell |
 | Scan secrets | `secrets-rescan` | Discover unmanaged secrets (read-only) |
 | Run tests | `just test` | Run integration suite |
+| Scan installed CVEs | `secnow` (or `just security-scan`) | CVE scan of live system; `secnow --explain` shows dep owners |
+| Scan before install | `secnext` | Scans candidate closure before a switch; `--fast` = eval-only peek |
 | Edit config | `nixconf` | Daily development |
 | Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See nix-config/home/_profiles/_template/programs/git.nix |
 | AWS login | `awslogin <alias> <env> [role]` | SSO login + dynamic profile creation |
@@ -387,6 +389,8 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 | Switch profile | Edit `config/machine-config.nix` → `profileName = "..."` |
 | Configure corporate proxy | `config/user-config.nix` → Uncomment `proxies` section, set `enabled = true` |
 | Change supply chain settings | `docs/supply-chain-security.md` has file locations per manager |
+| Accept/whitelist a CVE | `scripts/validation/vulnix-whitelist.toml` (triaged, dated reasons) |
+| Tune the pre-install gate | `scripts/maintenance/security-preflight.sh`; bypass with `SKIP_SECURITY_PREFLIGHT=1` or `nix-rebuild-skip-checks` |
 
 ---
 

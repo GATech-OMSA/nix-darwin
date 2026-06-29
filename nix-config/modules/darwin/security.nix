@@ -5,6 +5,15 @@
 # macOS security and privacy configuration: firewall hardening,
 # stealth mode, and Touch ID authentication for sudo.
 
+let
+  # MDM manages its own firewall policy on work; we control it on all other profiles.
+  firewallEnabled = myLib.selectByProfile profileName {
+    personal = true;
+    work     = false;
+    minimal  = true;
+    default  = true;
+  };
+in
 {
 
   # ==== Firewall ====
@@ -13,18 +22,8 @@
   # Stealth mode makes the machine silent to port scans (no ICMP or TCP RST replies),
   # reducing attack surface on untrusted networks.
   # Disabled on work profile — MDM manages its own firewall policy.
-  networking.applicationFirewall.enable = myLib.selectByProfile profileName {
-    personal = true;
-    work     = false;   # MDM manages its own firewall policy
-    minimal  = true;
-    default  = true;
-  };
-  networking.applicationFirewall.enableStealthMode = myLib.selectByProfile profileName {
-    personal = true;
-    work     = false;
-    minimal  = true;
-    default  = true;
-  };
+  networking.applicationFirewall.enable = firewallEnabled;
+  networking.applicationFirewall.enableStealthMode = firewallEnabled;
 
   # ==== PAM / Authentication ====
 
