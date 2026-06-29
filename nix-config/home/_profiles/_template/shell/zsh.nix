@@ -249,9 +249,9 @@ in
 
       # Force home-manager regeneration (workaround for cache bug)
       # See: claudedocs/troubleshooting/HOME-MANAGER-CACHE-BUG.md
-      # Automatically restarts shell on success
-      nix-rebuild-hm-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && sudo FLAKE_ROOT=${nixDarwinDir} darwin-rebuild switch --flake ${nixDarwinDir}#${machineId} --impure && exec zsh";
-      nix-home-rebuild-force = "cd ${nixDarwinDir} && result=$(nix build --impure --print-out-paths .#darwinConfigurations.${machineId}.config.home-manager.users.${username}.home.activationPackage) && $result/activate && exec zsh";
+      # Logic extracted to a script (repo convention); restarts shell on success.
+      nix-rebuild-hm-force = "${nixDarwinDir}/scripts/maintenance/rebuild-hm-force.sh --with-system";
+      nix-home-rebuild-force = "${nixDarwinDir}/scripts/maintenance/rebuild-hm-force.sh";
 
       # Scaffold new machine configuration from template
       nix-scaffold-machine = "${nixDarwinDir}/scripts/setup/scaffold-new-machine.sh";
@@ -325,10 +325,11 @@ in
       cat = "bat --style=plain --paging=never";
       catp = "bat -p";
 
-      grep = "rg";
+      # grep/find intentionally NOT aliased to rg/fd — those take different
+      # syntax (not just different output), so overriding them silently breaks
+      # `grep -rn` / `find . -name`. Use rg/fd by name; `rgi` is the short rg.
       rgi = "rg -i";
 
-      find = "fd";
       du = "dust";
       df = "duf";
       top = "btop";
@@ -361,17 +362,17 @@ in
       "uv-run" = "uv run";
       activate = "source .venv/bin/activate";
 
-      # Linting & Formatting
-      lint = "ruff check .";
-      format = "ruff format .";
-      "lint-fix" = "ruff check --fix .";
+      # Linting & Formatting (py- namespaced: these are Python/ruff-only, so a
+      # bare `lint` shouldn't run ruff inside a JS/Go repo)
+      "py-lint" = "ruff check .";
+      "py-format" = "ruff format .";
+      "py-lint-fix" = "ruff check --fix .";
 
       # ============================================
       # AWS
       # ============================================
-      awsp = "export AWS_PROFILE=";
-      awsprofile = "echo $AWS_PROFILE";
-      # awswho defined as function in aws-helpers.nix (richer output than simple alias)
+      # awsp / awsprofile / awswho defined as functions in aws-helpers.nix
+      # (awsp as an alias was broken: `awsp foo` set an empty profile and ran `foo`).
 
       # ============================================
       # DOCKER & KUBERNETES

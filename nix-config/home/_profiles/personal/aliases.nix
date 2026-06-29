@@ -5,17 +5,17 @@
 { config, lib, myLib, ... }:
 
 {
-  programs.zsh.shellAliases = {
+  programs.zsh.shellAliases = (myLib.mkNavigationAliases "$HOME/Dev" {
     # ============================================
     # LEARNING DIRECTORY SHORTCUTS
     # ============================================
-    learning = "cd ~/Dev/learning";
-    aiml = "cd ~/Dev/ai-ml";
-    algo = "cd ~/Dev/algorithms";
-    courses = "cd ~/Dev/courses";
-    experiments = "cd ~/Dev/experiments";
-    oss = "cd ~/Dev/open-source";
-
+    learning = "learning";
+    aiml = "ai-ml";
+    algo = "algorithms";
+    courses = "courses";
+    experiments = "experiments";
+    oss = "open-source";
+  }) // {
     # ============================================
     # OLLAMA SHORTCUTS
     # ============================================

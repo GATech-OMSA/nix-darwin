@@ -67,6 +67,19 @@ rec {
     }
   '';
 
+  # Generate directory-navigation aliases (eliminates repetitive `cd` aliases).
+  #
+  # Usage:
+  #   myLib.mkNavigationAliases "$HOME/Dev" {
+  #     learning = "learning";   # => learning = "cd $HOME/Dev/learning";
+  #     aiml     = "ai-ml";      # => aiml     = "cd $HOME/Dev/ai-ml";
+  #   }
+  #
+  # The `f`-prefix is reserved for Finder-open (Tier 1: `f` = open .), so keep
+  # nav alias names bare to avoid shadowing that convention.
+  mkNavigationAliases = base: dirs:
+    lib.mapAttrs (_name: subdir: "cd ${base}/${subdir}") dirs;
+
   # ============================================
   # AWS HELPERS
   # ============================================

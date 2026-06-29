@@ -5,18 +5,20 @@
 { config, lib, myLib, ... }:
 
 {
-  programs.zsh.shellAliases = {
-    # ============================================
-    # WORK PROJECT DIRECTORY SHORTCUTS
-    # ============================================
-    fscst = "cd ~/Dev/scst";
-    fti = "cd ~/Dev/tririga";
-    fps-proj = "cd ~/Dev/paging-solution";
-    fmp = "cd ~/Dev/misc-projects";
-    fwfhub = "cd ~/Dev/workforce-hub";
-    fap = "cd ~/Dev/webMethods/api";
-    fdeploys = "cd ~/Dev/production-deploys";
-
+  # ============================================
+  # WORK PROJECT DIRECTORY SHORTCUTS
+  # ============================================
+  # Bare-name nav aliases via myLib (rule #2). The `f`-prefix is reserved for
+  # Finder-open (Tier 1: `f` = open .) — these `cd` shortcuts must not shadow it.
+  programs.zsh.shellAliases = (myLib.mkNavigationAliases "$HOME/Dev" {
+    scst = "scst";
+    tri = "tririga";
+    paging = "paging-solution";
+    misc = "misc-projects";
+    wfhub = "workforce-hub";
+    "webm-api" = "webMethods/api";
+    deploys = "production-deploys";
+  }) // {
     # ============================================
     # AWS CONFIGURATION
     # ============================================

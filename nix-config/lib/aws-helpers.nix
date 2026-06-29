@@ -209,6 +209,23 @@ EOF
       echo "   Run 'awslist' to see all profiles"
     }
 
+    # Low-level escape hatch: set/clear AWS_PROFILE by raw name.
+    # `awsuse` is the normal switcher (validates against accounts.json);
+    # `awsp <name>` sets a raw profile, `awsp` with no arg clears it.
+    function awsp() {
+      if [ -z "''${1:-}" ]; then
+        unset AWS_PROFILE
+        echo "→ AWS profile cleared"
+      else
+        export AWS_PROFILE="$1"
+        echo "→ AWS_PROFILE=''${AWS_PROFILE}"
+      fi
+    }
+
+    function awsprofile() {
+      echo "''${AWS_PROFILE:-(none)}"
+    }
+
     function awslist() {
       if [ ! -f ~/.aws/accounts.json ]; then
         echo "✗No accounts.json found at ~/.aws/accounts.json"
