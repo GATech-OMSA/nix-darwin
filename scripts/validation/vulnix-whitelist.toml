@@ -31,10 +31,10 @@
 # on a bump, forcing re-triage) and direct CLI tools whose CVEs require a crafted
 # local file to trigger.
 #
-# Deliberately NOT whitelisted (still flagged by secnow) — removal candidates,
-# pending a keep-vs-remove decision: imagemagick, libraw, openexr, libheif,
-# libde265 (imaging stack ← fastfetch + yazi), unbound (← yazi + yt-dlp), and
-# ada (← repomix + markdown-link-check). Co-owned, so removal needs ALL owners.
+# 2026-06-28 update: removed fastfetch, yazi, yt-dlp, repomix, markdown-link-check
+# (+ ffmpeg) → cleared unbound (CVSS 10.0). The imaging stack (imagemagick,
+# libraw, openexr, libheif, libde265) now traces to the DIRECT `imagemagick`
+# package — still flagged, pending a keep-vs-remove decision on imagemagick itself.
 
 # Essential transport/crypto/base libs — pulled by openssh/curl, not removable.
 ["openssl-3.6.2"]
@@ -88,3 +88,7 @@ cve = [ "CVE-2026-44656", "CVE-2026-45130", "CVE-2026-46483", "CVE-2026-47162", 
 # giflib ← graphviz (diagram rendering); image-parse CVEs need a crafted GIF.
 ["giflib-5.2.2"]
 cve = [ "CVE-2024-45993", "CVE-2026-23868", "CVE-2026-26740" ]
+
+# ada ← nodejs (URL-parser lib bundled in node) — nodejs is needed for npm.
+["ada-3.4.4"]
+cve = "CVE-2024-9410"
