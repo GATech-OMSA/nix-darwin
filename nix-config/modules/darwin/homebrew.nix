@@ -41,7 +41,9 @@
     # Only brew formulae that MUST be from Homebrew
     brews = [
       "mas"         # Mac App Store CLI
-      "gemini-cli"  # Google Gemini CLI
+      # gemini-cli removed 2026-06-28: brew formula deprecated (disabled 2026-12-18).
+      # Replaced by the antigravity-cli cask below (command: agy). NOTE: this changes
+      # the `gemini` command to `agy` — reconfigure the peers@arc gemini integration.
       "gh"          # GitHub CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
       "opencode"    # Open source AI coding agent (anomalyco/tap)
@@ -60,6 +62,7 @@
       # "antigravity"
       "visual-studio-code"
       "claude-code@latest"    # rolling channel; stable `claude-code` cask lags behind
+      "antigravity-cli"     # Google Antigravity agentic CLI (command: agy) — replaces deprecated gemini-cli; cask auto_updates
       "ghostty"             # Terminal emulator (Homebrew for personal, Nix for work)
       "iterm2"
       # "dash"
