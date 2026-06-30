@@ -32,18 +32,17 @@
     };
 
     taps = [
-      # buo/cask-upgrade removed: now an untrusted third-party tap, and its `brew cu`
-      # is redundant with brew's built-in `brew upgrade --cask --greedy` (used in
-      # update-brew). One fewer external code source in the supply chain.
+      # Re-added 2026-06-30: provides `brew cu` (cask-upgrade) for interactive cask
+      # updates. Redundant with `brew upgrade --cask --greedy` (used by update-brew),
+      # but kept for the `brew cu` workflow. Review the tap's contents if it changes.
+      "buo/cask-upgrade"  # `brew cu` cask-upgrade command
       "anomalyco/tap"     # OpenCode AI coding agent (trust the formula, not whole tap)
     ];
 
     # Only brew formulae that MUST be from Homebrew
     brews = [
       "mas"         # Mac App Store CLI
-      # gemini-cli removed 2026-06-28: brew formula deprecated (disabled 2026-12-18).
-      # Replaced by the antigravity-cli cask below (command: agy). NOTE: this changes
-      # the `gemini` command to `agy` — reconfigure the peers@arc gemini integration.
+      "ollama"      # Local LLM CLI (managed so cleanup=zap won't remove it)
       "gh"          # GitHub CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
       "opencode"    # Open source AI coding agent (anomalyco/tap)
@@ -58,21 +57,21 @@
 
       # Development
       "cursor"
-      "orbstack"            # Docker & Linux VMs (fast, lightweight)
+      "orbstack"
       # "antigravity"
       "visual-studio-code"
-      "claude-code@latest"    # rolling channel; stable `claude-code` cask lags behind
-      "antigravity-cli"     # Google Antigravity agentic CLI (command: agy) — replaces deprecated gemini-cli; cask auto_updates
-      "ghostty"             # Terminal emulator (Homebrew for personal, Nix for work)
+      "claude-code@latest"
+      "antigravity-cli"
+      "ghostty"
       "iterm2"
       # "dash"
       # "warp"
       "fork"
       "microsoft-word"
-      "microsoft-excel"        # migrated from MAS — `mas uninstall 462058435` first
-      "microsoft-powerpoint"   # migrated from MAS — `mas uninstall 462062816` first
+      "microsoft-excel"          # migrated from MAS — `mas uninstall 462058435` first
+      "microsoft-powerpoint"     # migrated from MAS — `mas uninstall 462062816` first
       # "bruno"                  # Git-friendly local API client (modern Postman) — also on nix
-      "proxyman"               # Native HTTP/HTTPS debugging proxy with SSL inspection
+      "proxyman"                 # Native HTTP/HTTPS debugging proxy with SSL inspection
       # "kaleidoscope"           # Best-in-class visual diff/merge for code, folders, images
 
       # Productivity
@@ -86,7 +85,7 @@
       "codex"
       "codex-app"       # OpenAI Codex GUI (separate from codex CLI)
       # "jan"             # Local LLM runner
-      # "ollama-app"
+      "ollama-app"
 
       # Utilities
       "appcleaner"

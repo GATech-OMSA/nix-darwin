@@ -180,22 +180,22 @@ _This section is generated from `nix-config/modules/darwin/homebrew.nix` by_
 _`scripts/docs/sync-app-recommendations.sh`. Do not edit by hand —_
 _re-run via `just docs-apps` after editing `homebrew.nix`._
 
-### Casks (29)
+### Casks (30)
 
 | Cask | Note |
 | --- | --- |
 | `alfred` |  |
-| `antigravity-cli` | Google Antigravity agentic CLI (command: agy) — replaces deprecated gemini-cli; cask auto_updates |
+| `antigravity-cli` |  |
 | `appcleaner` |  |
 | `betterdisplay` | HiDPI/brightness for external monitors on Apple Silicon |
 | `chatgpt` |  |
 | `claude` |  |
-| `claude-code@latest` | rolling channel; stable `claude-code` cask lags behind |
+| `claude-code@latest` |  |
 | `codex` |  |
 | `codex-app` | OpenAI Codex GUI (separate from codex CLI) |
 | `cursor` |  |
 | `fork` |  |
-| `ghostty` | Terminal emulator (Homebrew for personal, Nix for work) |
+| `ghostty` |  |
 | `google-chrome` |  |
 | `hush` | migrated from MAS — `mas uninstall 1544743900` first |
 | `iterm2` |  |
@@ -205,7 +205,8 @@ _re-run via `just docs-apps` after editing `homebrew.nix`._
 | `microsoft-powerpoint` | migrated from MAS — `mas uninstall 462062816` first |
 | `microsoft-word` |  |
 | `obsidian` |  |
-| `orbstack` | Docker & Linux VMs (fast, lightweight) |
+| `ollama-app` |  |
+| `orbstack` |  |
 | `orion` |  |
 | `pdf-expert` |  |
 | `protonvpn` |  |
