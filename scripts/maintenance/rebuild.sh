@@ -107,7 +107,7 @@ _do_rebuild() {
     SECURITY_PREFLIGHT="${NIX_DARWIN_DIR}/scripts/maintenance/security-preflight.sh"
     if [[ -x "$SECURITY_PREFLIGHT" ]]; then
       set +e
-      FLAKE_ROOT="$NIX_DARWIN_DIR" "$SECURITY_PREFLIGHT"
+      FLAKE_ROOT="$NIX_DARWIN_DIR" MACHINE_ID="$MACHINE_ID" "$SECURITY_PREFLIGHT"
       sec_rc=$?
       set -e
       if [[ "$sec_rc" -ne 0 ]]; then

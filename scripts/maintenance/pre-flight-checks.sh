@@ -25,12 +25,11 @@
 #   2. Git status (warns on uncommitted changes)
 #   3. Nix daemon running
 #   4. No active rebuild processes
-#   5. Valid flake.nix syntax
-#   6. Nix store integrity
-#   7. Network connectivity to cache.nixos.org
-#   8. System load
-#   9. Required files exist (flake.nix, flake.lock)
-#  10. Secrets encryption (SOPS binary format)
+#   5. Nix store integrity
+#   6. System load
+#   7. Required files exist (flake.nix, flake.lock)
+#   8. Secrets encryption (SOPS binary format)
+# (flake syntax is validated by the security-preflight build; network is not gated)
 #
 
 set -euo pipefail
@@ -184,23 +183,6 @@ check_active_rebuilds() {
   return 0
 }
 
-check_flake_syntax() {
-  print_check "Validating flake.nix syntax..."
-
-  cd "$NIX_DARWIN_DIR" || return 1
-
-  # Try to evaluate flake (quick syntax check)
-  if nix flake metadata --no-write-lock-file &> /dev/null; then
-    print_pass "flake.nix syntax valid"
-  else
-    print_critical "flake.nix syntax error detected"
-    print_info "Run: nix flake check --show-trace"
-    return 1
-  fi
-
-  return 0
-}
-
 check_nix_store_integrity() {
   print_check "Checking Nix store integrity..."
 
@@ -219,20 +201,6 @@ check_nix_store_integrity() {
   fi
 
   print_pass "Nix store accessible"
-  return 0
-}
-
-check_network_connectivity() {
-  print_check "Checking network connectivity..."
-
-  # Try to reach cache.nixos.org (binary cache)
-  if ping -c 1 -W 2 cache.nixos.org &> /dev/null; then
-    print_pass "Network connectivity OK"
-  else
-    print_warning "Cannot reach cache.nixos.org"
-    print_info "Rebuild may be slower without binary cache"
-  fi
-
   return 0
 }
 
@@ -347,9 +315,7 @@ main() {
   check_git_status || true
   check_nix_daemon || true
   check_active_rebuilds || true
-  check_flake_syntax || true
   check_nix_store_integrity || true
-  check_network_connectivity || true
   check_system_load || true
   check_required_files || true
   check_secrets_encrypted || true

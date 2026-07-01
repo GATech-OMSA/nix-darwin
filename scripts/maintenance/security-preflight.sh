@@ -52,7 +52,9 @@ if [[ "${SKIP_SECURITY_PREFLIGHT:-0}" == "1" ]]; then
 fi
 
 # ── Resolve machineId (flake config name != hostname) ──────────────────────
-machine_id="$(nix eval --raw --file "$NIX_DIR/config/machine-config.nix" machineId 2>/dev/null || true)"
+# Prefer a MACHINE_ID passed by the caller (rebuild.sh already eval'd it) to
+# avoid a second `nix eval` fork per rebuild; fall back to evaluating it here.
+machine_id="${MACHINE_ID:-$(nix eval --raw --file "$NIX_DIR/config/machine-config.nix" machineId 2>/dev/null || true)}"
 if [[ -z "$machine_id" ]]; then
   warning "Could not read machineId — skipping security pre-flight (proceeding)."
   exit 0
