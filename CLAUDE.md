@@ -255,7 +255,7 @@ deprecate/docs/                 # Archived guides (git history)
 | Scan secrets | `secrets-rescan` | Discover unmanaged secrets (read-only) |
 | Run tests | `just test` | Run integration suite |
 | Scan installed CVEs | `secnow` (or `just security-scan`) | CVE scan of live system; `secnow --explain` shows dep owners |
-| Scan before install | `secnext` | Scans candidate closure before a switch; `--fast` = eval-only peek |
+| Scan before install | `secnext` | Scans candidate closure before a switch; `--fast` = eval-only peek; `--no-cache` forces a fresh scan (clean verdicts cached ~7d keyed by closure, so repeat rebuilds of an unchanged closure skip the ~50–80 s scan) |
 | Edit config | `nixconf` | Daily development |
 | Git shortcuts | `g s`, `g aa`, `g cm`, `g ps` | See nix-config/home/_profiles/_template/programs/git.nix |
 | AWS login | `awslogin <alias> <env> [role]` | SSO login + dynamic profile creation |
@@ -389,7 +389,7 @@ Mappings defined in `scripts/secrets/deploy-secrets.sh` (single source of truth)
 | Configure corporate proxy | `config/user-config.nix` → Uncomment `proxies` section, set `enabled = true` |
 | Change supply chain settings | `docs/supply-chain-security.md` has file locations per manager |
 | Accept/whitelist a CVE | `scripts/validation/vulnix-whitelist.toml` (triaged, dated reasons) |
-| Tune the pre-install gate | `scripts/maintenance/security-preflight.sh`; bypass with `SKIP_SECURITY_PREFLIGHT=1` or `nix-rebuild-skip-checks` |
+| Tune the pre-install gate | `scripts/maintenance/security-preflight.sh`; bypass with `SKIP_SECURITY_PREFLIGHT=1` or `nix-rebuild-skip-checks`; `--no-cache` skips the verdict cache; `SEC_PREFLIGHT_CACHE_TTL_DAYS` (default 7) |
 
 ---
 

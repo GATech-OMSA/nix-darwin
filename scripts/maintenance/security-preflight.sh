@@ -17,21 +17,35 @@
 #   --fast     eval only, scan the system .drv — a pre-download peek. Noisier:
 #              it's the BUILD closure (build-time deps that never get installed).
 #
+# Verdict cache: clean AND findings verdicts are cached keyed by the candidate
+#   closure path (+ whitelist mtime), so a rebuild whose closure hasn't changed
+#   skips the ~50–80 s vulnix scan entirely. Findings are cached only after an
+#   explicit accept (prompt approval or --no-prompt) — a cached findings verdict
+#   auto-proceeds (the closure is identical → same CVEs → already triaged); a
+#   no-TTY fallback or user decline is NOT cached (re-prompts next time). TTL
+#   bounds staleness (NVD publishes new CVEs for the same packages); --no-cache
+#   forces a fresh scan + re-prompt. SEC_PREFLIGHT_CACHE_TTL_DAYS overrides the
+#   7-day default.
+#
 # Exit: 0 = proceed (clean, accepted at prompt, scan unavailable, or non-TTY)
 #       1 = abort (user declined at the prompt). A failed scan never aborts.
 #
-# Usage: security-preflight.sh [--fast] [--no-prompt]
+# Usage: security-preflight.sh [--fast] [--no-prompt] [--no-cache]
 
 set -euo pipefail
 
 NIX_DIR="${FLAKE_ROOT:-$HOME/nix-darwin}"
 FAST=false
 PROMPT=true
+USE_CACHE=true
+CACHE_DIR="${HOME}/.cache/nix-darwin/sec-preflight"
+CACHE_TTL_DAYS="${SEC_PREFLIGHT_CACHE_TTL_DAYS:-7}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --fast) FAST=true; shift ;;
     --no-prompt) PROMPT=false; shift ;;
+    --no-cache) USE_CACHE=false; shift ;;
     -h|--help) sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
@@ -90,6 +104,46 @@ else
   fi
 fi
 
+# ── Verdict cache (skip the ~50–80s scan when the closure is unchanged) ─────
+# Key = candidate path (content-addressed, stable for unchanged inputs) + the
+# whitelist mtime (whitelist edits must invalidate). BOTH clean and findings
+# verdicts are cached — but findings only after an explicit accept (prompt
+# approval or --no-prompt), never after a no-TTY fallback or a user decline.
+# A cached findings verdict auto-proceeds: the closure is identical → same
+# CVEs → the user already triaged it. TTL bounds staleness (NVD publishes new
+# CVEs for the same packages); --no-cache forces a fresh scan + re-prompt.
+# Cache file: "<unix-ts>\n<verdict: clean|findings>".
+if [[ "$USE_CACHE" == true ]]; then
+  whitelist_sig=""
+  for _w in "${VULNIX_WHITELIST:-}" "$NIX_DIR/scripts/validation/vulnix-whitelist.toml"; do
+    [[ -n "$_w" && -f "$_w" ]] && whitelist_sig="${whitelist_sig}$(stat -f '%m' "$_w" 2>/dev/null || echo 0)"
+  done
+  cache_key="$(printf '%s|%s' "$target" "$whitelist_sig" | /usr/bin/shasum -a 256 | awk '{print $1}')" || cache_key=""
+  cache_file="$CACHE_DIR/${cache_key}"
+  if [[ -n "$cache_key" && -f "$cache_file" ]]; then
+    cached_ts="$(head -1 "$cache_file" 2>/dev/null || echo 0)"
+    cached_verdict="$(sed -n '2p' "$cache_file" 2>/dev/null || echo "")"
+    now="$(date +%s)"
+    # Guard against a corrupt/non-numeric ts: treat as expired so we re-scan
+    # rather than trip set -e in the arithmetic below.
+    if [[ "$cached_ts" =~ ^[0-9]+$ ]]; then
+      age_days=$(( (now - cached_ts) / 86400 ))
+    else
+      age_days=999
+    fi
+    if [[ "$age_days" -lt "$CACHE_TTL_DAYS" ]]; then
+      if [[ "$cached_verdict" == "clean" ]]; then
+        echo -e "${GREEN}✓ (cached) Candidate closure unchanged — no known non-whitelisted CVEs (last scanned ${age_days} day(s) ago; --no-cache re-scans).${NC}"
+        exit 0
+      elif [[ "$cached_verdict" == "findings" ]]; then
+        echo -e "${YELLOW}⚠ (cached) Candidate closure unchanged — same known CVEs as last scan (${age_days} day(s) ago), previously accepted. Proceeding.${NC}"
+        echo -e "${YELLOW}  Run 'secnext --no-cache' for the full CVE list or to re-review.${NC}"
+        exit 0
+      fi
+    fi
+  fi
+fi
+
 # ── What changes vs the running system (nvd diff) ──────────────────────────
 if [[ "$FAST" == false ]] && command -v nvd >/dev/null 2>&1 && [[ -e /run/current-system ]]; then
   echo ""
@@ -104,10 +158,21 @@ set +e
 scan_rc=$?
 set -e
 
+# write_cache <verdict>: persist a clean/findings verdict so the next rebuild
+# of this same closure skips the scan. No-op when --no-cache or no key. Findings
+# are only written on an EXPLICIT accept (clean, --no-prompt, or prompt yes) —
+# never after a no-TTY fallback or a user decline (those re-prompt next time).
+write_cache() {
+  [[ "$USE_CACHE" == true && -n "${cache_key:-}" ]] || return 0
+  [[ -d "$CACHE_DIR" ]] || mkdir -p "$CACHE_DIR"
+  printf '%s\n%s\n' "$(date +%s)" "$1" > "$cache_file"
+}
+
 # Exit-code contract: 0 clean · 2 findings · 1 could-not-run.
 case "$scan_rc" in
   0)
     echo -e "${GREEN}✓ Candidate system has no known non-whitelisted CVEs.${NC}"
+    write_cache "clean"
     exit 0
     ;;
   1)
@@ -119,10 +184,13 @@ esac
 # scan_rc == 2 → findings present.
 if [[ "$PROMPT" == false ]]; then
   warning "Candidate carries known CVEs (pre-flight informational; proceeding)."
+  write_cache "findings"   # --no-prompt is an explicit accept → cache
   exit 0
 fi
 # Prompt only with a real TTY; scripted/cron contexts proceed with a warning
-# (matches the chosen 'prompt', not 'block', semantics).
+# (matches the chosen 'prompt', not 'block', semantics). Don't cache: an
+# implicit no-TTY proceed isn't an explicit accept — preserve the prompt for
+# the next interactive rebuild of this closure.
 if [[ ! -t 0 ]]; then
   warning "Candidate carries known CVEs; no TTY to prompt — proceeding. Run 'secnext' to review."
   exit 0
@@ -134,6 +202,6 @@ info "Remediation: 'secnow --explain' to find owners · whitelist accepted ones 
 printf "Proceed with install/switch anyway? [y/N] "
 read -r reply </dev/tty
 case "$reply" in
-  [yY]|[yY][eE][sS]) exit 0 ;;
+  [yY]|[yY][eE][sS]) write_cache "findings"; exit 0 ;;
   *) warning "Aborted by user. Nothing was switched."; exit 1 ;;
 esac

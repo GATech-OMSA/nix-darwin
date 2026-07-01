@@ -218,8 +218,12 @@ in
       # secnext ("y"): scan what WOULD be installed before switching (builds the
       #   candidate, shows the delta, prompts on findings).
       #   secnext --fast    → eval-only pre-download peek (build-closure superset).
+      #   secnext --no-cache → force a fresh scan, ignoring the verdict cache.
       # The same secnext gate runs automatically before nix-rebuild / update-nix
-      # (bypass: nix-rebuild-skip-checks, or SKIP_SECURITY_PREFLIGHT=1).
+      # (bypass: nix-rebuild-skip-checks, or SKIP_SECURITY_PREFLIGHT=1). Clean and
+      # explicitly-accepted findings verdicts are cached ~7d keyed by candidate
+      # closure, so a rebuild of an unchanged closure skips the ~50–80s vulnix
+      # scan (SEC_PREFLIGHT_CACHE_TTL_DAYS overrides the TTL).
       secnow = "security-scan";  # packaged tool (bundles vulnix); see nix-config/pkgs/security-scan
       secnext = "${nixDarwinDir}/scripts/maintenance/security-preflight.sh";
 
