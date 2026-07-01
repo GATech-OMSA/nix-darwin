@@ -5,11 +5,16 @@ let
   nixDarwinDir = "${config.home.homeDirectory}/nix-darwin";
   homeDir = config.home.homeDirectory;
 
-  # Lazy-loaded function files (sourced on first use, not at startup)
-  # Saves ~50-80ms by deferring 933 lines of rarely-used function parsing
+  # Lazy-loaded function files (sourced on first use, not at startup).
+  # Defers ~1300 lines of rarely-used function parsing (#012 moved core/python/
+  # aws-completion out of initContent into this pattern; cleanup/update/
+  # credentials-mgmt were already lazy).
   lazyCleanup = pkgs.writeText "cleanup.zsh" (builtins.readFile ./functions/cleanup.zsh);
   lazyUpdate = pkgs.writeText "update.zsh" (builtins.readFile ./functions/update.zsh);
   lazyCredentials = pkgs.writeText "credentials-mgmt.zsh" (builtins.readFile ./functions/credentials-mgmt.zsh);
+  lazyCore = pkgs.writeText "core.zsh" (builtins.readFile ./functions/core.zsh);
+  lazyPython = pkgs.writeText "python.zsh" (builtins.readFile ./functions/python.zsh);
+  lazyAwsCompletion = pkgs.writeText "aws-completion.zsh" (builtins.readFile ./functions/aws-completion.zsh);
 
   # Static generation of shell init scripts to improve startup time
   # This moves ~15-30ms of processing from shell-start to build-time.
@@ -843,12 +848,60 @@ in
       # ============================================
       # LOAD MODULAR FUNCTION FILES
       # ============================================
-      # Functions extracted to separate files for maintainability
-      # See: functions/README.md for documentation
+      # Functions extracted to separate files for maintainability. ALL are
+      # lazy-loaded: a thin wrapper sources the file on first call, so the body
+      # parses only when used. This defers ~1040 lines of rarely-used function
+      # parsing off the interactive-init path (parse savings are modest, a few
+      # ms; the main value is consistency + deferring source-time work like the
+      # aws-completion compdef). See: functions/README.md for documentation.
 
-      ${builtins.readFile ./functions/core.zsh}
-      ${builtins.readFile ./functions/python.zsh}
-      ${builtins.readFile ./functions/aws-completion.zsh}
+      # Lazy-load: core utility functions (203 lines, used occasionally).
+      # `als` is an alias to find-alias (matches core.zsh's own alias) so it
+      # routes through the lazy find-alias wrapper without a separate stub.
+      __lazy_load_core() {
+        unfunction mkcd find-alias zsh-profile path-add backup histgrep \
+          kill-port gcl newproj killport sysinfo warn confirm risky critical \
+          note __lazy_load_core 2>/dev/null
+        source ${lazyCore}
+      }
+      mkcd() { __lazy_load_core; mkcd "$@"; }
+      find-alias() { __lazy_load_core; find-alias "$@"; }
+      zsh-profile() { __lazy_load_core; zsh-profile "$@"; }
+      path-add() { __lazy_load_core; path-add "$@"; }
+      backup() { __lazy_load_core; backup "$@"; }
+      histgrep() { __lazy_load_core; histgrep "$@"; }
+      kill-port() { __lazy_load_core; kill-port "$@"; }
+      gcl() { __lazy_load_core; gcl "$@"; }
+      newproj() { __lazy_load_core; newproj "$@"; }
+      killport() { __lazy_load_core; killport "$@"; }
+      sysinfo() { __lazy_load_core; sysinfo "$@"; }
+      warn() { __lazy_load_core; warn "$@"; }
+      confirm() { __lazy_load_core; confirm "$@"; }
+      risky() { __lazy_load_core; risky "$@"; }
+      critical() { __lazy_load_core; critical "$@"; }
+      note() { __lazy_load_core; note "$@"; }
+      alias als="find-alias"
+
+      # Lazy-load: Python/uv helpers (67 lines, used occasionally).
+      __lazy_load_python() {
+        unfunction uv-new uv-venv activate pyenv-info __lazy_load_python 2>/dev/null
+        source ${lazyPython}
+      }
+      uv-new() { __lazy_load_python; uv-new "$@"; }
+      uv-venv() { __lazy_load_python; uv-venv "$@"; }
+      activate() { __lazy_load_python; activate "$@"; }
+      pyenv-info() { __lazy_load_python; pyenv-info "$@"; }
+
+      # Lazy-load: AWS tab-completion body (88 lines) — only needed on first
+      # tab of awsuse/awslogin. compdef runs inline (it must, to register at
+      # init); the completion function is stubbed to source its body on first
+      # invocation, so _aws_helper_completion parses only when completion fires.
+      _aws_helper_completion() {
+        unfunction _aws_helper_completion 2>/dev/null
+        source ${lazyAwsCompletion}
+        _aws_helper_completion "$@"
+      }
+      compdef _aws_helper_completion awsuse awslogin
 
       # Lazy-load: cleanup functions (377 lines, used occasionally)
       __lazy_load_cleanup() {
