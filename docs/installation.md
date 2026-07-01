@@ -184,7 +184,6 @@ cd ~/nix-darwin
 
 1. **Validates Configuration**
    - Checks config files exist
-   - Validates FLAKE_ROOT environment variable
    - Detects placeholders in secret templates
 
 2. **Encrypts Secrets**
@@ -193,7 +192,7 @@ cd ~/nix-darwin
    - Validates encryption
 
 3. **Builds System**
-   - Runs `darwin-rebuild switch --flake . --impure`
+   - Runs `darwin-rebuild switch --flake .` (pure eval — no `--impure` needed)
    - Installs all packages
    - Sets up Homebrew and casks
    - Generates configuration files (~/.zshrc, ~/.gitconfig, etc.)
@@ -512,9 +511,9 @@ echo $ACTIVE_PROFILE
    - Old: Hostname determined behavior (macbook-pro-m1 → personal)
    - New: Profile selection in machine-config.nix
 
-3. **Impure builds required**
-   - All builds require `--impure` flag (auto-handled by `nix-rebuild` alias)
-   - FLAKE_ROOT environment variable required
+3. **Pure evaluation**
+   - The flake evaluates pure (no `--impure` flag, no `FLAKE_ROOT` needed)
+   - Tracked config files + hash-pinned vendored sops binary keep eval hermetic
 
 **Migration Steps:**
 

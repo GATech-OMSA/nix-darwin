@@ -9,48 +9,24 @@ let
   # Extract proxy configuration
   goProxy = userConfig.proxies.go or { enabled = false; };
 
-  # Check for pre-built sops-install-secrets binary (for proxied machines)
-  # Resolution order:
-  #   1. ~/.local/bin/sops-install-secrets (manually imported)
-  #   2. cache/sops-nix/sops-install-secrets.gz (auto-extracted from repo)
-  # Note: builtins.getEnv requires --impure (rebuild.sh always passes this)
-  homeDir = builtins.getEnv "HOME";
-  flakeRoot = builtins.getEnv "FLAKE_ROOT";
-
-  # Pinned SHA256 of cache/sops-nix/sops-install-secrets.gz
-  # Update via: shasum -a 256 cache/sops-nix/sops-install-secrets.gz | cut -d' ' -f1
+  # Hash-pinned, vendored sops-install-secrets (cache/sops-nix/sops-install-secrets.gz).
+  # A pure path literal — no builtins.getEnv / builtins.pathExists — so this overlay
+  # no longer forces --impure. The file is tracked in the repo, so it's present in
+  # every checkout (CI included); builtins.path + sha256 verifies it at eval time.
+  # Update the pin via:
+  #   shasum -a 256 cache/sops-nix/sops-install-secrets.gz | cut -d' ' -f1
   pinnedSopsHash = "cf4f9155cc2d77fa99e1ee285f5efa87a780d51136be33152eec7a3366e0c0f4";
+  prebuiltSopsStorePath = builtins.path {
+    path = ../../cache/sops-nix/sops-install-secrets.gz;
+    name = "sops-install-secrets.gz";
+    sha256 = pinnedSopsHash;
+  };
 
-  # Check ~/.local/bin first — but skip on work profile (no override capability,
-  # always use the hash-pinned repo cache to avoid stale-binary footguns from
-  # corporate IT or old setup scripts)
+  # Work has no local override capability — always build from source (via the
+  # corporate Go proxy when configured, else the default proxy.golang.org).
+  # Personal uses the vendored, hash-pinned binary, skipping the Go build.
   isWorkProfile = (machineConfig.profileName or "") == "work";
-  localBinPath =
-    if homeDir != "" then homeDir + "/.local/bin/sops-install-secrets" else "";
-  hasLocalBin = !isWorkProfile && localBinPath != "" && builtins.pathExists localBinPath;
-
-  # Fallback: check repo cache (no manual import.sh needed)
-  repoCachePath =
-    if flakeRoot != "" then flakeRoot + "/cache/sops-nix/sops-install-secrets.gz" else "";
-  hasRepoCache = repoCachePath != "" && builtins.pathExists repoCachePath;
-
-  # Copy into Nix store for sandbox access
-  # builtins.path with sha256 verifies the file hash at eval time — a tampered
-  # binary will fail the build rather than being silently trusted.
-  # Note: localBinPath is NOT hash-pinned because the user manages that binary
-  # manually (e.g. scp from another machine). Only the repo cache is pinned.
-  prebuiltSopsStorePath =
-    if hasLocalBin
-    then builtins.path { path = localBinPath; name = "sops-install-secrets"; }
-    else if hasRepoCache
-    then builtins.path {
-      path = repoCachePath;
-      name = "sops-install-secrets.gz";
-      sha256 = pinnedSopsHash;
-    }
-    else null;
-
-  hasPrebuiltSops = hasLocalBin || hasRepoCache;
+  usePrebuiltSops = !isWorkProfile;
 in
 
 [
@@ -59,24 +35,19 @@ in
   # ============================================
   # Issue: Corporate proxy blocks Go module downloads from proxy.golang.org
   #
-  # Resolution order:
-  #   1. Pre-built binary at ~/.local/bin/sops-install-secrets (via cache/sops-nix/)
-  #   2. Go proxy override from user-config.nix
-  #   3. Default (build from source)
+  # Resolution:
+  #   - Personal: vendored, hash-pinned sops-install-secrets (no Go build).
+  #   - Work: Go proxy override from user-config.nix, else default source build.
+  # The previous ~/.local/bin override (an un-pinned, user-managed binary) was
+  # dropped — the vendored cache is the same binary (verified byte-identical),
+  # now hash-checked at eval time instead of silently trusted.
   (_final: prev:
-    if hasPrebuiltSops then {
-      # Use pre-built binary — avoids Go build entirely
-      sops-install-secrets = prev.runCommand "sops-install-secrets" {} (
-        if hasLocalBin then ''
-          mkdir -p $out/bin
-          cp ${prebuiltSopsStorePath} $out/bin/sops-install-secrets
-          chmod +x $out/bin/sops-install-secrets
-        '' else ''
-          mkdir -p $out/bin
-          ${prev.gzip}/bin/gunzip -c ${prebuiltSopsStorePath} > $out/bin/sops-install-secrets
-          chmod +x $out/bin/sops-install-secrets
-        ''
-      );
+    if usePrebuiltSops then {
+      sops-install-secrets = prev.runCommand "sops-install-secrets" {} ''
+        mkdir -p $out/bin
+        ${prev.gzip}/bin/gunzip -c ${prebuiltSopsStorePath} > $out/bin/sops-install-secrets
+        chmod +x $out/bin/sops-install-secrets
+      '';
     }
     else if goProxy.enabled or false then {
       # Use corporate Go proxy for building from source

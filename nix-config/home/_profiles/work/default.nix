@@ -42,7 +42,7 @@ in {
   # Shared imports + starship wiring live in _template/profile-base.nix;
   # this profile contributes its proxy/session deltas.
   imports = [
-    (import ../_template/profile-base.nix { profileDir = ../work; })
+    (import ../_template/profile-base.nix { profileDir = ../work; extras = ../work/starship-extras.toml; })
   ];
 
   # Add Rancher Desktop to PATH (for Docker CLI)

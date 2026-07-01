@@ -34,7 +34,7 @@ WITH_SYSTEM=false
 cd "$NIX_DARWIN_DIR"
 
 echo "→ Building home-manager activation package for ${USERNAME}@${MACHINE_ID}…"
-result=$(nix build --impure --print-out-paths \
+result=$(nix build --print-out-paths \
   ".#darwinConfigurations.${MACHINE_ID}.config.home-manager.users.${USERNAME}.home.activationPackage")
 
 echo "→ Activating home-manager generation…"
@@ -42,7 +42,7 @@ echo "→ Activating home-manager generation…"
 
 if [[ "$WITH_SYSTEM" == true ]]; then
   echo "→ Running full darwin-rebuild switch…"
-  sudo FLAKE_ROOT="$NIX_DARWIN_DIR" darwin-rebuild switch --flake "${NIX_DARWIN_DIR}#${MACHINE_ID}" --impure
+  sudo darwin-rebuild switch --flake "${NIX_DARWIN_DIR}#${MACHINE_ID}"
 fi
 
 echo "Restarting shell..."

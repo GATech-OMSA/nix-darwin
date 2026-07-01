@@ -24,7 +24,7 @@ build:
     #!/usr/bin/env bash
     MACHINE_ID=$(nix eval --raw --file config/machine-config.nix machineId 2>/dev/null || echo "default")
     echo "Building system for $MACHINE_ID (no switch)..."
-    nix build ".#darwinConfigurations.$MACHINE_ID.system" --impure
+    nix build ".#darwinConfigurations.$MACHINE_ID.system"
 
 # Rollback to previous generation
 rollback:

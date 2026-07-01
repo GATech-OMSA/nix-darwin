@@ -367,9 +367,8 @@ build_and_activate() {
   fi
 
   # Run darwin-rebuild with flake (requires sudo for system activation)
-  # --impure flag is required because we use builtins.getEnv for gitignored configs
   # Explicitly specify configuration name to avoid hostname mismatch issues
-  if sudo FLAKE_ROOT="$FLAKE_ROOT" darwin-rebuild switch --flake "$REPO_ROOT#${machine_id}" --impure; then
+  if sudo darwin-rebuild switch --flake "$REPO_ROOT#${machine_id}"; then
     echo ""
     success "Build and activation complete!"
   else
@@ -382,7 +381,7 @@ build_and_activate() {
     echo "  • Permission issues → Check: sudo permissions"
     echo ""
     echo "For detailed error output, run:"
-    echo "  sudo FLAKE_ROOT=\"\$PWD\" darwin-rebuild switch --flake .#${machine_id} --impure --show-trace"
+    echo "  sudo darwin-rebuild switch --flake .#${machine_id} --show-trace"
     exit 1
   fi
 

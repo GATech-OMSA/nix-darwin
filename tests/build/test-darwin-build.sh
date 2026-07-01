@@ -33,7 +33,7 @@ test_section "Dry-Run Build"
 if [[ "${TEST_DRY_RUN:-0}" -eq 1 ]]; then
   test_skip "Darwin build dry-run" "Skipped in dry-run mode"
 else
-  if nix build "$REPO_ROOT#darwinConfigurations.$MACHINE_ID.system" --dry-run --impure --no-write-lock-file 2>&1; then
+  if nix build "$REPO_ROOT#darwinConfigurations.$MACHINE_ID.system" --dry-run --no-write-lock-file 2>&1; then
     _test_log "pass" "Dry-run build succeeds for $MACHINE_ID"
   else
     _test_log "fail" "Dry-run build failed for $MACHINE_ID"

@@ -68,7 +68,7 @@ diff "$CONFIG_FILE.bak" "$CONFIG_FILE" || true
 
 # Rebuild system targeting the specific machine
 echo "Rebuilding system with new profile..."
-if sudo FLAKE_ROOT="$REPO_ROOT" darwin-rebuild switch --flake "$REPO_ROOT#$MACHINE_ID" --impure; then
+if sudo darwin-rebuild switch --flake "$REPO_ROOT#$MACHINE_ID"; then
   echo "Successfully switched to $PROFILE profile"
   echo "Restart your shell: exec zsh"
   rm "$CONFIG_FILE.bak"

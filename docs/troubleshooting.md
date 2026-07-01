@@ -14,12 +14,12 @@
 | Build fails | `nix-rollback` | [Build Errors](#build-errors) |
 | Wrong profile active | Edit machine-config.nix | [Profile Issues](#profile-issues) |
 | Config files missing | Run `./scripts/configure.sh` | [Profile Issues](#missing-configuration-files) |
-| FLAKE_ROOT not set | Use `nix-rebuild` alias | [Profile Issues](#flake-root-errors) |
+| Pure-eval error | Remove the impure builtin (no --impure needed) | [Flake evaluation](#flake-evaluation-pure--no---impure--flake_root-needed) |
 | Placeholders in secrets | Edit secret templates, run activate.sh | [Secrets Issues](#placeholder-detection) |
 | Changes don't apply | `exec zsh` | [Silent Failures](#silent-failures) |
 | Git commit blocked | Check secret encryption | [Git Problems](#commit-blocked-by-hooks) |
 | Age key mismatch | Check ~/.config/sops/age/ | [Secrets Issues](#age-key-problems) |
-| Build requires --impure | Use `nix-rebuild` alias (auto-handles) | [Build Errors](#impure-flag-required) |
+| Pure-eval error | An impure builtin was reintroduced — remove it (no --impure needed) | [Flake evaluation](#flake-evaluation-pure--no---impure--flake_root-needed) |
 
 ---
 
@@ -32,7 +32,7 @@ Problem? Start here:
 │  ├─ Yes → Check Profile Issues section
 │  │  ├─ Config files missing? → Run ./scripts/configure.sh
 │  │  ├─ Wrong profile? → Edit config/machine-config.nix
-│  │  └─ Build fails? → Check FLAKE_ROOT errors
+│  │  └─ Build fails? → Check flake evaluation (pure)
 │  │
 │  └─ No → Did you just rebuild?
 │     ├─ Yes → Try: exec zsh
@@ -196,59 +196,25 @@ echo $ACTIVE_PROFILE
 
 ---
 
-### FLAKE_ROOT Errors
+### Flake evaluation (pure — no --impure / FLAKE_ROOT needed)
 
-**Symptom:**
-- Build fails with "FLAKE_ROOT not set"
-- Error: "Could not find config files"
-
-**Why it happens:**
-- v2.0.0 uses FLAKE_ROOT environment variable to find config files
-- Direct `darwin-rebuild` commands don't set this variable
-- Only `nix-rebuild` alias handles FLAKE_ROOT automatically
-
-**Solution:**
+The flake evaluates **pure** — no `--impure` flag and no `FLAKE_ROOT` env var
+required. `config/machine-config.nix` and `config/user-config.nix` are tracked
+files imported as path literals into the store, and the sops overlay uses a
+hash-pinned, vendored binary (`cache/sops-nix/sops-install-secrets.gz`) via a
+pure `builtins.path` — no `builtins.getEnv` / `builtins.pathExists` at eval time.
 
 ```bash
-# ❌ DON'T use darwin-rebuild directly
-darwin-rebuild switch --flake .
-
-# ✅ DO use nix-rebuild alias (sets FLAKE_ROOT automatically)
+# ✅ Use the nix-rebuild alias (preferred)
 nix-rebuild
 
-# Or set manually if needed
-FLAKE_ROOT="$PWD" darwin-rebuild switch --flake . --impure
+# Or darwin-rebuild directly — no --impure, no FLAKE_ROOT:
+sudo darwin-rebuild switch --flake .#<machineId>
 ```
 
-**Why it's needed:**
-- Config files are gitignored and outside Nix store
-- FLAKE_ROOT tells Nix where to find config/ directory
-- `nix-rebuild` alias handles this automatically
-
----
-
-### Impure Flag Required
-
-**Symptom:**
-- Build fails without `--impure` flag
-- Error about pure evaluation
-
-**Why it happens:**
-- v2.0.0 reads gitignored files (config/user-config.nix, config/machine-config.nix)
-- Pure evaluation mode can't access files outside Nix store
-- All builds require `--impure` flag
-
-**Solution:**
-
-```bash
-# ✅ Use nix-rebuild alias (handles --impure automatically)
-nix-rebuild
-
-# Or if using darwin-rebuild directly:
-darwin-rebuild switch --flake . --impure
-```
-
-**Note:** `nix-rebuild` alias automatically adds `--impure` flag
+If you see a "pure evaluation" error, something reintroduced an impure builtin
+(`builtins.getEnv` / `builtins.pathExists` / `builtins.readDir`) at eval time —
+find and remove it rather than re-adding `--impure`.
 
 ---
 

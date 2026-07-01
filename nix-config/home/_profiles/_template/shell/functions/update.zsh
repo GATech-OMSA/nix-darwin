@@ -69,7 +69,7 @@ function update-nix() {
   fi
 
   echo "  Rebuilding darwin configuration..."
-  if sudo FLAKE_ROOT="$nix_dir" darwin-rebuild switch --flake "$nix_dir#$machine_id" --impure; then
+  if sudo darwin-rebuild switch --flake "$nix_dir#$machine_id"; then
     echo "  Darwin rebuild completed"
   else
     echo "  error: darwin rebuild failed" >&2

@@ -87,16 +87,16 @@ echo ""
 echo -e "${BOLD}🔒 Security pre-flight — assessing what would be installed${NC}"
 
 # ── Realize the candidate ──────────────────────────────────────────────────
-# --impure + FLAKE_ROOT mirror the real switch (overlays read getEnv HOME/FLAKE_ROOT);
-# a bare build would eval-fail where the real build succeeds.
+# The flake is pure (no getEnv/pathExists in the overlay since #009), so a bare
+# build evaluates the same closure the real switch will — no --impure needed.
 if [[ "$FAST" == true ]]; then
   info "Fast mode: evaluating candidate derivation (no download)…"
-  target="$(FLAKE_ROOT="$NIX_DIR" nix path-info --impure --derivation "$flake_attr" 2>/dev/null || true)"
+  target="$(nix path-info --derivation "$flake_attr" 2>/dev/null || true)"
   [[ -z "$target" ]] && { warning "Could not evaluate candidate .drv — skipping (proceeding)."; exit 0; }
   warning "Fast scan is the BUILD closure (superset incl. build-time deps not installed)."
 else
   info "Building candidate closure (no switch; the switch will reuse this)…"
-  if ! target="$(FLAKE_ROOT="$NIX_DIR" nix build --impure --no-link --print-out-paths "$flake_attr" 2>&1 | tail -1)" \
+  if ! target="$(nix build --no-link --print-out-paths "$flake_attr" 2>&1 | tail -1)" \
      || [[ ! -e "$target" ]]; then
     warning "Candidate build failed — skipping security pre-flight (proceeding)."
     exit 0

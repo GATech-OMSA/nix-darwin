@@ -16,7 +16,6 @@
 # Options:
 #   --skip-checks    Skip pre-flight checks (emergency mode)
 #   --debug          Enable verbose output and trace
-#   --impure         Allow impure expressions (default: true)
 #   --rollback       Rollback to previous generation
 #   --legacy         Use darwin-rebuild instead of nh (fallback)
 
@@ -138,13 +137,12 @@ _do_rebuild() {
       echo "warning: nh not found, falling back to darwin-rebuild"
     fi
 
-    export FLAKE_ROOT="$NIX_DARWIN_DIR"
-    CMD="darwin-rebuild switch --flake ${NIX_DARWIN_DIR}#${MACHINE_ID} --impure"
+    CMD="darwin-rebuild switch --flake ${NIX_DARWIN_DIR}#${MACHINE_ID}"
     [[ "$DEBUG_MODE" == "true" ]] && CMD="$CMD --show-trace --verbose --print-build-logs"
     [[ ${#args[@]} -gt 0 ]] && CMD="$CMD ${args[*]}"
 
     echo "Running: sudo $CMD"
-    if sudo FLAKE_ROOT="$FLAKE_ROOT" $CMD; then
+    if sudo $CMD; then
       echo "Rebuild successful"
       return 0
     else
@@ -155,7 +153,7 @@ _do_rebuild() {
 
   # nh path
   cd "$NIX_DARWIN_DIR" || return 1
-  CMD="nh darwin switch -H ${MACHINE_ID} . --impure"
+  CMD="nh darwin switch -H ${MACHINE_ID} ."
   [[ "$DEBUG_MODE" == "true" ]] && CMD="$CMD --show-trace --print-build-logs --verbose"
   [[ ${#args[@]} -gt 0 ]] && CMD="$CMD -- ${args[*]}"
 

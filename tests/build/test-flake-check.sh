@@ -40,7 +40,7 @@ if [[ -n "$MACHINE_ID" ]]; then
   _test_log "pass" "machineId readable from config: $MACHINE_ID"
 
   assert_command_succeeds \
-    "nix eval --raw '$REPO_ROOT#darwinConfigurations.$MACHINE_ID.system.system' --no-write-lock-file --impure 2>/dev/null" \
+    "nix eval --raw '$REPO_ROOT#darwinConfigurations.$MACHINE_ID.system.system' --no-write-lock-file 2>/dev/null" \
     "darwinConfiguration for $MACHINE_ID evaluates"
 else
   _test_log "fail" "Failed to read machineId from config/machine-config.nix"

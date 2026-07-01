@@ -250,8 +250,8 @@ in
 
       # nh (Nix Helper) convenience aliases
       # Uses subshell to cd to flake directory (nh works best from within flake dir)
-      nh-switch = "(cd ${nixDarwinDir} && nh darwin switch -H ${machineId} . --impure)";
-      nh-build = "(cd ${nixDarwinDir} && nh darwin build -H ${machineId} . --impure)";
+      nh-switch = "(cd ${nixDarwinDir} && nh darwin switch -H ${machineId} .)";
+      nh-build = "(cd ${nixDarwinDir} && nh darwin build -H ${machineId} .)";
       nh-clean = "nh clean all --keep 5";          # Smart cleanup, keep 5 generations
       nh-clean-aggressive = "nh clean all --keep 2";  # Aggressive cleanup
       nh-search = "nh search";                     # Search nixpkgs

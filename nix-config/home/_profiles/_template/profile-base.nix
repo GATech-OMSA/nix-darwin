@@ -6,8 +6,10 @@
 #
 # `profileDir` is the importing profile's directory (a path, e.g. ../personal),
 # passed by the profile's default.nix so this module can reach that profile's
-# packages.nix / aliases.nix / starship.toml.
-{ profileDir, ... }:
+# packages.nix / aliases.nix / starship.toml. `extras` (optional) is a path to a
+# profile-specific starship-extras.toml; passing it (a pure path literal) instead
+# of probing with builtins.pathExists keeps the flake pure (no --impure).
+{ profileDir, extras ? null, ... }:
 
 {
   imports = [
@@ -23,13 +25,12 @@
     settings =
       let
         base = builtins.fromTOML (builtins.readFile ./starship/base.toml);
-        extrasPath = profileDir + "/starship-extras.toml";
       in
         # Shallow // is sufficient: extras only adds new top-level module keys
         # (kubernetes/nodejs/…) and overrides the `format` string. Shared
         # modules + palettes stay from base.
-        if builtins.pathExists extrasPath
-        then base // (builtins.fromTOML (builtins.readFile extrasPath))
+        if extras != null
+        then base // (builtins.fromTOML (builtins.readFile extras))
         else base;
   };
 }
