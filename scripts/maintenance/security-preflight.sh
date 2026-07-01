@@ -19,13 +19,12 @@
 #
 # Verdict cache: clean AND findings verdicts are cached keyed by the candidate
 #   closure path (+ whitelist mtime), so a rebuild whose closure hasn't changed
-#   skips the ~50–80 s vulnix scan entirely. Findings are cached only after an
-#   explicit accept (prompt approval or --no-prompt) — a cached findings verdict
-#   auto-proceeds (the closure is identical → same CVEs → already triaged); a
-#   no-TTY fallback or user decline is NOT cached (re-prompts next time). TTL
-#   bounds staleness (NVD publishes new CVEs for the same packages); --no-cache
-#   forces a fresh scan + re-prompt. SEC_PREFLIGHT_CACHE_TTL_DAYS overrides the
-#   7-day default.
+#   skips the ~50–80 s vulnix scan entirely. Findings are cached on any proceed
+#   (prompt approval, --no-prompt, or a no-TTY proceed) — only a user DECLINE is
+#   not cached. A cached findings verdict auto-proceeds (the closure is identical
+#   → same CVEs → already triaged). TTL bounds staleness (NVD publishes new CVEs
+#   for the same packages); --no-cache forces a fresh scan + re-prompt.
+#   SEC_PREFLIGHT_CACHE_TTL_DAYS overrides the 7-day default.
 #
 # Exit: 0 = proceed (clean, accepted at prompt, scan unavailable, or non-TTY)
 #       1 = abort (user declined at the prompt). A failed scan never aborts.
@@ -107,11 +106,11 @@ fi
 # ── Verdict cache (skip the ~50–80s scan when the closure is unchanged) ─────
 # Key = candidate path (content-addressed, stable for unchanged inputs) + the
 # whitelist mtime (whitelist edits must invalidate). BOTH clean and findings
-# verdicts are cached — but findings only after an explicit accept (prompt
-# approval or --no-prompt), never after a no-TTY fallback or a user decline.
-# A cached findings verdict auto-proceeds: the closure is identical → same
-# CVEs → the user already triaged it. TTL bounds staleness (NVD publishes new
-# CVEs for the same packages); --no-cache forces a fresh scan + re-prompt.
+# verdicts are cached — findings on any proceed (prompt approval, --no-prompt,
+# or a no-TTY proceed); only a user decline is not cached. A cached findings
+# verdict auto-proceeds: the closure is identical → same CVEs → the user
+# already triaged it. TTL bounds staleness (NVD publishes new CVEs for the
+# same packages); --no-cache forces a fresh scan + re-prompt.
 # Cache file: "<unix-ts>\n<verdict: clean|findings>".
 if [[ "$USE_CACHE" == true ]]; then
   whitelist_sig=""
@@ -160,8 +159,8 @@ set -e
 
 # write_cache <verdict>: persist a clean/findings verdict so the next rebuild
 # of this same closure skips the scan. No-op when --no-cache or no key. Findings
-# are only written on an EXPLICIT accept (clean, --no-prompt, or prompt yes) —
-# never after a no-TTY fallback or a user decline (those re-prompt next time).
+# are written on any proceed (clean, --no-prompt, no-TTY proceed, or prompt yes)
+# — only a user decline is not cached (re-prompts next time).
 write_cache() {
   [[ "$USE_CACHE" == true && -n "${cache_key:-}" ]] || return 0
   [[ -d "$CACHE_DIR" ]] || mkdir -p "$CACHE_DIR"
@@ -187,12 +186,15 @@ if [[ "$PROMPT" == false ]]; then
   write_cache "findings"   # --no-prompt is an explicit accept → cache
   exit 0
 fi
-# Prompt only with a real TTY; scripted/cron contexts proceed with a warning
-# (matches the chosen 'prompt', not 'block', semantics). Don't cache: an
-# implicit no-TTY proceed isn't an explicit accept — preserve the prompt for
-# the next interactive rebuild of this closure.
+# Prompt only with a real TTY; scripted/cron contexts (and `!`-driven rebuilds)
+# proceed with a warning (matches the chosen 'prompt', not 'block', semantics).
+# Cache the findings: a no-TTY proceed is still a proceed — the closure is
+# identical → same CVEs → already accepted. Not caching here would mean
+# `!`-driven rebuilds never fill the cache and re-scan every time. --no-cache
+# and the TTL remain the re-review escape hatches.
 if [[ ! -t 0 ]]; then
   warning "Candidate carries known CVEs; no TTY to prompt — proceeding. Run 'secnext' to review."
+  write_cache "findings"
   exit 0
 fi
 
