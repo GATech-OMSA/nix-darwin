@@ -44,12 +44,12 @@ User wants to change system pkg    → Edit: nix-config/modules/darwin/packages.
 
 ## 2️⃣ USE myLib FUNCTIONS (NEVER manual conditionals)
 
-Machine-specific values go through `myLib.selectByMachine` — never hand-rolled
-`if hostname == ...` ternaries. Same applies to navigation aliases, package
-groups, and command checks: prefer the `myLib` helper.
+Machine-specific values go through `myLib.selectByProfile` — never hand-rolled
+`if profileName == ...` ternaries. Same applies to navigation aliases and
+command checks: prefer the `myLib` helper.
 
 - **Standard:** [.claude/rules/gen-lang-nix.md](.claude/rules/gen-lang-nix.md) — required patterns + examples.
-- **Catalog:** `nix-config/lib/README.md` — all 30+ helper functions.
+- **Catalog:** `nix-config/lib/README.md` — helper functions (verify against `lib/default.nix`; some legacy helpers were removed).
 
 ---
 
@@ -77,7 +77,7 @@ nix-rollback  # Undo last generation
 
 | File Type | Use This as Template | Why |
 |-----------|---------------------|-----|
-| Library functions | `nix-config/lib/warnings.nix` | Perfect headers, design philosophy, examples |
+| Library functions | `nix-config/lib/default.nix` | Header, section dividers, usage examples in comments |
 | Complex configs | `nix-config/home/_profiles/_template/shell/zsh.nix` | Sections, modern enhancements, comments |
 | Host configs | `nix-config/hosts/_template/default.nix` | Patterns for multi-machine, secrets |
 | Profiles | `nix-config/home/_profiles/work/` | Complex logic, modular organization, inline examples |
@@ -295,10 +295,9 @@ nix-darwin/
 │   │   │   ├── personal/   # Personal profile behavior
 │   │   │   ├── work/       # Work profile behavior
 │   │   │   └── minimal/    # Bare-bones troubleshooting
-│   │   ├── _mixins/      # Reusable configuration mixins
 │   │   └── _template/    # Base template configurations
 │   ├── modules/          # System packages + settings (darwin/shared)
-│   ├── lib/              # 30+ helper functions
+│   ├── lib/              # helper functions (see lib/default.nix)
 │   ├── overlays/         # Package customizations
 │   └── pkgs/             # Custom packages
 ├── scripts/               # Utility scripts

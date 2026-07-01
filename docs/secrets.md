@@ -152,13 +152,6 @@ aws_credentials: |
   [default]
   aws_access_key_id = AKIA...
   aws_secret_access_key = ...
-
-# Database connections
-mssql_prod_connection: |
-  Server=sql.company.com
-  Database=ProdDB
-  User=jimmy
-  Password=secret
 ```
 
 ---

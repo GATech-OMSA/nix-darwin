@@ -146,17 +146,6 @@ secrets = {
   zsh_secrets = { ... };
   ssh_private_key = { ... };
 
-  # Multi-environment databases
-  postgres_prod_connection = {
-    path = "/Users/${username}/.db/postgres/prod";
-    mode = "0600";
-  };
-
-  postgres_dev_connection = {
-    path = "/Users/${username}/.db/postgres/dev";
-    mode = "0600";
-  };
-
   # API tokens
   github_token = {
     path = "/Users/${username}/.tokens/github_token";
@@ -177,9 +166,9 @@ sops = {
 */
 
 # Create secret files manually:
-# mkdir -p ~/.db/postgres
-# echo "connection_string" > ~/.db/postgres/prod
-# chmod 600 ~/.db/postgres/prod
+# mkdir -p ~/.tokens
+# echo "token_value" > ~/.tokens/example_token
+# chmod 600 ~/.tokens/example_token
 ```
 
 ## Multi-Machine Setup Patterns

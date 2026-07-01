@@ -196,10 +196,6 @@ work_ssh_public_key      → ~/.ssh/id_ed25519_work.pub
 aws_credentials     → ~/.aws/credentials
 aws_accounts        → ~/.aws/accounts.json
 
-# Database credentials
-mssql_prod_connection    → ~/.db/mssql/prod
-postgres_prod_connection → ~/.db/postgres/prod
-
 # API tokens, service credentials, etc.
 ```
 

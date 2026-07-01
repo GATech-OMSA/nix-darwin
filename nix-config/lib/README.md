@@ -1,5 +1,12 @@
 # Library Functions
 
+> ⚠️ **This README is stale** (2026-07-01): it documents ~14 helpers that were
+> removed during the `c85cf20` secrets/AWS/setup simplification. **Trust
+> `default.nix` as the source of truth** — only ~10 helpers actually exist:
+> `selectByProfile`, `mkProfileSessionVars`, `msg`, `mkLazyCompletion`,
+> `mkNavigationAliases`, `secrets`, `aws.*`, `reload.*`, `go.proxyVars`,
+> `isWorkProfile`. A full rewrite is tracked as `perf-dedup #002`.
+
 This directory contains reusable Nix helper functions and utilities used across your nix-darwin configuration.
 
 ## Purpose

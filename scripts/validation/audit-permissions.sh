@@ -199,41 +199,6 @@ check_aws_files() {
   done
 }
 
-# Check database connection files
-check_database_files() {
-  print_category "DATABASE CONNECTIONS"
-
-  # Oracle
-  for env in prod dev qa test; do
-    check_file_permission "${HOME}/.db/oracle/$env"
-  done
-
-  # MSSQL
-  for env in prod dev qa test; do
-    check_file_permission "${HOME}/.db/mssql/$env"
-  done
-
-  # PostgreSQL
-  for env in prod dev qa test; do
-    check_file_permission "${HOME}/.db/postgres/$env"
-  done
-
-  # Oracle PS
-  for env in prod dev qa test; do
-    check_file_permission "${HOME}/.db/oracle-ps/$env"
-  done
-
-  # ODS
-  for env in prod dev qa test; do
-    check_file_permission "${HOME}/.db/ods/$env"
-  done
-
-  # DW
-  for env in prod dev qa test; do
-    check_file_permission "${HOME}/.db/dw/$env"
-  done
-}
-
 # Check SSH keys
 check_ssh_files() {
   print_category "SSH KEYS"
@@ -421,7 +386,6 @@ main() {
 
   # Run all permission checks
   check_aws_files
-  check_database_files
   check_ssh_files
   check_token_files
   check_credential_files

@@ -32,12 +32,11 @@
 | `--show-secure` | `-s` | Show secure files (normally hidden) |
 | `--help` | `-h` | Show help message |
 
-## File Categories (42 total)
+## File Categories (18 total)
 
 | Category | Count | Example |
 |----------|-------|---------|
 | AWS | 4 | `~/.aws/credentials` |
-| Database | 24 | `~/.db/oracle/prod` |
 | SSH | 5 | `~/.ssh/id_ed25519` |
 | Tokens | 4 | `~/.tokens/git_token` |
 | Credentials | 2 | `~/.credentials/servicenow` |
