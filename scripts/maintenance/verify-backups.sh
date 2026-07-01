@@ -19,11 +19,12 @@ NC='\033[0m' # No Color
 # CONFIGURATION
 # ============================================================================
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 
 # Extract machineId from config/machine-config.nix
 MACHINE_CONFIG="$REPO_ROOT/config/machine-config.nix"
 if [[ -f "$MACHINE_CONFIG" ]]; then
-  MACHINE_ID=$(grep 'machineId' "$MACHINE_CONFIG" | cut -d'"' -f2)
+  MACHINE_ID="$(get_machine_id)"
 else
   # Fallback or error if config doesn't exist
   echo "error: error: Machine config not found at $MACHINE_CONFIG"

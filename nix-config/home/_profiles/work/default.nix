@@ -14,7 +14,6 @@ let
   hasCaBundle = (proxies.corporateCaBundle or "") != "";
 
   # CA bundle env vars — fan out to all tools that need TLS trust
-  # npm cafile is handled in node.nix via .npmrc
   caBundleVars = if hasCaBundle then {
     AWS_CA_BUNDLE = caBundlePath;
     NODE_EXTRA_CA_CERTS = caBundlePath;
@@ -23,12 +22,8 @@ let
     SSL_CERT_FILE = caBundlePath;        # Generic OpenSSL (curl, etc.)
   } else {};
 
-  # Helper to build proxy environment variables
-  goProxyVars = if (proxies.go.enabled or false) then {
-    GOPROXY = "${proxies.go.url or "https://proxy.golang.org"},direct";
-    GOPRIVATE = proxies.go.private or "";
-    GOSUMDB = "off";  # Corporate proxy cannot mirror Go's sum database
-  } else {};
+  # Proxy env vars (Go via shared myLib.go.proxyVars; Python/npm/cargo inline)
+  goProxyVars = if (proxies.go.enabled or false) then myLib.go.proxyVars proxies.go else {};
 
   pythonProxyVars = if (proxies.python.enabled or false) then {
     PIP_INDEX_URL = proxies.python.url or "https://pypi.org/simple";
@@ -44,35 +39,26 @@ let
   } else {};
 
 in {
+  # Shared imports + starship wiring live in _template/profile-base.nix;
+  # this profile contributes its proxy/session deltas.
   imports = [
-    ../_template/programs      # Base program configs
-    ../_template/shell/zsh.nix # Base shell config
-    ../../_template/development # Development configs (Python, Node, AI/ML)
-    ./packages.nix             # Work-specific packages
-    ./aliases.nix              # Work-specific aliases
+    (import ../_template/profile-base.nix { profileDir = ../work; })
   ];
 
   # Add Rancher Desktop to PATH (for Docker CLI)
-  # npm global prefix PATH is managed by node.nix (co-located with .npmrc prefix)
   home.sessionPath = [
     "$HOME/.rd/bin"  # Rancher Desktop binaries (docker, kubectl, etc.)
   ];
 
-  # Work-specific session variables
-  home.sessionVariables = {
-    MACHINE_MODE = "work";
-    AWS_PROFILE = "work-domain";  # Default, auto-restored from ~/.aws/.last_profile
-    WORKSPACE = "$HOME/Work";
+  # Work-specific session variables (common block via myLib + proxy fan-out)
+  home.sessionVariables = myLib.mkProfileSessionVars {
+    mode = "work";
+    awsProfile = "work-domain";  # auto-restored from ~/.aws/.last_profile
+    workspace = "$HOME/Work";
   }
-  // caBundleVars     # CA bundle for all TLS-speaking tools
-  // goProxyVars      # Merge Go proxy vars if enabled
-  // pythonProxyVars  # Merge Python proxy vars if enabled
-  // npmProxyVars     # Merge NPM proxy vars if enabled
-  // cargoProxyVars;  # Merge Cargo proxy vars if enabled
-
-  # Starship prompt (work theme)
-  programs.starship = {
-    enable = true;
-    settings = builtins.fromTOML (builtins.readFile ./starship.toml);
-  };
+  // caBundleVars
+  // goProxyVars
+  // pythonProxyVars
+  // npmProxyVars
+  // cargoProxyVars;
 }

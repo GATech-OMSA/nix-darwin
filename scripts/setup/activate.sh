@@ -16,6 +16,7 @@ set -o pipefail
 # ============================================================================
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 SCRIPT_VERSION="1.0.0"
 DRY_RUN=false
 
@@ -104,7 +105,7 @@ check_config_files() {
 
   # Extract machineId from machine-config.nix (if it exists)
   if [ -f "$REPO_ROOT/config/machine-config.nix" ]; then
-    local machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | cut -d '"' -f 2)
+    local machine_id="$(get_machine_id)"
 
     # Check host directory exists
     if [ -d "$REPO_ROOT/nix-config/hosts/$machine_id" ]; then
@@ -133,7 +134,7 @@ check_and_handle_secrets() {
   print_step "◆ Secret Encryption Status"
 
   # Extract machineId from machine-config.nix
-  local machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | cut -d '"' -f 2)
+  local machine_id="$(get_machine_id)"
   local SECRETS_FILE="$REPO_ROOT/nix-config/hosts/$machine_id/secrets.yaml"
 
   # Check if secrets file exists
@@ -340,7 +341,7 @@ build_and_activate() {
   export FLAKE_ROOT="$REPO_ROOT"
 
   # Extract machineId from machine-config.nix to use correct flake configuration
-  machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | sed 's/.*"\(.*\)".*/\1/')
+  machine_id="$(get_machine_id)"
 
   if [ -z "$machine_id" ]; then
     error "Could not extract machineId from config/machine-config.nix"

@@ -263,7 +263,7 @@ in
       secrets-view = "${nixDarwinDir}/scripts/secrets/view-secrets.sh";
       secrets-backup = "${nixDarwinDir}/scripts/secrets/backup-secrets.sh";
       secrets-audit = "${nixDarwinDir}/scripts/secrets/audit-secrets.sh";
-      # secrets-status provided by lazy-loaded credentials-mgmt.zsh (richer output)
+      secrets-status = "${nixDarwinDir}/scripts/secrets/status-secrets.sh";
       secrets-deploy = "${nixDarwinDir}/scripts/secrets/deploy-secrets.sh";
 
       # Maintenance & validation
@@ -809,7 +809,7 @@ in
       # ============================================
       # TERRAFORM PLUGIN CACHE
       # ============================================
-      [[ -n "$TF_PLUGIN_CACHE_DIR" ]] && mkdir -p "$TF_PLUGIN_CACHE_DIR"
+      [[ -d "$TF_PLUGIN_CACHE_DIR" ]] || mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # ============================================
       # WELCOME MESSAGE (cached — avoids subprocess calls per shell)
@@ -879,21 +879,18 @@ in
       update-system() { __lazy_load_update; update-system "$@"; }
       update-all() { __lazy_load_update; update-all "$@"; }
 
-      # Lazy-load: credentials management (241 lines, used occasionally)
+      # Lazy-load: workspace backup/restore/sync — the only functions this module defines.
+      # (edit-secrets/secrets-status/etc. were stubbed here previously but never defined
+      # in credentials-mgmt.zsh — they died with the old warning system. secrets-status
+      # is now a shell alias to scripts/secrets/status-secrets.sh; see aliases above.)
       __lazy_load_credentials() {
-        unfunction edit-secrets edit-credentials secrets-status secrets-check \
-          backup-workspace restore-workspace sync-workspace nix-rebuild-confirm \
+        unfunction backup-workspace restore-workspace sync-workspace \
           __lazy_load_credentials 2>/dev/null
         source ${lazyCredentials}
       }
-      edit-secrets() { __lazy_load_credentials; edit-secrets "$@"; }
-      edit-credentials() { __lazy_load_credentials; edit-credentials "$@"; }
-      secrets-status() { __lazy_load_credentials; secrets-status "$@"; }
-      secrets-check() { __lazy_load_credentials; secrets-check "$@"; }
       backup-workspace() { __lazy_load_credentials; backup-workspace "$@"; }
       restore-workspace() { __lazy_load_credentials; restore-workspace "$@"; }
       sync-workspace() { __lazy_load_credentials; sync-workspace "$@"; }
-      nix-rebuild-confirm() { __lazy_load_credentials; nix-rebuild-confirm "$@"; }
       # nix-health() stub omitted — alias `nix-health` points to health-check.sh script
 
       # ============================================

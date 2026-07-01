@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, profileName ? "personal", machineId ? "default", mixins ? [], hostname, myLib, username, ... }:
+{ config, pkgs, lib, inputs, profileName ? "personal", machineId ? "default", hostname, myLib, username, ... }:
 
 {
   # Home Manager configuration for user (username-agnostic)

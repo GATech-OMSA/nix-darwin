@@ -12,6 +12,7 @@ echo "→ Validating secrets and credentials..."
 # (scripts/git-hooks/../.. = repo root). Fail closed if the shared SOPS helper
 # can't be loaded — a security hook that can't check must not pass silently.
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 if ! source "$REPO_ROOT/scripts/git-hooks/lib-sops-check.sh" 2>/dev/null; then
   echo "✗ ERROR: could not load lib-sops-check.sh (expected at scripts/git-hooks/)" >&2
   exit 1
@@ -107,8 +108,7 @@ if echo "$STAGED_FILES" | grep -qE '(\.nix$|^flake\.lock$)'; then
     fi
 
     # Force-eval the active darwinConfiguration so module-tree errors fail here.
-    machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" 2>/dev/null \
-      | sed 's/.*"\(.*\)".*/\1/')
+    machine_id="$(get_machine_id)"
     if [ -z "$machine_id" ]; then
       echo "  ▸ skipping deep eval: could not determine machineId" >&2
     else

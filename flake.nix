@@ -48,7 +48,7 @@
       userConfig = import ./config/user-config.nix;
 
       # Overlays (reads userConfig for proxy settings, machineConfig for profile-aware gates)
-      overlays = import ./nix-config/overlays { inherit inputs userConfig machineConfig; };
+      overlays = import ./nix-config/overlays { inherit inputs userConfig machineConfig myLib; };
 
       # Active machine config (tracked, overrides registry for local builds)
       machineConfig = import ./config/machine-config.nix;

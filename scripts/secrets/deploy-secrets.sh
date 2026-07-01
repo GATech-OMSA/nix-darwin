@@ -27,6 +27,7 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 DRY_RUN=false
 AGE_KEY="$HOME/.config/sops/age/keys.txt"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/secrets-deploy"
@@ -81,7 +82,7 @@ fi
 
 # Auto-detect machine ID
 if [ -f "$REPO_ROOT/config/machine-config.nix" ]; then
-  MACHINE_ID=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | sed 's/.*"\(.*\)".*/\1/')
+  MACHINE_ID="$(get_machine_id)"
 else
   error "Could not detect machine ID (config/machine-config.nix not found)"
   exit 1
@@ -144,12 +145,6 @@ MAPPINGS=(
   # AWS
   "aws_credentials|$HOME/.aws/credentials|0600"
   "aws_accounts|$HOME/.aws/accounts.json|0600"
-
-  # Database credentials
-  "mssql_prod_connection|$HOME/.db/mssql/prod|0600"
-  "postgres_prod_connection|$HOME/.db/postgres/prod|0600"
-  "ods_prod_connection|$HOME/.db/ods/prod|0600"
-  "dw_prod_connection|$HOME/.db/dw/prod|0600"
 
   # API tokens
   "git_token|$HOME/.tokens/git_token|0600"

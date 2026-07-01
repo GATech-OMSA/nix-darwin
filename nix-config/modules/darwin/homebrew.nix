@@ -42,10 +42,10 @@
     # Only brew formulae that MUST be from Homebrew
     brews = [
       "mas"         # Mac App Store CLI
-      "ollama"      # Local LLM CLI (managed so cleanup=zap won't remove it)
-      "gh"          # GitHub CLI
       "mole"        # Mac cleanup/optimization CLI (mo clean, mo analyze, mo status)
       "opencode"    # Open source AI coding agent (anomalyco/tap)
+      # "gh" removed — managed by Nix (essentialPackages) on all machines
+      # "ollama" removed — the `ollama-app` cask bundles the CLI
     ];
 
     # GUI applications only

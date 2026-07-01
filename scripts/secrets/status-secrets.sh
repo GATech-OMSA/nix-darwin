@@ -26,6 +26,7 @@ error() { echo -e "${RED}✗${NC} $*"; }
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 
 echo ""
 echo "Secrets Management Status"
@@ -69,7 +70,7 @@ echo ""
 # Machine and secrets file
 echo "Secrets File:"
 if [ -f "$REPO_ROOT/config/machine-config.nix" ]; then
-  machine_id=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | sed 's/.*"\(.*\)".*/\1/')
+  machine_id="$(get_machine_id)"
   secrets_file="$REPO_ROOT/nix-config/hosts/$machine_id/secrets.yaml"
 
   echo -e "  ${DIM}Machine: $machine_id${NC}"

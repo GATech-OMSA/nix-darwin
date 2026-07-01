@@ -3,7 +3,7 @@
 # Purpose: Modify existing nixpkgs packages without forking nixpkgs
 # Usage: Import in flake.nix to apply customizations
 
-{ inputs, userConfig, machineConfig }:
+{ inputs, userConfig, machineConfig, myLib }:
 
 let
   # Extract proxy configuration
@@ -81,11 +81,7 @@ in
     else if goProxy.enabled or false then {
       # Use corporate Go proxy for building from source
       sops-install-secrets = inputs.sops-nix.packages.${prev.system}.sops-install-secrets.overrideAttrs (_: {
-        overrideModAttrs = _: {
-          GOPROXY = "${goProxy.url},direct";
-          GOPRIVATE = goProxy.private or "";
-          GOSUMDB = "off";
-        };
+        overrideModAttrs = _: myLib.go.proxyVars goProxy;
       });
     } else
       { }  # No override — build from source using default proxy.golang.org

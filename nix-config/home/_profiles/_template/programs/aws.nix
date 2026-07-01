@@ -18,7 +18,7 @@ let
   awsSso = userConfig.awsSso or { enabled = false; };
   ssoEnabled = (awsSso.enabled or false) && (awsSso.startUrl or "") != "";
   ssoRegion = awsSso.region or "us-east-1";
-  ssoSessionName = if profileName == "work" then "sso-work" else "sso-personal";
+  ssoSessionName = myLib.selectByProfile profileName { work = "sso-work"; personal = "sso-personal"; default = "sso-personal"; };
 
   # SSO-enabled config (just session + default — profiles created by awslogin)
   ssoConfig = ''

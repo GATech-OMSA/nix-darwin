@@ -24,6 +24,7 @@ set -o pipefail
 
 SCRIPT_VERSION="1.0.0"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 JSON_MODE=false
 
 # ANSI color codes
@@ -314,7 +315,7 @@ check_config_files() {
 
     # Check for valid field names
     if grep -q 'machineId' "$machine_config" 2>/dev/null; then
-      local config_machine_id=$(grep 'machineId' "$machine_config" | cut -d '"' -f 2)
+      local config_machine_id="$(get_machine_id)"
       success "machineId = \"$config_machine_id\""
 
       # Compare with detected machine ID (config includes profile suffix)
@@ -383,7 +384,7 @@ check_host_directory() {
   local machine_config="$REPO_ROOT/config/machine-config.nix"
 
   if [ -f "$machine_config" ]; then
-    machine_id=$(grep 'machineId' "$machine_config" 2>/dev/null | cut -d '"' -f 2)
+    machine_id="$(get_machine_id)"
   fi
 
   if [ -z "$machine_id" ] || [ "$machine_id" = "CHANGE-ME" ]; then
@@ -445,7 +446,7 @@ check_secrets() {
   local machine_config="$REPO_ROOT/config/machine-config.nix"
 
   if [ -f "$machine_config" ]; then
-    machine_id=$(grep 'machineId' "$machine_config" 2>/dev/null | cut -d '"' -f 2)
+    machine_id="$(get_machine_id)"
   fi
 
   if [ -z "$machine_id" ] || [ "$machine_id" = "CHANGE-ME" ]; then
@@ -546,7 +547,7 @@ determine_stage() {
   # Determine machine ID for host check
   local machine_id=""
   if [ -f "$machine_config" ]; then
-    machine_id=$(grep 'machineId' "$machine_config" 2>/dev/null | cut -d '"' -f 2)
+    machine_id="$(get_machine_id)"
   fi
   if [ -n "$machine_id" ] && [ "$machine_id" != "CHANGE-ME" ] && [ -d "$REPO_ROOT/nix-config/hosts/$machine_id" ]; then
     has_host=true

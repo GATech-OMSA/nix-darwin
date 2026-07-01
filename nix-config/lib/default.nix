@@ -13,9 +13,6 @@ rec {
   # PROFILE HELPERS
   # ============================================
 
-  # Check if profile is personal
-  isPersonalProfile = profileName: profileName == "personal";
-
   # Check if profile is work
   isWorkProfile = profileName: profileName == "work";
 
@@ -25,6 +22,14 @@ rec {
     values.${profileName}
       or (values.default
       or (throw "No value for profile '${profileName}' and no default provided"));
+
+  # Build the common sessionVariables block for a full profile.
+  # Usage: myLib.mkProfileSessionVars { mode = "home"; awsProfile = "personal"; workspace = "$HOME/Dev"; }
+  mkProfileSessionVars = { mode, awsProfile, workspace }: {
+    MACHINE_MODE = mode;
+    AWS_PROFILE = awsProfile;
+    WORKSPACE = workspace;
+  };
 
 
   # ============================================
@@ -37,10 +42,6 @@ rec {
     error = msg: ''echo "error: ${msg}" >&2'';
     warning = msg: ''echo "warning: ${msg}"'';
     info = msg: ''echo "${msg}"'';
-    loading = msg: ''echo "${msg}..."'';
-    rocket = msg: ''echo "${msg}"'';
-    package = msg: ''echo "${msg}"'';
-    pin = msg: ''echo "${msg}"'';
   };
 
   # ============================================
@@ -88,6 +89,20 @@ rec {
   aws = import ./aws-helpers.nix { inherit lib; };
 
   # ============================================
+  # GO PROXY HELPERS
+  # ============================================
+  # Build the Go proxy env-var set from a userConfig.proxies.go struct.
+  # Shared by three emission sites (build sandbox env, sops-nix build attrs,
+  # work runtime session vars) so the values stay in sync — F18/#019.
+  go = {
+    proxyVars = goCfg: {
+      GOPROXY = "${goCfg.url or "https://proxy.golang.org"},direct";
+      GOPRIVATE = goCfg.private or "";
+      GOSUMDB = "off";  # corporate proxy cannot mirror Go's sum database
+    };
+  };
+
+  # ============================================
   # HOT RELOAD HELPERS
   # ============================================
 
@@ -107,16 +122,6 @@ rec {
         "\${HOME}/.aws/credentials"
         "\${HOME}/.aws/accounts.json"
         "\${HOME}/.aws/.last_profile"
-      ];
-
-      # Database connection strings deployed by scripts/secrets/deploy-secrets.sh
-      # (the prod targets in its MAPPINGS array). Kept in sync with that list so
-      # validation/audit coverage matches what is actually written to disk.
-      database = [
-        "\${HOME}/.db/mssql/prod"
-        "\${HOME}/.db/postgres/prod"
-        "\${HOME}/.db/ods/prod"
-        "\${HOME}/.db/dw/prod"
       ];
 
       ai = [

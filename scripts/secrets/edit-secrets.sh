@@ -24,6 +24,7 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
 
 # Parse options
 MACHINE_ID="${1:-}"
@@ -37,7 +38,7 @@ fi
 # Auto-detect machine ID if not provided
 if [ -z "$MACHINE_ID" ]; then
   if [ -f "$REPO_ROOT/config/machine-config.nix" ]; then
-    MACHINE_ID=$(grep 'machineId' "$REPO_ROOT/config/machine-config.nix" | sed 's/.*"\(.*\)".*/\1/')
+    MACHINE_ID="$(get_machine_id)"
     info "Auto-detected machine ID: $MACHINE_ID"
   else
     error "Could not detect machine ID"

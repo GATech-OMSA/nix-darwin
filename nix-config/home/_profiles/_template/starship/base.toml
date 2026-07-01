@@ -1,7 +1,9 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# Personal Profile — Line-connected, Pastel Text
-# Minimal prompt: directory, git, nix-shell, duration, time
+# Starship base config — shared by all full profiles (personal, work).
+# Profile-specific additions (e.g. work's k8s/language modules) live in
+# <profile>/starship-extras.toml and are shallow-merged (//) over this by
+# _template/profile-base.nix.
 
 scan_timeout = 100
 

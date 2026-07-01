@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, username, userConfig ? {}, ... }:
+{ config, pkgs, lib, inputs, username, userConfig ? {}, myLib, ... }:
 
 # Darwin Modules - Module Imports
 #
@@ -16,7 +16,6 @@ in
     ./fonts.nix
     ./security.nix
     ./packages.nix
-    ./builders.nix
     ./secrets-watcher.nix
     ./atuin-wal-checkpoint.nix
   ];
@@ -77,15 +76,7 @@ in
   # These are available during darwin-rebuild and all Nix builds.
   # Note: work/default.nix sets the same Go proxy vars for user shell sessions.
   # Both are needed — this covers build sandbox, that covers runtime.
-  environment.variables = lib.mkIf goProxyEnabled {
-    GOPROXY = "${proxies.go.url},direct";
-    GOPRIVATE = proxies.go.private;
-    GOSUMDB = "off";  # Corporate proxy cannot mirror Go's sum database
-  };
-
-  # Store optimization disabled - requires nix.enable = true
-  # Determinate Nix handles optimization separately
-  # nix.optimise.automatic = true;
+  environment.variables = lib.mkIf goProxyEnabled (myLib.go.proxyVars proxies.go);
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

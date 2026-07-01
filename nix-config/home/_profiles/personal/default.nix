@@ -6,24 +6,15 @@
 { config, pkgs, lib, myLib, hostname, ... }:
 
 {
+  # Shared imports + starship wiring live in _template/profile-base.nix.
   imports = [
-    ../_template/programs       # Profile-shared program configs
-    ../_template/shell/zsh.nix  # Profile-shared shell config
-    ../../_template/development # Development configs (Python, Node, AI/ML)
-    ./packages.nix              # Personal packages
-    ./aliases.nix               # Personal aliases
+    (import ../_template/profile-base.nix { profileDir = ../personal; })
   ];
 
   # Personal-specific session variables
-  home.sessionVariables = {
-    MACHINE_MODE = "home";
-    AWS_PROFILE = "personal";
-    WORKSPACE = "$HOME/Dev";
-  };
-
-  # Starship prompt (personal theme)
-  programs.starship = {
-    enable = true;
-    settings = builtins.fromTOML (builtins.readFile ./starship.toml);
+  home.sessionVariables = myLib.mkProfileSessionVars {
+    mode = "home";
+    awsProfile = "personal";
+    workspace = "$HOME/Dev";
   };
 }

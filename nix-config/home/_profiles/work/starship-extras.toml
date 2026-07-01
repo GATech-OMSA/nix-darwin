@@ -1,0 +1,54 @@
+# Work-only starship additions — shallow-merged (//) over
+# _template/starship/base.toml by _template/profile-base.nix.
+#
+# Overrides `format` (adds k8s + language modules to the prompt line) and
+# defines those modules. Everything else (directory, git, aws, python,
+# palettes, …) is inherited unchanged from base.toml.
+
+format = """
+[╭─](fg:surface2) \
+$container\
+$nix_shell\
+$directory\
+$git_branch\
+$git_status\
+$git_state\
+$aws\
+$kubernetes\
+$python\
+$nodejs\
+$golang\
+$rust\
+$terraform\
+$fill\
+$cmd_duration\
+$time\
+$line_break\
+[╰─](fg:surface2) \
+$character"""
+
+[kubernetes]
+format = '[󱃾 $context( \($namespace\))]($style) '
+style = "fg:mauve"
+disabled = false
+detect_files = ['k8s', 'kubernetes', 'Dockerfile', 'docker-compose.yml']
+
+[nodejs]
+symbol = "󰎙"
+style = "fg:teal"
+format = '[$symbol $version]($style) '
+
+[golang]
+symbol = "󰟓"
+style = "fg:teal"
+format = '[$symbol $version]($style) '
+
+[rust]
+symbol = "󰘗"
+style = "fg:teal"
+format = '[$symbol $version]($style) '
+
+[terraform]
+symbol = "󱁢"
+style = "fg:teal"
+format = '[$symbol $workspace]($style) '
