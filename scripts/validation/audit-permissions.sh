@@ -5,20 +5,10 @@
 set -o pipefail
 
 # ============================================================================
-# COLOR DEFINITIONS
-# ============================================================================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
-
-# ============================================================================
 # CONFIGURATION
 # ============================================================================
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/audit-framework.sh"   # colors + print_header/print_category (TTY-aware)
 FIX_MODE=0
 VERBOSE=0
 SHOW_SECURE=0
@@ -89,20 +79,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ============================================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS (script-specific)
 # ============================================================================
-print_header() {
-  echo ""
-  echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  echo -e "${BOLD}${CYAN}$1${NC}"
-  echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-}
-
-print_category() {
-  echo ""
-  echo -e "${BOLD}${BLUE}▶ $1${NC}"
-  echo ""
-}
+# print_header / print_category come from scripts/lib/audit-framework.sh.
+# Domain checks below use its TTY-aware color vars (GREEN/RED/CYAN/YELLOW).
 
 check_secure() {
   ((SECURE_FILES++))

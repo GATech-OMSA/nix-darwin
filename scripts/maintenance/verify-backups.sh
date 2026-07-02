@@ -5,21 +5,11 @@
 set -o pipefail
 
 # ============================================================================
-# COLOR DEFINITIONS
-# ============================================================================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
-
-# ============================================================================
 # CONFIGURATION
 # ============================================================================
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
+source "${REPO_ROOT}/scripts/lib/machine-id.sh"        # get_machine_id
+source "${REPO_ROOT}/scripts/lib/audit-framework.sh"   # colors + print/check helpers (TTY-aware)
 
 # Extract machineId from config/machine-config.nix
 MACHINE_CONFIG="$REPO_ROOT/config/machine-config.nix"
@@ -68,54 +58,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ============================================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS (script-specific)
 # ============================================================================
-
-print_header() {
-  echo ""
-  echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  echo -e "${BOLD}${CYAN}$1${NC}"
-  echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-}
-
-print_category() {
-  echo ""
-  echo -e "${BOLD}${BLUE}▶ $1${NC}"
-  echo ""
-}
-
-check_pass() {
-  ((TOTAL_CHECKS++))
-  ((PASSED_CHECKS++))
-  echo -e "  ${GREEN}✓${NC} $1"
-  if [[ $VERBOSE -eq 1 && -n "${2:-}" ]]; then
-    echo -e "    ${CYAN}→${NC} $2"
-  fi
-}
-
-check_fail() {
-  ((TOTAL_CHECKS++))
-  ((FAILED_CHECKS++))
-  echo -e "  ${RED}✗${NC} $1"
-  if [[ -n "${2:-}" ]]; then
-    echo -e "    ${RED}→${NC} $2"
-  fi
-}
-
-check_warn() {
-  ((TOTAL_CHECKS++))
-  ((WARNINGS++))
-  echo -e "  ${YELLOW}▸${NC} $1"
-  if [[ -n "${2:-}" ]]; then
-    echo -e "    ${YELLOW}→${NC} $2"
-  fi
-}
-
-verbose_output() {
-  if [[ $VERBOSE -eq 1 ]]; then
-    echo -e "    ${CYAN}→${NC} $1"
-  fi
-}
+# print_header / print_category / check_pass / check_fail / check_warn /
+# verbose_output come from scripts/lib/audit-framework.sh (sourced above).
 
 cleanup_temp() {
   if [[ -d "$TEMP_RESTORE_DIR" ]]; then
