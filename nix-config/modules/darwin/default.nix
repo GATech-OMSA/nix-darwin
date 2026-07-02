@@ -49,8 +49,12 @@ in
     max-free = 21474836480
 
     # ==== Security ====
-    # Isolate builds from the host environment
-    sandbox = true
+    # Sandbox builds (isolate from the host), but allow derivations that declare
+    # an explicit macOS sandbox profile (e.g. pre-commit) to use it. Strict
+    # `sandbox = true` rejects those (`specifies a sandbox profile, but this is
+    # only allowed when 'sandbox' is 'relaxed'`); `relaxed` still sandboxes every
+    # build, just permits per-derivation profiles — commonly required on nix-darwin.
+    sandbox = relaxed
 
     # Allow root and the primary user to manage trusted substituters
     trusted-users = root ${username}
