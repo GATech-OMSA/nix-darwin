@@ -337,7 +337,8 @@ build_and_activate() {
   info "Running darwin-rebuild switch (requires sudo)..."
   echo ""
 
-  # Export FLAKE_ROOT for gitignored config imports
+  # FLAKE_ROOT is a repo-root hint for helper scripts (e.g. security-preflight);
+  # the flake itself evaluates pure and no longer needs it.
   export FLAKE_ROOT="$REPO_ROOT"
 
   # Extract machineId from machine-config.nix to use correct flake configuration

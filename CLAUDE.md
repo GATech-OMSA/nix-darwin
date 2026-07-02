@@ -251,7 +251,7 @@ deprecate/docs/                 # Archived guides (git history)
 | Update all | `just update` (or `update-all`) | Weekly maintenance |
 | Edit secrets | `secrets-edit` | Edit encrypted secrets.yaml |
 | Deploy secrets | `secrets-deploy` | Decrypt + deploy (no rebuild needed) |
-| Reload secrets | `secrets-reload` | Re-source in current shell |
+| Reload env/secrets | `respin` | Full shell restart (`exec zsh`) — picks up secrets + local overrides |
 | Scan secrets | `secrets-rescan` | Discover unmanaged secrets (read-only) |
 | Run tests | `just test` | Run integration suite |
 | Scan installed CVEs | `secnow` (or `just security-scan`) | CVE scan of live system; `secnow --explain` shows dep owners |
@@ -361,7 +361,7 @@ user-data/secrets/
 ```bash
 secrets-edit              # Edit encrypted secrets.yaml
 secrets-deploy            # Decrypt + deploy to target paths
-secrets-reload            # Re-source in current shell
+respin                    # Apply to current shell (full restart: exec zsh)
 secrets-rescan            # Discover unmanaged secrets (read-only)
 ```
 

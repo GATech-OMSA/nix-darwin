@@ -1,6 +1,6 @@
 # macOS 15+ zsh SIGCHLD-loss Race — Diagnosis & Fix Patterns
 
-**Symptom:** zsh hangs at the prompt after `exec zsh` (`restart` alias) on macOS 15.x+. Stack ends in `__sigsuspend`. Reproducible at ~5–100% rate depending on what runs at init.
+**Symptom:** zsh hangs at the prompt after `exec zsh` (`respin` alias) on macOS 15.x+. Stack ends in `__sigsuspend`. Reproducible at ~5–100% rate depending on what runs at init.
 
 **Root cause:** zsh's child-wait paths assume the SIGCHLD handler will fire after the child exits. On macOS 15+, the child can exit, the SIGCHLD can arrive, the handler can run and consume it, and *then* the parent enters `sigsuspend` — waiting forever for a signal that already came and went. Affects:
 - `waitforpid` — used by `$(cmd)` command-substitution

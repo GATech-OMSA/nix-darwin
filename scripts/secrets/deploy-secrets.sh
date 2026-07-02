@@ -343,5 +343,5 @@ if [ "$DRY_RUN" = true ]; then
 else
   success "Deployed: $deployed, Skipped: $skipped"
   echo ""
-  info "Run 'secrets-reload' to re-source in current shell"
+  info "Run 'respin' to apply in current shell"
 fi

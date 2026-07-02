@@ -62,7 +62,7 @@ nix-darwin/
 git clone YOUR_REPO_URL ~/nix-darwin && cd ~/nix-darwin
 
 # 2. Check what's needed
-./scripts/setup/preflight.sh
+./scripts/setup/inspect.sh
 
 # 3. Install prerequisites (Nix, sops, age)
 ./scripts/setup/bootstrap.sh
@@ -92,8 +92,8 @@ secrets-edit
 # Deploy to target paths (no rebuild needed)
 secrets-deploy
 
-# Re-source in current shell
-secrets-reload
+# Apply to current shell (full restart: exec zsh)
+respin
 ```
 
 See [docs/aws-and-secrets-workflow.md](docs/aws-and-secrets-workflow.md) for the full reference.
@@ -123,7 +123,7 @@ nix-rollback           # Rollback to previous generation
 ```bash
 secrets-edit           # Edit encrypted secrets.yaml
 secrets-deploy         # Decrypt + deploy (no rebuild needed)
-secrets-reload         # Re-source in current shell
+respin                 # Apply to current shell (exec zsh)
 secrets-status         # Check status of everything
 secrets-rescan         # Discover unmanaged secrets
 ```
@@ -182,7 +182,7 @@ nix-rollback   # if needed
 # Secrets not loading
 secrets-status     # Check age key, encryption, deployed files
 secrets-deploy     # Re-deploy
-secrets-reload     # Re-source
+respin             # Apply to current shell
 
 # Wrong profile
 echo $ACTIVE_PROFILE

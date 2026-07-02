@@ -1200,8 +1200,7 @@ create_secrets_file() {
 
   # Create comprehensive plaintext template matching secrets-personal.nix structure
   cat > "$SECRETS_FILE" <<'EOF'
-# Edit with: edit-secrets
-# or use the helper: edit-secrets
+# Edit with: secrets-edit (or scripts/secrets/edit-secrets.sh)
 # Environment variables and API keys
 # These will be placed in ~/.zsh_secrets and sourced automatically
 # This file will be encrypted with SOPS after review

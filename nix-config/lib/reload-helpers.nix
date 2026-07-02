@@ -59,7 +59,7 @@ rec {
   # both files are auto-sourced by zshrc on every init, see SOURCE SECRETS).
   #
   # Files:
-  #   ~/.zsh_secrets       - SOPS-managed secrets (edit with: edit-secrets)
+  #   ~/.zsh_secrets       - SOPS-managed secrets (edit with: secrets-edit)
   #   ~/.zsh_secrets.local - Local testing overrides (gitignored, temporary)
   #
   # Workflow:
@@ -105,7 +105,7 @@ rec {
         echo "error: no secret files found"
         echo ""
         echo "   Create secrets:"
-        echo "   - Permanent: edit-secrets (SOPS-encrypted)"
+        echo "   - Permanent: secrets-edit (SOPS-encrypted)"
         echo "   - Testing: secrets-local edit (temporary)"
         return 1
       fi
@@ -115,7 +115,7 @@ rec {
       echo "   • Reloaded: $count file(s)"
       echo "   • Scope: Current shell only"
       echo ""
-      echo "   For permanent changes: edit-secrets + nix-rebuild"
+      echo "   For permanent changes: secrets-edit + nix-rebuild"
     }
   '';
 

@@ -388,7 +388,7 @@ in
       # ============================================
       # AWS
       # ============================================
-      # awsp / awsprofile / awswho defined as functions in aws-helpers.nix
+      # awsp / awswho defined as functions in aws-helpers.nix
       # (awsp as an alias was broken: `awsp foo` set an empty profile and ran `foo`).
 
       # ============================================

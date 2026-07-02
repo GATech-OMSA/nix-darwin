@@ -101,7 +101,7 @@ if sops "$SECRETS_FILE"; then
   echo ""
   info "Next steps:"
   echo "  1. Deploy: secrets-deploy"
-  echo "  2. Reload: secrets-reload"
+  echo "  2. Reload: respin"
 else
   error "SOPS editor exited with error"
   if [ "$NO_BACKUP" = false ]; then
