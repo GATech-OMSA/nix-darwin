@@ -49,16 +49,14 @@ rec {
   '';
 
   # ==================================================
-  # SECRETS HOT RELOAD
+  # SECRETS HOT RELOAD (private helper)
   # ==================================================
-  # Reload secrets from ~/.zsh_secrets without rebuilding
-  # Also supports ~/.zsh_secrets.local for temporary testing
-  #
-  # Usage:
-  #   secrets-reload              # Reload both files
-  #   secrets-local edit          # Edit local test overrides
-  #   secrets-local show          # Show local overrides
-  #   secrets-local rm            # Remove local overrides
+  # Re-source ~/.zsh_secrets and ~/.zsh_secrets.local into the CURRENT shell
+  # process without a full respin. Used internally by `secrets-local add/unset`
+  # so a new test value is available immediately. Not exposed as a public
+  # command — for a full environment refresh (zshenv/zshrc/secrets/local
+  # overrides all at once), use `respin` (alias in zsh.nix, = `exec zsh`;
+  # both files are auto-sourced by zshrc on every init, see SOURCE SECRETS).
   #
   # Files:
   #   ~/.zsh_secrets       - SOPS-managed secrets (edit with: edit-secrets)
@@ -66,12 +64,12 @@ rec {
   #
   # Workflow:
   #   1. secrets-local edit       # Create temporary test credentials
-  #   2. secrets-reload           # Apply immediately to current shell
+  #   2. respin                   # Apply to current shell (full refresh)
   #   3. Test your changes
   #   4. secrets-local rm         # Clean up when done
   #
   mkSecretsReload = ''
-    function secrets-reload() {
+    function __reload_secret_files() {
       echo "Reloading secrets..."
       echo ""
 
@@ -160,7 +158,7 @@ EOF
 
           ''${EDITOR:-vim} ~/.zsh_secrets.local
           echo ""
-          echo "   Run: secrets-reload (to apply changes)"
+          echo "   Run: respin (to apply changes)"
           ;;
 
         set|add)
@@ -187,7 +185,7 @@ EOF
           __local_file_upsert_prefix ~/.zsh_secrets.local "$prefix" "$line"
           chmod 600 ~/.zsh_secrets.local 2>/dev/null || true
           export "$key=$value"
-          secrets-reload >/dev/null 2>&1 || true
+          __reload_secret_files >/dev/null 2>&1 || true
 
           echo "Saved and reloaded: $key"
           echo "   File: ~/.zsh_secrets.local"
@@ -208,7 +206,7 @@ EOF
 
           __local_file_remove_prefix ~/.zsh_secrets.local "export $key="
           unset "$key" 2>/dev/null || true
-          secrets-reload >/dev/null 2>&1 || true
+          __reload_secret_files >/dev/null 2>&1 || true
 
           echo "Removed and reloaded: $key"
           ;;
@@ -230,7 +228,7 @@ EOF
             /bin/rm ~/.zsh_secrets.local
             echo "Deleted ~/.zsh_secrets.local"
             echo ""
-            echo "   Run: secrets-reload (to clear overrides)"
+            echo "   Run: respin (to clear overrides)"
           else
             echo "error: no ~/.zsh_secrets.local found"
           fi
@@ -269,7 +267,7 @@ EOF
           echo ""
           echo "Workflow:"
           echo "  1. secrets-local edit      # Create test credentials"
-          echo "  2. secrets-reload           # Apply to current shell"
+          echo "  2. respin                  # Apply to current shell"
           echo "  3. Test your changes"
           echo "  4. secrets-local rm        # Clean up when done"
           echo ""

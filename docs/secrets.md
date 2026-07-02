@@ -104,7 +104,7 @@ secrets-edit    # Opens secrets.yaml in $EDITOR via SOPS (auto-encrypts on save)
 
 ```bash
 secrets-deploy  # Decrypt + write to target paths
-secrets-reload  # Re-source in current shell
+respin  # Re-source in current shell
 ```
 
 ---
@@ -116,7 +116,7 @@ secrets-reload  # Re-source in current shell
 3. The launchd watcher fires `secrets-deploy` automatically on save. If you
    skipped step 2 (or want to deploy before the watcher coalesces), run
    `secrets-deploy` manually.
-4. `secrets-reload` — re-source if it's a shell variable
+4. `respin` — re-source if it's a shell variable
 
 ### Watcher behavior
 
@@ -181,7 +181,7 @@ secrets-deploy
 ```bash
 secrets-edit      # Edit encrypted secrets.yaml (launchd auto-deploys on save)
 secrets-deploy    # Decrypt + deploy to target paths (writes manifest)
-secrets-reload    # Re-source in current shell
+respin    # Re-source in current shell
 secrets-status    # Show age key, encryption, deployed files
 secrets-rescan    # Discover unmanaged secrets (read-only)
 secrets-view      # View decrypted secrets (read-only)

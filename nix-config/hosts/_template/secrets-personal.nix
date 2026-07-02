@@ -6,7 +6,7 @@
 #
 # Edit secrets: secrets-edit
 # Manual deploy: secrets-deploy
-# Reload shell: secrets-reload
+# Reload shell: respin
 
 { config, pkgs, username, ... }:
 

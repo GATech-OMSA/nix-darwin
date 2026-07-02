@@ -155,7 +155,7 @@ A backup is created at `~/.aws/backup/config-<timestamp>` before any overwrite.
 ```bash
 secrets-edit      # Edit encrypted secrets.yaml (SOPS)
 secrets-deploy    # Decrypt + deploy to target paths (no rebuild needed)
-secrets-reload    # Re-source ~/.zsh_secrets in current shell
+respin    # Re-source ~/.zsh_secrets in current shell
 secrets-status    # Show age key, encryption, tools, deployed secrets
 secrets-rescan    # Discover unmanaged secrets (read-only)
 secrets-view      # View decrypted secrets (read-only)
@@ -167,7 +167,7 @@ secrets-local     # Manage temporary testing overrides
 ### Workflow
 
 ```
-secrets-edit  →  secrets-deploy  →  secrets-reload
+secrets-edit  →  secrets-deploy  →  respin
   (edit yaml)     (decrypt+write)    (re-source shell)
 ```
 
@@ -205,7 +205,7 @@ aws_accounts        → ~/.aws/accounts.json
 secrets-edit                          # 1. Add key + value to secrets.yaml
 # Edit scripts/secrets/deploy-secrets.sh  # 2. Add mapping line
 secrets-deploy                        # 3. Deploy
-secrets-reload                        # 4. Re-source if shell var
+respin                        # 4. Re-source if shell var
 ```
 
 ### Hot reload
@@ -290,7 +290,7 @@ awslogin <project> <env>      # Re-login if expired
 ```bash
 secrets-status                # Check age key, encryption, deployed files
 secrets-deploy                # Re-deploy
-secrets-reload                # Re-source in current shell
+respin                # Re-source in current shell
 ```
 
 ### Profile not found after awslogin

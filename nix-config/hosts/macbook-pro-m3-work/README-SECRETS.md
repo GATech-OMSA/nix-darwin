@@ -7,7 +7,7 @@ Secrets are managed identically to the personal machine via `deploy-secrets.sh`.
 ```bash
 secrets-edit           # Edit encrypted secrets.yaml
 secrets-deploy         # Decrypt + deploy to target paths (no rebuild needed)
-secrets-reload         # Re-source in current shell
+respin         # Re-source in current shell
 ```
 
 On rebuild, `deploy-secrets.sh` runs automatically via Home Manager activation hook.

@@ -71,7 +71,7 @@ nix-scaffold-machine   # Create new machine config from template
 ```
 secrets-edit           # Edit encrypted secrets with SOPS
 secrets-deploy         # Decrypt and deploy to target paths
-secrets-reload         # Re-source secrets in current shell
+respin         # Re-source secrets in current shell
 secrets-view           # View decrypted secrets (read-only)
 secrets-rescan         # Discover unmanaged secrets (read-only)
 secrets-status         # Show age key, encryption, deployed files

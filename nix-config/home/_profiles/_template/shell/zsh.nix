@@ -196,8 +196,6 @@ in
       # SYSTEM & CONFIGURATION
       # ============================================
       c = "clear";
-      reload = "source ~/.zshrc && printf '\\033[90m zshrc reloaded\\033[0m\\n'";
-      restart = "exec zsh";
 
       # Quick open shortcuts
       vs = "code .";          # Open VS Code in current directory
@@ -526,7 +524,7 @@ in
         # Why: that $() can race with SIGCHLD on macOS — child exits, sigsuspend
         # waits forever for a signal that already arrived, hanging shell init
         # before the welcome message ever prints. Reproduced after
-        # `exec zsh` (= `restart`) where SHLVL changes (parent=1 → child=2)
+        # `exec zsh` (= `respin`) where SHLVL changes (parent=1 → child=2)
         # and atuin.zsh's `ATUIN_SHLVL != $SHLVL` branch fires the fork.
         # Pure-builtin substitute below uses no fork at all.
         zmodload zsh/datetime 2>/dev/null
@@ -815,6 +813,10 @@ in
       # SOURCE SECRETS
       # ============================================
       [ -f ~/.zsh_secrets ] && source ~/.zsh_secrets
+      # Local testing overrides (gitignored) — sourced after main secrets so
+      # they win. Lets `respin` pick up secrets-local changes without a
+      # dedicated secrets-reload command.
+      [ -f ~/.zsh_secrets.local ] && source ~/.zsh_secrets.local
 
       # ============================================
       # OPTION+ARROW WORD NAVIGATION
@@ -964,7 +966,16 @@ in
       # HOT RELOAD FUNCTIONS
       # ============================================
       # Quick reload of secrets and environment without rebuild
-      # Functions: secrets-reload, secrets-local, zsh-local
+      # Functions: respin, secrets-local, zsh-local
+
+      # Full shell process restart. Picks up everything in one shot: zshenv,
+      # zshrc, ~/.zsh_secrets, ~/.zsh_secrets.local, and ~/.zshrc.local — all
+      # sourced automatically as part of normal init (see SOURCE SECRETS above).
+      # Replaces the old separate reload / restart / secrets-reload aliases.
+      function respin() {
+        printf '\033[90m respinning: zshenv → zshrc → secrets (+ .local) → zshrc.local\033[0m\n'
+        exec zsh
+      }
 
       ${myLib.reload.mkAllHotReloadFunctions}
 
