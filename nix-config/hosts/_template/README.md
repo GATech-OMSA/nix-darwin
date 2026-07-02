@@ -1,219 +1,121 @@
 # Host Configuration Template
 
-Template for creating new machine configurations.
+Template for creating a new machine configuration. Normally
+`scripts/setup/configure.sh` does this for you (it copies the template,
+creates config files, and scaffolds secrets) — the steps below are the manual
+equivalent.
 
 ## Quick Start
 
-### 1. Copy Template
+### 1. Copy the template
 
 ```bash
-# Copy template to new hostname
-cp -r hosts/_template hosts/NEW-HOSTNAME
-
-# Example
-cp -r hosts/_template hosts/mbp-alice
+# machineId convention: <model>-<profile suffix>, e.g. macbook-air-m2-personal
+cp -r nix-config/hosts/_template nix-config/hosts/NEW-MACHINE-ID
 ```
 
-### 2. Customize Configuration
+The `-personal` / `-work` machineId suffix matters: `.sops.yaml` creation
+rules select the age key by that suffix.
 
-Edit `hosts/NEW-HOSTNAME/default.nix`:
+### 2. Customize `default.nix`
 
 ```nix
-networking = {
-  computerName = "Alice's MacBook Pro";  # Change this
-  # ...
-};
+networking.computerName = "Alice's MacBook Pro";   # display name
+homebrew.enable = true;                             # false on corporate MDM
 ```
 
-### 3. Register Machine
+Keep the conditional secrets import as-is — it picks
+`secrets-personal.nix` / `secrets-work.nix` by the active profile.
 
-Add to `hosts/machines.nix`:
+### 3. Register the machine in `flake.nix`
+
+Add an entry to `machineDefaults`:
 
 ```nix
 {
-  "mbp-alice" = "personal";  # or "work"
+  machineId = "NEW-MACHINE-ID";
+  profileName = "personal";          # or "work" / "minimal"
+  system = "aarch64-darwin";
+  expectedHostname = "mbp-alice";
+  enableHomeManager = true;
+  skipGoPackages = false;
 }
 ```
 
-### 4. Add to Flake
+### 4. Activate it locally
 
-Add to `flake.nix`:
+Point `config/machine-config.nix` at the new machine:
 
 ```nix
-darwinConfigurations."mbp-alice" = mkDarwinSystem {
-  hostname = "mbp-alice";
-  system = "aarch64-darwin";  # or "x86_64-darwin"
-  username = "alice";
-  mixins = [ "base" "dev" "personal" ];  # or "work"
-};
+machineId = "NEW-MACHINE-ID";
+profileName = "personal";
 ```
 
-### 5. Setup Secrets
+Only the active machineId is exported by the flake, so this step is what
+makes the new machine buildable on this checkout.
+
+### 5. Set up secrets
 
 ```bash
-# Generate age key
+# Generate age key (bootstrap.sh does this on a fresh machine)
 mkdir -p ~/.config/sops/age
 age-keygen -o ~/.config/sops/age/keys.txt
-
-# Get public key
 grep "public key:" ~/.config/sops/age/keys.txt
 
-# Update .sops.yaml
-code secrets/.sops.yaml
-# Add your public key
+# Add the public key to .sops.yaml (repo root), then create the secrets file
+cp nix-config/hosts/NEW-MACHINE-ID/secrets.yaml.template \
+   nix-config/hosts/NEW-MACHINE-ID/secrets.yaml
+sops nix-config/hosts/NEW-MACHINE-ID/secrets.yaml   # or: secrets-edit
 
-# Encrypt secrets
-sops hosts/mbp-alice/secrets.yaml
-# Add your actual secrets
-
-# Verify encryption
-cat hosts/mbp-alice/secrets.yaml | head -5
-# Should see: ENC[AES256_GCM,data:...]
+# Verify it's encrypted before committing
+head -5 nix-config/hosts/NEW-MACHINE-ID/secrets.yaml   # expect ENC[AES256_GCM,...]
 ```
+
+Secret → target-path mappings live in `scripts/secrets/deploy-secrets.sh`;
+deploy with `secrets-deploy`, apply to the current shell with `respin`.
 
 ### 6. Build
 
 ```bash
-# First time setup
-sudo nix run nix-darwin -- switch --flake .#mbp-alice
+# First time
+sudo nix run nix-darwin -- switch --flake .#NEW-MACHINE-ID
 
 # Subsequent rebuilds
-darwin-rebuild switch --flake ~/nix-darwin
+nix-rebuild
 ```
 
-## What to Customize
-
-### Required
-
-- [ ] `networking.computerName` - Display name
-- [ ] `hosts/machines.nix` - Add hostname mapping
-- [ ] `flake.nix` - Add darwinConfiguration
-- [ ] `secrets.yaml` - Add encrypted secrets
-
-### Optional
-
-- [ ] SOPS secrets configuration (add/remove as needed)
-- [ ] Homebrew packages (in modules/darwin/homebrew.nix)
-- [ ] Shell aliases (in home/USERNAME/shell/zsh.nix)
-- [ ] Git config (in home/USERNAME/programs/git.nix)
-
-## Files in Template
+## Files in this template
 
 ```
 _template/
-├── default.nix      # Main host configuration
-├── secrets.yaml     # Encrypted secrets (template)
-└── README.md        # This file
+├── default.nix            # Host config (networking, user, homebrew toggle)
+├── secrets-personal.nix   # sops-nix wiring for personal profile
+├── secrets-work.nix       # sops-nix wiring for work profile
+├── secrets.yaml.template  # Starting point for the encrypted secrets file
+└── README.md              # This file
 ```
 
-## Machine Types
+## Profile choice
 
-Choose mixin based on machine purpose:
+Machine behavior (packages, aliases, session vars) comes from the profile,
+not from this host directory:
 
-**Personal machine:**
-```nix
-mixins = [ "base" "dev" "personal" ];
-```
+- `personal` — full setup, Homebrew enabled, personal AWS profile
+- `work` — corporate variant (proxy support, work AWS, Homebrew usually off)
+- `minimal` — bare-bones troubleshooting profile
 
-**Work machine:**
-```nix
-mixins = [ "base" "dev" "work" ];
-```
+Set it in the flake registry entry and `config/machine-config.nix`; switch
+later with `scripts/profiles/switch-profile.sh`.
 
-**Minimal machine:**
-```nix
-mixins = [ "base" ];
-```
+## Corporate environment notes
 
-## Secret Configuration Examples
+- Homebrew: `homebrew.enable = false;` when MDM manages apps.
+- Blocked Go module downloads (sops-nix builds): enable the Go proxy in
+  `config/user-config.nix` (`proxies.go.enabled = true`) — see CLAUDE.md
+  "Proxy Configuration".
 
-### Basic Setup (Personal Machine)
+## See also
 
-```nix
-secrets = {
-  zsh_secrets = { path = "/Users/${username}/.zsh_secrets"; mode = "0600"; };
-  ssh_private_key = { path = "/Users/${username}/.ssh/id_ed25519"; mode = "0600"; };
-  ssh_public_key = { path = "/Users/${username}/.ssh/id_ed25519.pub"; mode = "0644"; };
-  aws_credentials = { path = "/Users/${username}/.aws/credentials"; mode = "0600"; };
-};
-```
-
-### Work Machine with Databases
-
-```nix
-secrets = {
-  # Core secrets
-  zsh_secrets = { ... };
-  ssh_private_key = { ... };
-
-  # API tokens
-  github_token = {
-    path = "/Users/${username}/.tokens/github_token";
-    mode = "0600";
-  };
-};
-```
-
-### Corporate Environment (Proxy Blocks SOPS)
-
-```nix
-# DISABLED: sops-nix module requires Go modules blocked by corporate proxy
-# Alternative: Manage secrets manually
-/*
-sops = {
-  # ... all your secrets config here
-};
-*/
-
-# Create secret files manually:
-# mkdir -p ~/.tokens
-# echo "token_value" > ~/.tokens/example_token
-# chmod 600 ~/.tokens/example_token
-```
-
-## Multi-Machine Setup Patterns
-
-### Pattern 1: Personal + Work Machines
-
-**Personal** (mbp-alice):
-- Mixins: `[ "base" "dev" "personal" ]`
-- Homebrew: `enabled`
-- Secrets: SSH keys, AWS (personal), Ollama keys
-- Apps: Browsers, AI tools, personal productivity
-
-**Work** (mbp-alice-work):
-- Mixins: `[ "base" "dev" "work" ]`
-- Homebrew: `disabled` (if corporate policy)
-- Secrets: Work SSH, databases, API tokens, VPN
-- Apps: Corporate tools, work-specific configs
-
-### Pattern 2: Multiple Personal Machines
-
-**Desktop** (mac-studio-alice):
-- Mixins: `[ "base" "dev" "personal" ]`
-- Heavy workloads, all tools installed
-
-**Laptop** (mbp-alice):
-- Mixins: `[ "base" "personal" ]` (no dev)
-- Minimal, lightweight setup for travel
-
-## Homebrew Toggle Strategy
-
-```nix
-# Personal machine (apps via Homebrew)
-homebrew.enable = true;
-
-# Work machine (corporate MDM manages apps)
-homebrew.enable = false;
-
-# Minimal machine (no GUI apps)
-homebrew.enable = false;
-```
-
-## See Also
-
-- [Installation Guide](../../docs/guides/installation.md) - Complete setup
-- [Multi-User Setup](../../docs/guides/multi-user-setup.md) - Multiple users
-- [Secrets Guide](../../docs/guides/secrets.md) - SOPS encryption
-- [Architecture Overview](../../docs/architecture/overview.md) - System design
-- [Work Setup Guide](../../docs/guides/work-setup.md) - Corporate environments
+- `../README.md` — how machine selection works
+- `docs/installation.md` — complete three-script setup
+- `docs/secrets.md` — SOPS encryption guide
