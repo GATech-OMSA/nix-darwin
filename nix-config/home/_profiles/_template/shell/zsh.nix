@@ -874,22 +874,22 @@ in
           note __lazy_load_core 2>/dev/null
         source ${lazyCore}
       }
-      mkcd() { __lazy_load_core; mkcd "$@"; }
-      find-alias() { __lazy_load_core; find-alias "$@"; }
-      zsh-profile() { __lazy_load_core; zsh-profile "$@"; }
-      path-add() { __lazy_load_core; path-add "$@"; }
-      backup() { __lazy_load_core; backup "$@"; }
-      histgrep() { __lazy_load_core; histgrep "$@"; }
-      kill-port() { __lazy_load_core; kill-port "$@"; }
-      gcl() { __lazy_load_core; gcl "$@"; }
-      newproj() { __lazy_load_core; newproj "$@"; }
-      killport() { __lazy_load_core; killport "$@"; }
-      sysinfo() { __lazy_load_core; sysinfo "$@"; }
-      warn() { __lazy_load_core; warn "$@"; }
-      confirm() { __lazy_load_core; confirm "$@"; }
-      risky() { __lazy_load_core; risky "$@"; }
-      critical() { __lazy_load_core; critical "$@"; }
-      note() { __lazy_load_core; note "$@"; }
+      function mkcd() { __lazy_load_core; mkcd "$@"; }
+      function find-alias() { __lazy_load_core; find-alias "$@"; }
+      function zsh-profile() { __lazy_load_core; zsh-profile "$@"; }
+      function path-add() { __lazy_load_core; path-add "$@"; }
+      function backup() { __lazy_load_core; backup "$@"; }
+      function histgrep() { __lazy_load_core; histgrep "$@"; }
+      function kill-port() { __lazy_load_core; kill-port "$@"; }
+      function gcl() { __lazy_load_core; gcl "$@"; }
+      function newproj() { __lazy_load_core; newproj "$@"; }
+      function killport() { __lazy_load_core; killport "$@"; }
+      function sysinfo() { __lazy_load_core; sysinfo "$@"; }
+      function warn() { __lazy_load_core; warn "$@"; }
+      function confirm() { __lazy_load_core; confirm "$@"; }
+      function risky() { __lazy_load_core; risky "$@"; }
+      function critical() { __lazy_load_core; critical "$@"; }
+      function note() { __lazy_load_core; note "$@"; }
       alias als="find-alias"
 
       # Lazy-load: Python/uv helpers (67 lines, used occasionally).
@@ -897,10 +897,10 @@ in
         unfunction uv-new uv-venv activate pyenv-info __lazy_load_python 2>/dev/null
         source ${lazyPython}
       }
-      uv-new() { __lazy_load_python; uv-new "$@"; }
-      uv-venv() { __lazy_load_python; uv-venv "$@"; }
-      activate() { __lazy_load_python; activate "$@"; }
-      pyenv-info() { __lazy_load_python; pyenv-info "$@"; }
+      function uv-new() { __lazy_load_python; uv-new "$@"; }
+      function uv-venv() { __lazy_load_python; uv-venv "$@"; }
+      function activate() { __lazy_load_python; activate "$@"; }
+      function pyenv-info() { __lazy_load_python; pyenv-info "$@"; }
 
       # Lazy-load: AWS tab-completion body (88 lines) — only needed on first
       # tab of awsuse/awslogin. compdef runs inline (it must, to register at
@@ -920,16 +920,16 @@ in
           __lazy_load_cleanup 2>/dev/null
         source ${lazyCleanup}
       }
-      cleanup-safe() { __lazy_load_cleanup; cleanup-safe "$@"; }
-      cleanup-quick() { __lazy_load_cleanup; cleanup-quick "$@"; }
-      cleanup-standard() { __lazy_load_cleanup; cleanup-standard "$@"; }
+      function cleanup-safe() { __lazy_load_cleanup; cleanup-safe "$@"; }
+      function cleanup-quick() { __lazy_load_cleanup; cleanup-quick "$@"; }
+      function cleanup-standard() { __lazy_load_cleanup; cleanup-standard "$@"; }
       # cleanup() stub omitted — alias `cleanup = "cleanup-standard"` handles it
-      cleanup-dev() { __lazy_load_cleanup; cleanup-dev "$@"; }
-      cleanup-aggressive() { __lazy_load_cleanup; cleanup-aggressive "$@"; }
-      cleanup-all() { __lazy_load_cleanup; cleanup-all "$@"; }
-      cleanup-nix() { __lazy_load_cleanup; cleanup-nix "$@"; }
-      cleanup-docker() { __lazy_load_cleanup; cleanup-docker "$@"; }
-      cleanup-python() { __lazy_load_cleanup; cleanup-python "$@"; }
+      function cleanup-dev() { __lazy_load_cleanup; cleanup-dev "$@"; }
+      function cleanup-aggressive() { __lazy_load_cleanup; cleanup-aggressive "$@"; }
+      function cleanup-all() { __lazy_load_cleanup; cleanup-all "$@"; }
+      function cleanup-nix() { __lazy_load_cleanup; cleanup-nix "$@"; }
+      function cleanup-docker() { __lazy_load_cleanup; cleanup-docker "$@"; }
+      function cleanup-python() { __lazy_load_cleanup; cleanup-python "$@"; }
 
       # Lazy-load: update functions (315 lines, used weekly)
       __lazy_load_update() {
@@ -937,14 +937,14 @@ in
           update-dev update-system update-all __lazy_load_update 2>/dev/null
         source ${lazyUpdate}
       }
-      update-nix() { __lazy_load_update; update-nix "$@"; }
-      update-brew() { __lazy_load_update; update-brew "$@"; }
-      update-mamba() { __lazy_load_update; update-mamba "$@"; }
-      update-vscode() { __lazy_load_update; update-vscode "$@"; }
-      update-mas() { __lazy_load_update; update-mas "$@"; }
-      update-dev() { __lazy_load_update; update-dev "$@"; }
-      update-system() { __lazy_load_update; update-system "$@"; }
-      update-all() { __lazy_load_update; update-all "$@"; }
+      function update-nix() { __lazy_load_update; update-nix "$@"; }
+      function update-brew() { __lazy_load_update; update-brew "$@"; }
+      function update-mamba() { __lazy_load_update; update-mamba "$@"; }
+      function update-vscode() { __lazy_load_update; update-vscode "$@"; }
+      function update-mas() { __lazy_load_update; update-mas "$@"; }
+      function update-dev() { __lazy_load_update; update-dev "$@"; }
+      function update-system() { __lazy_load_update; update-system "$@"; }
+      function update-all() { __lazy_load_update; update-all "$@"; }
 
       # Lazy-load: workspace backup/restore/sync — the only functions this module defines.
       # (edit-secrets/secrets-status/etc. were stubbed here previously but never defined
@@ -955,9 +955,9 @@ in
           __lazy_load_credentials 2>/dev/null
         source ${lazyCredentials}
       }
-      backup-workspace() { __lazy_load_credentials; backup-workspace "$@"; }
-      restore-workspace() { __lazy_load_credentials; restore-workspace "$@"; }
-      sync-workspace() { __lazy_load_credentials; sync-workspace "$@"; }
+      function backup-workspace() { __lazy_load_credentials; backup-workspace "$@"; }
+      function restore-workspace() { __lazy_load_credentials; restore-workspace "$@"; }
+      function sync-workspace() { __lazy_load_credentials; sync-workspace "$@"; }
       # nix-health() stub omitted — alias `nix-health` points to health-check.sh script
 
       # ============================================
