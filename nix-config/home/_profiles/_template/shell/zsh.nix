@@ -44,7 +44,7 @@ let
       $out/atuin.zsh
 
     # Verify patch applied (build fails if upstream renames the line)
-    if /usr/bin/grep -qF 'export ATUIN_SESSION=$(atuin uuid)' $out/atuin.zsh; then
+    if ${pkgs.gnugrep}/bin/grep -qF 'export ATUIN_SESSION=$(atuin uuid)' $out/atuin.zsh; then
       echo "ERROR: atuin.zsh sed patch did not match — upstream changed the line" >&2
       exit 1
     fi
@@ -54,7 +54,7 @@ let
     # renames the symbol, the override becomes a dead function and the racy
     # `$(atuin history start …)` silently fires every command. Build fails so
     # the override gets updated. (F12b)
-    if ! /usr/bin/grep -qF 'add-zsh-hook preexec _atuin_preexec' $out/atuin.zsh; then
+    if ! ${pkgs.gnugrep}/bin/grep -qF 'add-zsh-hook preexec _atuin_preexec' $out/atuin.zsh; then
       echo "ERROR: atuin.zsh no longer registers '_atuin_preexec' as the preexec hook — the SIGCHLD-safe override in zsh.nix is dead; update it to the new symbol" >&2
       exit 1
     fi
@@ -71,7 +71,7 @@ let
       $out/starship.zsh
 
     # Verify patch applied
-    if /usr/bin/grep -qE '^PROMPT2="\$\(.*starship.*--continuation' $out/starship.zsh; then
+    if ${pkgs.gnugrep}/bin/grep -qE '^PROMPT2="\$\(.*starship.*--continuation' $out/starship.zsh; then
       echo "ERROR: starship.zsh PROMPT2 sed patch did not match — upstream changed the line" >&2
       exit 1
     fi
@@ -84,7 +84,7 @@ let
       $out/fzf.zsh
 
     # Verify patch applied
-    if /usr/bin/grep -qF "binding=\$(bindkey '^I')" $out/fzf.zsh; then
+    if ${pkgs.gnugrep}/bin/grep -qF "binding=\$(bindkey '^I')" $out/fzf.zsh; then
       echo "ERROR: fzf.zsh binding sed patch did not match — upstream changed the line" >&2
       exit 1
     fi
@@ -111,7 +111,7 @@ let
       ${pkgs.gnused}/bin/sed -i ${lib.escapeShellArg sedExpr} "$out/${file}"
 
       # Verify patch applied (build fails if upstream changes the pattern).
-      if /usr/bin/grep -qF ${lib.escapeShellArg verify} "$out/${file}"; then
+      if ${pkgs.gnugrep}/bin/grep -qF ${lib.escapeShellArg verify} "$out/${file}"; then
         echo "ERROR: ${name} sed patch did not match — upstream changed the line" >&2
         exit 1
       fi
