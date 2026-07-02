@@ -49,6 +49,16 @@ let
       exit 1
     fi
 
+    # Verify the preexec hook is registered as _atuin_preexec — the SIGCHLD-safe
+    # override defined in initContent replaces that exact function. If atuin
+    # renames the symbol, the override becomes a dead function and the racy
+    # `$(atuin history start …)` silently fires every command. Build fails so
+    # the override gets updated. (F12b)
+    if ! /usr/bin/grep -qF 'add-zsh-hook preexec _atuin_preexec' $out/atuin.zsh; then
+      echo "ERROR: atuin.zsh no longer registers '_atuin_preexec' as the preexec hook — the SIGCHLD-safe override in zsh.nix is dead; update it to the new symbol" >&2
+      exit 1
+    fi
+
     # Patch starship.zsh: replace top-level `PROMPT2="$(starship prompt --continuation)"`
     # — the $() runs at every shell source (i.e. every `exec zsh`) and triggers
     # the SIGCHLD waitforpid race. Pre-compute the continuation prompt at build
