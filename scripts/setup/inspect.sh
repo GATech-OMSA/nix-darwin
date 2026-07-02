@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Nix-Darwin Pre-Flight Inspector
+# Nix-Darwin Setup Inspector
 #
 # Read-only diagnostic that checks system state and produces a numbered
 # action plan. Designed for fresh clones, machine migrations, or any time
 # you need to know "where am I in the setup pipeline?"
 #
+# Renamed from preflight.sh to avoid colliding with the rebuild-gate
+# scripts/maintenance/pre-flight-checks.sh (this is a separate setup
+# diagnostic, not the rebuild pre-flight).
+#
 # Usage:
-#   ./preflight.sh          # Run all checks
-#   ./preflight.sh --json   # Machine-readable JSON output
-#   ./preflight.sh --help   # Show help
+#   ./inspect.sh           # Run all checks
+#   ./inspect.sh --json    # Machine-readable JSON output
+#   ./inspect.sh --help    # Show help
 #
 # Exit codes:
 #   0 - System is READY (all checks pass)
@@ -711,14 +715,14 @@ print_json() {
 
 show_help() {
   cat << EOF
-Nix-Darwin Pre-Flight Inspector v${SCRIPT_VERSION}
+Nix-Darwin Setup Inspector v${SCRIPT_VERSION}
 
 Read-only diagnostic that checks system state and produces an action plan.
 
 Usage:
-  ./preflight.sh          Run all checks with human-readable output
-  ./preflight.sh --json   Machine-readable JSON output
-  ./preflight.sh --help   Show this help
+  ./inspect.sh           Run all checks with human-readable output
+  ./inspect.sh --json    Machine-readable JSON output
+  ./inspect.sh --help    Show this help
 
 Checks performed:
    1. System detection    macOS version, chip, arch, hostname, machineId
@@ -767,7 +771,7 @@ done
 
 # Run all checks
 if [ "$JSON_MODE" != true ]; then
-  print_header "Nix-Darwin Pre-Flight Inspector v${SCRIPT_VERSION}"
+  print_header "Nix-Darwin Setup Inspector v${SCRIPT_VERSION}"
 fi
 
 check_system
