@@ -32,8 +32,17 @@ in
     # Source: nix-config/modules/darwin/default.nix
 
     # ==== Determinate Nix installer defaults ====
-    # Store optimization — deduplicate identical files via hard links
-    auto-optimise-store = true
+    # Store optimization disabled — auto-optimise-store's hard-link dedup
+    # collides (`create_hard_link: File exists` in /nix/store/.links/) on new
+    # path imports once the .links state is corrupted (e.g. by an interrupted
+    # rebuild), which blocks ALL rebuilds — the "substitutes failed (networking
+    # issues)" messages are this same hard-link failure, mislabeled. The ~4 GB
+    # dedup savings isn't worth the rebuild fragility on a 608 GB disk. To
+    # re-enable: verify the store is healthy first (nix store optimise reconciles
+    # existing links, but new imports re-trigger the collision until the .links
+    # dir is clean — the reliable reset is a full nix-collect-garbage + rebuild
+    # with this off, then re-enable).
+    auto-optimise-store = false
 
     # Auto garbage collection — safety net when disk runs low
     min-free = 10737418240
