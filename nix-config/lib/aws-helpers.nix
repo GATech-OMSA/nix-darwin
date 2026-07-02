@@ -222,10 +222,6 @@ EOF
       fi
     }
 
-    function awsprofile() {
-      echo "''${AWS_PROFILE:-(none)}"
-    }
-
     function awslist() {
       if [ ! -f ~/.aws/accounts.json ]; then
         echo "✗No accounts.json found at ~/.aws/accounts.json"
