@@ -11,6 +11,9 @@ set -o pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # Colors + print/check helpers (print_header, check_pass, …) — TTY-aware.
 source "${REPO_ROOT}/scripts/lib/audit-framework.sh"
+# sumval <summary-line> <key> → the integer for key=<number> on a SUMMARY: line.
+# Used to parse the sub-scripts' machine-readable summary instead of scraping ANSI.
+sumval() { echo "$1" | grep -oE "$2=[0-9]+" | head -1 | cut -d= -f2; }
 VERBOSE=0
 TOTAL_CHECKS=0
 PASSED_CHECKS=0
@@ -353,14 +356,12 @@ check_secrets() {
     audit_output=$("$REPO_ROOT/scripts/validation/audit-permissions.sh" 2>&1)
     audit_exit_code=$?
 
-    # Parse audit results (strip ANSI color codes for parsing)
-    audit_clean=$(echo "$audit_output" | sed 's/\x1b\[[0-9;]*m//g')
-
-    if echo "$audit_clean" | grep -q "Security Score:"; then
-      # Extract statistics from cleaned output
-      secure_count=$(echo "$audit_clean" | grep "Secure (600):" | grep -oE '[0-9]+' | head -n1 || echo "0")
-      insecure_count=$(echo "$audit_clean" | grep "Insecure:" | grep -oE '[0-9]+' | head -n1 || echo "0")
-      total_files=$(echo "$audit_clean" | grep "Files Checked:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+    # Parse the machine-readable SUMMARY: line (replaces fragile ANSI scraping).
+    audit_summary=$(echo "$audit_output" | grep '^SUMMARY:')
+    if [[ -n "$audit_summary" ]]; then
+      secure_count=$(sumval "$audit_summary" secure);     secure_count=${secure_count:-0}
+      insecure_count=$(sumval "$audit_summary" insecure); insecure_count=${insecure_count:-0}
+      total_files=$(sumval "$audit_summary" total);       total_files=${total_files:-0}
 
       if [[ $audit_exit_code -eq 0 ]]; then
         check_pass "Credential file permissions secure" "$secure_count/$total_files files with 600 permissions"
@@ -501,15 +502,13 @@ check_backup_verification() {
   verify_output=$("$REPO_ROOT/scripts/maintenance/verify-backups.sh" 2>&1)
   verify_exit_code=$?
 
-  # Parse verification results (strip ANSI codes for parsing)
-  verify_clean=$(echo "$verify_output" | sed 's/\x1b\[[0-9;]*m//g')
-
-  # Extract statistics
-  if echo "$verify_clean" | grep -q "Verification Score:"; then
-    passed=$(echo "$verify_clean" | grep "✓ Passed:" | grep -oE '[0-9]+' | head -n1 || echo "0")
-    failed=$(echo "$verify_clean" | grep "✗ Failed:" | grep -oE '[0-9]+' | head -n1 || echo "0")
-    warnings=$(echo "$verify_clean" | grep "▸ Warnings:" | grep -oE '[0-9]+' | head -n1 || echo "0")
-    total=$(echo "$verify_clean" | grep "Total Checks:" | grep -oE '[0-9]+' | head -n1 || echo "0")
+  # Parse the machine-readable SUMMARY: line (replaces fragile ANSI scraping).
+  verify_summary=$(echo "$verify_output" | grep '^SUMMARY:')
+  if [[ -n "$verify_summary" ]]; then
+    passed=$(sumval "$verify_summary" passed);     passed=${passed:-0}
+    failed=$(sumval "$verify_summary" failed);     failed=${failed:-0}
+    warnings=$(sumval "$verify_summary" warnings); warnings=${warnings:-0}
+    total=$(sumval "$verify_summary" total);       total=${total:-0}
 
     if [[ $verify_exit_code -eq 0 ]]; then
       check_pass "Backup verification passed" "$passed/$total checks passed"

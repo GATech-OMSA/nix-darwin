@@ -406,6 +406,8 @@ main() {
 
   echo -e "${BOLD}Verification Score:${NC} ${status_color}${pass_percent}%${NC} ($PASSED_CHECKS/$TOTAL_CHECKS checks passed)"
   echo -e "${BOLD}Status:${NC}             ${status_emoji} ${status_color}${status_text}${NC}"
+  # Machine-readable summary (parsed by health-check.sh instead of ANSI scraping).
+  echo "SUMMARY: total=$TOTAL_CHECKS passed=$PASSED_CHECKS failed=$FAILED_CHECKS warnings=$WARNINGS"
   echo ""
 
   # Provide recommendations

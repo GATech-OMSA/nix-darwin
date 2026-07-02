@@ -289,6 +289,8 @@ generate_summary_report() {
 
   echo -e "${BOLD}Security Score:${NC}  ${status_color}${secure_percent}%${NC} ($SECURE_FILES/$existing_files secure)"
   echo -e "${BOLD}Status:${NC}          ${status_emoji} ${status_color}${status_text}${NC}"
+  # Machine-readable summary (parsed by health-check.sh instead of ANSI scraping).
+  echo "SUMMARY: total=$TOTAL_FILES secure=$SECURE_FILES insecure=$INSECURE_FILES missing=$MISSING_FILES fixed=$FIXED_FILES"
   echo ""
 }
 
