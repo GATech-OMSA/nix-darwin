@@ -42,6 +42,7 @@ USE_CACHE=true
 CACHE_DIR="${HOME}/.cache/nix-darwin/sec-preflight"
 CACHE_TTL_DAYS="${SEC_PREFLIGHT_CACHE_TTL_DAYS:-7}"
 
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --fast) FAST=true; shift ;;
@@ -60,7 +61,7 @@ fi
 info()    { echo -e "${BLUE}→${NC} $*"; }
 warning() { echo -e "${YELLOW}⚠${NC} $*"; }
 
-run_banner "security-preflight" "fast=$FAST prompt=$PROMPT use_cache=$USE_CACHE" "$@"
+run_banner "security-preflight" "fast=$FAST prompt=$PROMPT use_cache=$USE_CACHE" "${all_args[@]}"
 
 # Honor the global skip switch.
 if [[ "${SKIP_SECURITY_PREFLIGHT:-0}" == "1" ]]; then

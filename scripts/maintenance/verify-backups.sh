@@ -36,6 +36,7 @@ FAILED_CHECKS=0
 WARNINGS=0
 
 # Parse command line arguments
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     -v|--verbose)
@@ -58,7 +59,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-run_banner "verify-backups" "verbose=$VERBOSE" "$@"
+run_banner "verify-backups" "verbose=$VERBOSE" "${all_args[@]}"
 
 # ============================================================================
 # HELPER FUNCTIONS (script-specific)

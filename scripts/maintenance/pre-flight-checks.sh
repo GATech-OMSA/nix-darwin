@@ -292,6 +292,8 @@ check_secrets_encrypted() {
 # ============================================
 
 main() {
+  local all_args=("$@")
+
   # Parse arguments
   while [[ $# -gt 0 ]]; do
     case $1 in
@@ -312,7 +314,7 @@ main() {
   done
 
   if [[ "$QUIET_MODE" == "false" ]]; then
-    run_banner "pre-flight-checks" "quiet=$QUIET_MODE warnings_only=$WARNINGS_ONLY" "$@"
+    run_banner "pre-flight-checks" "quiet=$QUIET_MODE warnings_only=$WARNINGS_ONLY" "${all_args[@]}"
   fi
 
   print_header "Pre-Flight Checks for darwin-rebuild"

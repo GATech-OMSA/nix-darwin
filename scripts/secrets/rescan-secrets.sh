@@ -72,6 +72,7 @@ EOF
 }
 
 # Parse arguments
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help) print_usage; exit 0 ;;
@@ -80,7 +81,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-run_banner "rescan-secrets" "depth=$SCAN_DEPTH" "$@"
+run_banner "rescan-secrets" "depth=$SCAN_DEPTH" "${all_args[@]}"
 
 # ==============================================================================
 # KNOWN DEPLOY TARGETS (from deploy-secrets.sh)

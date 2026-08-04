@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-#
 # run-banner.sh
 #
 # Shared run-header banner for user-facing scripts. Mirrors the format

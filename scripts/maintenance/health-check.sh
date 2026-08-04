@@ -22,6 +22,7 @@ FAILED_CHECKS=0
 WARNINGS=0
 
 # Parse command line arguments
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     -v|--verbose)
@@ -44,7 +45,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-run_banner "health-check" "verbose=$VERBOSE" "$@"
+run_banner "health-check" "verbose=$VERBOSE" "${all_args[@]}"
 
 # print_header / print_category / check_pass / check_fail / check_warn /
 # verbose_output come from scripts/lib/audit-framework.sh (sourced above).

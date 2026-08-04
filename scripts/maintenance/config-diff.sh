@@ -69,6 +69,7 @@ EOF
 }
 
 # Parse arguments
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
     case $1 in
         --generations)
@@ -96,7 +97,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-run_banner "config-diff" "packages_only=$PACKAGES_ONLY verbose=$VERBOSE" "$@"
+run_banner "config-diff" "packages_only=$PACKAGES_ONLY verbose=$VERBOSE" "${all_args[@]}"
 
 # Get generations
 PROFILE_DIR="/nix/var/nix/profiles"

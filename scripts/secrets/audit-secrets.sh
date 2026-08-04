@@ -42,6 +42,7 @@ MAX_FILE_SIZE=$((10 * 1024 * 1024))  # 10MB
 # PARSE ARGUMENTS
 # ============================================================================
 
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     --depth)
@@ -64,7 +65,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-run_banner "audit-secrets" "depth=$SCAN_DEPTH dry_run=$DRY_RUN" "$@"
+run_banner "audit-secrets" "depth=$SCAN_DEPTH dry_run=$DRY_RUN" "${all_args[@]}"
 
 # ============================================================================
 # COLORS & FORMATTING
