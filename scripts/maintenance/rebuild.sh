@@ -27,6 +27,8 @@ set -e
 NIX_DARWIN_DIR="${HOME}/nix-darwin"
 PRE_FLIGHT_SCRIPT="${NIX_DARWIN_DIR}/scripts/maintenance/pre-flight-checks.sh"
 MACHINE_ID=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/machine-config.nix" machineId 2>/dev/null || echo "default")
+REPO_ROOT="$NIX_DARWIN_DIR"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 
 LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/nix-rebuild"
 LOG_FILE="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ).log"
@@ -75,11 +77,7 @@ done
 # inside the pipe and leave tee hanging. The wrapper does `exec zsh` after
 # the pipe drains.
 _do_rebuild() {
-  echo "===== nix-rebuild $(date -u +%Y-%m-%dT%H:%M:%SZ) ====="
-  echo "machine: $MACHINE_ID"
-  echo "args:    ${args[*]:-(none)}"
-  echo "flags:   skip_checks=$SKIP_CHECKS debug=$DEBUG_MODE rollback=$ROLLBACK legacy=$USE_LEGACY"
-  echo
+  run_banner "nix-rebuild" "skip_checks=$SKIP_CHECKS debug=$DEBUG_MODE rollback=$ROLLBACK legacy=$USE_LEGACY" "${args[@]}"
 
   # PRE-FLIGHT
   if [[ "$ROLLBACK" == "false" ]] && [[ "$SKIP_CHECKS" == "false" ]]; then
