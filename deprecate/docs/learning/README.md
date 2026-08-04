@@ -1214,13 +1214,13 @@ echo $MACHINE_MODE       # home, work, or minimal
 
 ```bash
 # Switch to work profile
-scripts/switch-profile.sh work
+scripts/profiles/switch-profile.sh work
 
 # Switch to personal profile
-scripts/switch-profile.sh personal
+scripts/profiles/switch-profile.sh personal
 
 # Switch to minimal (troubleshooting)
-scripts/switch-profile.sh minimal
+scripts/profiles/switch-profile.sh minimal
 ```
 
 ### Profile-Specific Behavior
@@ -1444,7 +1444,7 @@ cleanup                 # Clean up
 
 # Profile (v2.0.0)
 echo $ACTIVE_PROFILE    # Check profile
-scripts/switch-profile.sh work  # Switch profile
+scripts/profiles/switch-profile.sh work  # Switch profile
 ```
 
 ### Configuration

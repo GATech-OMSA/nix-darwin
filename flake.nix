@@ -94,7 +94,7 @@
       # a single darwinSystem + Home Manager tree; CI's matrix (.github/workflows/ci.yml)
       # sets machineConfig.machineId per job, so each CI job also evaluates exactly
       # its own machine — both machines are still covered across the matrix. To build
-      # the *other* machine locally, switch via scripts/switch-profile.sh (which
+      # the *other* machine locally, switch via scripts/profiles/switch-profile.sh (which
       # rewrites config/machine-config.nix). Fallback: if the active machineId isn't
       # in the registry, export all rather than brick the flake (preserves prior
       # behavior for misconfigs).
