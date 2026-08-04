@@ -964,18 +964,18 @@ in
       function status() { __lazy_load_dispatch; status "$@"; }
       function fix() { __lazy_load_dispatch; fix "$@"; }
 
-      # Lazy-load: workspace backup/restore/sync — the only functions this module defines.
+      # Lazy-load: workspace backup/restore — the only functions this module defines.
       # (edit-secrets/secrets-status/etc. were stubbed here previously but never defined
       # in credentials-mgmt.zsh — they died with the old warning system. secrets-status
-      # is now a shell alias to scripts/secrets/status-secrets.sh; see aliases above.)
+      # is now a shell alias to scripts/secrets/status-secrets.sh; see aliases above.
+      # sync-workspace was removed — the script it called doesn't exist.)
       __lazy_load_credentials() {
-        unfunction backup-workspace restore-workspace sync-workspace \
+        unfunction backup-workspace restore-workspace \
           __lazy_load_credentials 2>/dev/null
         source ${lazyCredentials}
       }
       function backup-workspace() { __lazy_load_credentials; backup-workspace "$@"; }
       function restore-workspace() { __lazy_load_credentials; restore-workspace "$@"; }
-      function sync-workspace() { __lazy_load_credentials; sync-workspace "$@"; }
       # nix-health() stub omitted — alias `nix-health` points to health-check.sh script
 
       # ============================================
