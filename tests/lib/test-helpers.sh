@@ -29,6 +29,7 @@ function_files=(
   "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/core.zsh"
   "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/update.zsh"
   "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/cleanup.zsh"
+  "$REPO_ROOT/nix-config/home/_profiles/_template/shell/functions/dispatch.zsh"
 )
 
 for func_file in "${function_files[@]}"; do

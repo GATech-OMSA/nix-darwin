@@ -926,7 +926,8 @@ in
       function cleanup-safe() { __lazy_load_cleanup; cleanup-safe "$@"; }
       function cleanup-quick() { __lazy_load_cleanup; cleanup-quick "$@"; }
       function cleanup-standard() { __lazy_load_cleanup; cleanup-standard "$@"; }
-      # cleanup() stub omitted — alias `cleanup = "cleanup-standard"` handles it
+      # cleanup() stub lives in the dispatch lazy-load block below, not here —
+      # it now routes through the `clean` umbrella dispatcher.
       function cleanup-dev() { __lazy_load_cleanup; cleanup-dev "$@"; }
       function cleanup-aggressive() { __lazy_load_cleanup; cleanup-aggressive "$@"; }
       function cleanup-all() { __lazy_load_cleanup; cleanup-all "$@"; }
@@ -936,13 +937,12 @@ in
 
       # Lazy-load: update functions (315 lines, used weekly)
       __lazy_load_update() {
-        unfunction update-nix update-brew update-mamba update-vscode update-mas \
+        unfunction update-nix update-brew update-vscode update-mas \
           update-dev update-system update-all __lazy_load_update 2>/dev/null
         source ${lazyUpdate}
       }
       function update-nix() { __lazy_load_update; update-nix "$@"; }
       function update-brew() { __lazy_load_update; update-brew "$@"; }
-      function update-mamba() { __lazy_load_update; update-mamba "$@"; }
       function update-vscode() { __lazy_load_update; update-vscode "$@"; }
       function update-mas() { __lazy_load_update; update-mas "$@"; }
       function update-dev() { __lazy_load_update; update-dev "$@"; }

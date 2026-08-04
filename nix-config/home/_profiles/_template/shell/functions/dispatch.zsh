@@ -144,7 +144,7 @@ Usage: status [subcommand]
   git         Show nix-darwin repo git status
 EOF
       ;;
-    secrets) shift; secrets ;;
+    secrets) shift; secrets "$@" ;;
     git) shift; git -C "$HOME/nix-darwin" status --short --branch "$@" ;;
     *)
       echo "Unknown status subcommand: $1" >&2
