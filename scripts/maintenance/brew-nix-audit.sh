@@ -8,13 +8,18 @@
 
 set -e
 
-# ============================================ 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
+# ============================================
 # COLORS
-# ============================================ 
+# ============================================
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
+
+run_banner "brew-nix-audit" "(none)" "$@"
 
 echo -e "${BLUE}Auditing Homebrew packages for Nix alternatives...${NC}\n"
 

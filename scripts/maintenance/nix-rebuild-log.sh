@@ -13,12 +13,20 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
 LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/nix-rebuild"
 
 if [[ ! -d "$LOG_DIR" ]]; then
   echo "No log directory yet: $LOG_DIR" >&2
   echo "Run \`nix-rebuild\` once to create one." >&2
   exit 1
+fi
+
+# --help/-h prints just the doc comment and exits — no banner noise there.
+if [[ "${1:-}" != "--help" && "${1:-}" != "-h" ]]; then
+  run_banner "nix-rebuild-log" "(none)" "$@"
 fi
 
 case "${1:-}" in

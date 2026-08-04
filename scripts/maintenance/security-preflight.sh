@@ -34,6 +34,8 @@
 set -euo pipefail
 
 NIX_DIR="${FLAKE_ROOT:-$HOME/nix-darwin}"
+REPO_ROOT="$NIX_DIR"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 FAST=false
 PROMPT=true
 USE_CACHE=true
@@ -57,6 +59,8 @@ else
 fi
 info()    { echo -e "${BLUE}→${NC} $*"; }
 warning() { echo -e "${YELLOW}⚠${NC} $*"; }
+
+run_banner "security-preflight" "fast=$FAST prompt=$PROMPT use_cache=$USE_CACHE" "$@"
 
 # Honor the global skip switch.
 if [[ "${SKIP_SECURITY_PREFLIGHT:-0}" == "1" ]]; then

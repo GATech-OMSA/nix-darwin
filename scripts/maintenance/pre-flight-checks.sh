@@ -34,6 +34,9 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
 # ============================================
 # COLOR CODES
 # ============================================
@@ -307,6 +310,10 @@ main() {
         ;;
     esac
   done
+
+  if [[ "$QUIET_MODE" == "false" ]]; then
+    run_banner "pre-flight-checks" "quiet=$QUIET_MODE warnings_only=$WARNINGS_ONLY" "$@"
+  fi
 
   print_header "Pre-Flight Checks for darwin-rebuild"
 

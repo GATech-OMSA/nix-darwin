@@ -10,6 +10,7 @@ set -o pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "${REPO_ROOT}/scripts/lib/machine-id.sh"        # get_machine_id
 source "${REPO_ROOT}/scripts/lib/audit-framework.sh"   # colors + print/check helpers (TTY-aware)
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"        # run_banner
 
 # Extract machineId from config/machine-config.nix
 MACHINE_CONFIG="$REPO_ROOT/config/machine-config.nix"
@@ -56,6 +57,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+run_banner "verify-backups" "verbose=$VERBOSE" "$@"
 
 # ============================================================================
 # HELPER FUNCTIONS (script-specific)
