@@ -15,6 +15,7 @@ let
   lazyCore = pkgs.writeText "core.zsh" (builtins.readFile ./functions/core.zsh);
   lazyPython = pkgs.writeText "python.zsh" (builtins.readFile ./functions/python.zsh);
   lazyAwsCompletion = pkgs.writeText "aws-completion.zsh" (builtins.readFile ./functions/aws-completion.zsh);
+  lazyDispatch = pkgs.writeText "dispatch.zsh" (builtins.readFile ./functions/dispatch.zsh);
 
   # Static generation of shell init scripts to improve startup time
   # This moves ~15-30ms of processing from shell-start to build-time.
@@ -372,12 +373,12 @@ in
       jn = "jupyter notebook";
 
       # UV commands
-      "uv-new" = "uv init";
-      "uv-venv" = "uv venv";
+      # uv-new/uv-venv/activate removed — richer same-named functions in
+      # python.zsh (cd into project dirs, chain venv+activate, check both
+      # .venv/venv) were shadowed by these aliases. Removing un-shadows them.
       "uv-add" = "uv add";
       "uv-sync" = "uv sync";
       "uv-run" = "uv run";
-      activate = "source .venv/bin/activate";
 
       # Linting & Formatting (py- namespaced: these are Python/ruff-only, so a
       # bare `lint` shouldn't run ruff inside a JS/Go repo)
@@ -445,16 +446,16 @@ in
       # ============================================
       # CLEANUP & MAINTENANCE
       # ============================================
-      # Main cleanup command (Standard Tier)
-      cleanup = "cleanup-standard";
-      clean = "cleanup-quick";
-      
+      # `clean`/`cleanup` are umbrella dispatcher functions (dispatch.zsh),
+      # not aliases — an alias here would shadow the function of the same
+      # name. See dispatch.zsh for subcommands (quick/safe/dev/aggressive/...).
+      #
       # Specific cleanup tasks (Zsh functions)
       # cleanup-safe       : Logs/temp files only
       # cleanup-quick      : Safe + brew cleanup
       # cleanup-standard   : Quick + Docker prune + Nix GC
       # cleanup-aggressive : Deep clean (requires confirmation)
-      
+
       # Script-based maintenance
       system-cleanup = "${nixDarwinDir}/scripts/maintenance/system-cleanup.sh";
     };
@@ -947,6 +948,21 @@ in
       function update-dev() { __lazy_load_update; update-dev "$@"; }
       function update-system() { __lazy_load_update; update-system "$@"; }
       function update-all() { __lazy_load_update; update-all "$@"; }
+
+      # Lazy-load: umbrella dispatchers (update/clean/secrets/status/fix +
+      # back-compat cleanup). Routing layer only — the bodies call the
+      # already-lazy functions/scripts above, so this defers just the
+      # dispatch.zsh parse cost, not the work it routes to.
+      __lazy_load_dispatch() {
+        unfunction update clean cleanup secrets status fix __lazy_load_dispatch 2>/dev/null
+        source ${lazyDispatch}
+      }
+      function update() { __lazy_load_dispatch; update "$@"; }
+      function clean() { __lazy_load_dispatch; clean "$@"; }
+      function cleanup() { __lazy_load_dispatch; cleanup "$@"; }
+      function secrets() { __lazy_load_dispatch; secrets "$@"; }
+      function status() { __lazy_load_dispatch; status "$@"; }
+      function fix() { __lazy_load_dispatch; fix "$@"; }
 
       # Lazy-load: workspace backup/restore/sync — the only functions this module defines.
       # (edit-secrets/secrets-status/etc. were stubbed here previously but never defined

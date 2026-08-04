@@ -193,8 +193,8 @@ function cleanup-standard() {
   __cleanup_log "standard" "Completed in ${duration}s"
 }
 
-# Default alias
-function cleanup() { cleanup-standard "$@"; }
+# `cleanup` (back-compat default) now lives in dispatch.zsh, routing through
+# the `clean` umbrella dispatcher instead of being defined here.
 
 # ============================================
 # TIER 4: CLEANUP-DEV (Development-focused)
