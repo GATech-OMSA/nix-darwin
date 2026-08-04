@@ -354,7 +354,7 @@ mkdir -p workspace/$(hostname)/profile-backups/$(echo $ACTIVE_PROFILE)-$(date +%
 cp config/machine-config.nix workspace/$(hostname)/profile-backups/$(echo $ACTIVE_PROFILE)-$(date +%Y%m%d)/
 
 # 2. Switch profile
-scripts/switch-profile.sh work  # or personal
+scripts/profiles/switch-profile.sh work  # or personal
 
 # 3. If issues, restore previous profile
 cp workspace/$(hostname)/profile-backups/personal-*/machine-config.nix config/

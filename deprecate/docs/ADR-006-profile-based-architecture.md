@@ -174,7 +174,7 @@ fi
 
 ✅ **Portability**: Configuration works on any machine (just run configure.sh)
 ✅ **Clean Separation**: User identity vs machine identity vs profile behavior
-✅ **Easy Testing**: Switch profiles with `scripts/switch-profile.sh`
+✅ **Easy Testing**: Switch profiles with `scripts/profiles/switch-profile.sh`
 ✅ **Git-Friendly**: No machine-specific values in repository
 ✅ **Simpler Flake**: No hostname conditionals in flake.nix
 ✅ **Better UX**: Guided setup with configure.sh
@@ -431,7 +431,7 @@ exec zsh
 
 ### Profile Switcher
 
-**scripts/switch-profile.sh**:
+**scripts/profiles/switch-profile.sh**:
 ```bash
 #!/usr/bin/env bash
 # Switch between profiles
@@ -481,13 +481,13 @@ echo $ACTIVE_PROFILE  # Should show selected profile
 
 ```bash
 # Switch to work profile
-./scripts/switch-profile.sh work
+./scripts/profiles/switch-profile.sh work
 
 # Switch to personal profile
-./scripts/switch-profile.sh personal
+./scripts/profiles/switch-profile.sh personal
 
 # Switch to minimal (troubleshooting)
-./scripts/switch-profile.sh minimal
+./scripts/profiles/switch-profile.sh minimal
 ```
 
 ### Check Current Profile

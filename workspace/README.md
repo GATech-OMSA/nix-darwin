@@ -27,11 +27,6 @@ backup-workspace           # Backs up to workspace/<machineId>/
 restore-workspace          # Restores from workspace/<machineId>/
 ```
 
-### Sync
-```bash
-sync-workspace             # Backup + Commit + Push
-```
-
 ## What Gets Backed Up
 
 - **App configs**: Claude, Continue.dev, Gemini, iTerm2

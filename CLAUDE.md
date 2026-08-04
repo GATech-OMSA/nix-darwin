@@ -121,9 +121,9 @@ echo $ACTIVE_PROFILE
 
 **Switch profiles:**
 ```bash
-scripts/switch-profile.sh personal
-scripts/switch-profile.sh work
-scripts/switch-profile.sh minimal
+scripts/profiles/switch-profile.sh personal
+scripts/profiles/switch-profile.sh work
+scripts/profiles/switch-profile.sh minimal
 ```
 
 **Profile structure:**
@@ -248,7 +248,8 @@ deprecate/docs/                 # Archived guides (git history)
 | System Cleanup | `system-cleanup` | Interactive cache/log/docker cleaning |
 | Brew Audit | `nix-brew-audit` | Check Brew apps for Nix migration |
 | Health check | `just health` (or `nix-health`) | Troubleshooting |
-| Update all | `just update` (or `update-all`) | Weekly maintenance |
+| Update (weekly, full) | `update` (bare = `update-all`; subcommands `nix\|brew\|vscode\|mas\|dev\|system`) | Canonical weekly update: nix, brew, vscode, mas + macOS check — see `shell/functions/dispatch.zsh` |
+| Update (flake+brew, no rebuild) | `just update` | Updates flake inputs + Homebrew only — does NOT rebuild; run `just switch` after |
 | Edit secrets | `secrets-edit` | Edit encrypted secrets.yaml |
 | Deploy secrets | `secrets-deploy` | Decrypt + deploy (no rebuild needed) |
 | Reload env/secrets | `respin` | Full shell restart (`exec zsh`) — picks up secrets + local overrides |
