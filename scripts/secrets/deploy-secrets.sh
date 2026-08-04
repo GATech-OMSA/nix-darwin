@@ -28,12 +28,14 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 DRY_RUN=false
 AGE_KEY="$HOME/.config/sops/age/keys.txt"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/secrets-deploy"
 MANIFEST="$STATE_DIR/manifest"
 
 # Parse options
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run|-n) DRY_RUN=true ;;
@@ -53,6 +55,10 @@ done
 for nixpath in /run/current-system/sw/bin /nix/var/nix/profiles/default/bin "$HOME/.nix-profile/bin"; do
   [[ -d "$nixpath" ]] && [[ ":$PATH:" != *":$nixpath:"* ]] && PATH="$nixpath:$PATH"
 done
+
+# Banner after the PATH augmentation above — `nix` (used by get_machine_id)
+# may not be resolvable yet in activation/launchd contexts with a bare PATH.
+run_banner "deploy-secrets" "dry_run=$DRY_RUN" "${all_args[@]}"
 
 # Resolve required tools to absolute paths and verify identity.
 # Activation hooks have an unstable PATH (which yq/sops gets found can vary by

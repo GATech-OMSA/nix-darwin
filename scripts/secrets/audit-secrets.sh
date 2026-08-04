@@ -22,6 +22,9 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -39,6 +42,7 @@ MAX_FILE_SIZE=$((10 * 1024 * 1024))  # 10MB
 # PARSE ARGUMENTS
 # ============================================================================
 
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     --depth)
@@ -60,6 +64,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+run_banner "audit-secrets" "depth=$SCAN_DEPTH dry_run=$DRY_RUN" "${all_args[@]}"
 
 # ============================================================================
 # COLORS & FORMATTING

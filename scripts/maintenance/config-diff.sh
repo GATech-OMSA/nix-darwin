@@ -11,6 +11,9 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -66,6 +69,7 @@ EOF
 }
 
 # Parse arguments
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
     case $1 in
         --generations)
@@ -92,6 +96,8 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+run_banner "config-diff" "packages_only=$PACKAGES_ONLY verbose=$VERBOSE" "${all_args[@]}"
 
 # Get generations
 PROFILE_DIR="/nix/var/nix/profiles"

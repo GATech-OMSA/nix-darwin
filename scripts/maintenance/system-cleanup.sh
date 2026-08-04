@@ -12,9 +12,12 @@
 
 set -e
 
-# ============================================ 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
+# ============================================
 # COLORS
-# ============================================ 
+# ============================================
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -22,9 +25,11 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 FORCE=false
-if [[ "$1" == "--force" ]]; then
+if [[ "${1:-}" == "--force" ]]; then
   FORCE=true
 fi
+
+run_banner "system-cleanup" "force=$FORCE" "$@"
 
 confirm() {
   if [[ "$FORCE" == "true" ]]; then return 0; fi

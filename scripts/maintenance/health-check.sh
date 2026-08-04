@@ -11,6 +11,7 @@ set -o pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # Colors + print/check helpers (print_header, check_pass, …) — TTY-aware.
 source "${REPO_ROOT}/scripts/lib/audit-framework.sh"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 # sumval <summary-line> <key> → the integer for key=<number> on a SUMMARY: line.
 # Used to parse the sub-scripts' machine-readable summary instead of scraping ANSI.
 sumval() { echo "$1" | grep -oE "$2=[0-9]+" | head -1 | cut -d= -f2; }
@@ -21,6 +22,7 @@ FAILED_CHECKS=0
 WARNINGS=0
 
 # Parse command line arguments
+all_args=("$@")
 while [[ $# -gt 0 ]]; do
   case $1 in
     -v|--verbose)
@@ -42,6 +44,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+run_banner "health-check" "verbose=$VERBOSE" "${all_args[@]}"
 
 # print_header / print_category / check_pass / check_fail / check_warn /
 # verbose_output come from scripts/lib/audit-framework.sh (sourced above).

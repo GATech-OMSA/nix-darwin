@@ -22,11 +22,15 @@ set -euo pipefail
 # CONFIGURATION
 # ============================================
 NIX_DARWIN_DIR="${HOME}/nix-darwin"
+REPO_ROOT="$NIX_DARWIN_DIR"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 MACHINE_ID=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/machine-config.nix" machineId)
 USERNAME=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/user-config.nix" username 2>/dev/null || echo "$USER")
 
 WITH_SYSTEM=false
 [[ "${1:-}" == "--with-system" ]] && WITH_SYSTEM=true
+
+run_banner "rebuild-hm-force" "with_system=$WITH_SYSTEM" "$@"
 
 # ============================================
 # BUILD + ACTIVATE
