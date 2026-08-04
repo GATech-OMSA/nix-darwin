@@ -14,6 +14,29 @@
 
 ---
 
+## Tier 0: Umbrella dispatchers (discoverable entry points)
+
+**Status**: Incoming — implemented as zsh functions in
+`nix-config/home/_profiles/_template/shell/functions/dispatch.zsh`.
+
+**Pattern**: Five top-level verbs, each a bare command with an obvious default
+action plus subcommands for everything else. Tiers 1-5 below still exist for
+muscle memory — Tier 0 exists so a new user (or a rusty one) can type a plain
+English verb and get somewhere useful without memorizing the tier system.
+
+| Verb | Bare behavior | Subcommands |
+|------|---------------|--------------|
+| `update` | `update-all` | `nix`, `brew`, `vscode`, `mas`, `dev`, `system` |
+| `clean` | `cleanup-standard` | `quick`, `safe`, `dev`, `aggressive`, `nix`, `docker`, `python`, `deep` |
+| `secrets` | status | `edit`, `view`, `deploy`, `rescan`, `audit`, `backup` |
+| `status` | health check | `secrets`, `git` |
+| `fix` | menu | `rollback`, `rebuild`, `rebuild-force` |
+
+Frame it as: Tier 0 is what you type when you don't remember the tier-3/4
+name; the longer forms remain available (and faster once memorized).
+
+---
+
 ## Five-Tier System
 
 ### Tier 1: Ultra-frequent tools (1 char)
@@ -77,7 +100,9 @@ secrets-rescan         # Discover unmanaged secrets (read-only)
 secrets-status         # Show age key, encryption, deployed files
 secrets-backup         # Backup secrets.yaml
 secrets-audit          # Scan for plaintext credential exposure
-secrets-local          # Manage temporary testing overrides
+secrets-local edit     # Edit ~/.zsh_secrets.local (gitignored testing overrides)
+secrets-local add      # Set one var: secrets-local add VAR value (also: set)
+secrets-local unset    # Remove one var (also: rm-key/delete-key/remove-key)
 ```
 
 **Cleanup operations** (`cleanup-` + TAB):
@@ -94,6 +119,19 @@ cleanup-docker         # Docker cleanup only
 cleanup-python         # Python cache cleanup only
 system-cleanup         # Interactive guided cleanup script
 ```
+
+**Update operations** (`update-` + TAB):
+```
+update-nix             # Flake update + security pre-flight + darwin-rebuild switch
+update-brew            # brew update + upgrade + greedy cask upgrade + cleanup + doctor
+update-vscode          # Reinstall (force-update) all installed VS Code extensions
+update-mas             # mas upgrade (Mac App Store apps)
+update-dev             # update-nix + update-vscode (quick dev-loop update)
+update-system          # update-nix + update-brew
+update-all             # update-nix + update-brew + update-vscode + update-mas
+                        # + macOS softwareupdate --list (full sweep)
+```
+Defined in `nix-config/home/_profiles/_template/shell/functions/update.zsh`.
 
 ---
 
@@ -184,11 +222,15 @@ These aliases map modern tools over standard Unix commands:
 | `ls` | eza | ls |
 | `ll` | eza -al | ls -la |
 | `cat` | bat | cat |
-| `grep` | rg (ripgrep) | grep |
-| `find` | fd | find |
 | `du` | dust | du |
 | `df` | duf | df |
 | `top` | btop | top/htop |
+
+`grep` and `find` are **deliberately NOT aliased** to `rg`/`fd` — those tools
+take different syntax (not just different output), so overriding the builtins
+would silently break `grep -rn ...` / `find . -name ...` muscle memory. Use
+`rg`/`fd` by their own names when you want them; `rgi` is a short alias for
+`rg -i`.
 
 ---
 
