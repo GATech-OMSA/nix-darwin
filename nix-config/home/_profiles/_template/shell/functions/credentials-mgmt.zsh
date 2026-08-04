@@ -1,4 +1,4 @@
-# workspace.zsh
+# credentials-mgmt.zsh
 # Workspace backup and restore functions
 
 # ============================================
@@ -18,15 +18,6 @@ function restore-workspace() {
   local script="$HOME/nix-darwin/scripts/workspace/restore.sh"
   if [[ ! -f "$script" ]]; then
     echo "✗ Restore script not found: $script"
-    return 1
-  fi
-  bash "$script" "$@"
-}
-
-function sync-workspace() {
-  local script="$HOME/nix-darwin/scripts/workspace/sync.sh"
-  if [[ ! -f "$script" ]]; then
-    echo "✗ Sync script not found: $script"
     return 1
   fi
   bash "$script" "$@"
