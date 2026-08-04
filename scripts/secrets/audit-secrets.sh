@@ -22,6 +22,9 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -60,6 +63,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+run_banner "audit-secrets" "depth=$SCAN_DEPTH dry_run=$DRY_RUN" "$@"
 
 # ============================================================================
 # COLORS & FORMATTING

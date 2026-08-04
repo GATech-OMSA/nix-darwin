@@ -28,6 +28,7 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 DRY_RUN=false
 AGE_KEY="$HOME/.config/sops/age/keys.txt"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/secrets-deploy"
@@ -48,6 +49,8 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
+
+run_banner "deploy-secrets" "dry_run=$DRY_RUN" "$@"
 
 # Ensure Nix paths are available (activation hooks may have limited PATH)
 for nixpath in /run/current-system/sw/bin /nix/var/nix/profiles/default/bin "$HOME/.nix-profile/bin"; do

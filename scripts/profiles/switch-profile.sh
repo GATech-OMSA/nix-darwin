@@ -6,6 +6,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 CONFIG_FILE="$REPO_ROOT/config/machine-config.nix"
 PROFILE="${1:-}"
 VALID_PROFILES=("personal" "work" "minimal")
@@ -57,6 +58,8 @@ if [ -z "$MACHINE_ID" ]; then
   echo "error: failed to read machineId from $CONFIG_FILE"
   exit 1
 fi
+
+run_banner "switch-profile" "target_profile=$PROFILE" "$@"
 
 # Update machine-config.nix
 echo "Switching to profile: $PROFILE"

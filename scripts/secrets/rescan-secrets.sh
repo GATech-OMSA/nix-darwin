@@ -29,6 +29,7 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 SCAN_DEPTH="${SECRET_SCAN_DEPTH:-4}"
 
 # Common exclusions for find
@@ -78,6 +79,8 @@ while [[ $# -gt 0 ]]; do
     *) error "Unknown option: $1"; print_usage; exit 1 ;;
   esac
 done
+
+run_banner "rescan-secrets" "depth=$SCAN_DEPTH" "$@"
 
 # ==============================================================================
 # KNOWN DEPLOY TARGETS (from deploy-secrets.sh)

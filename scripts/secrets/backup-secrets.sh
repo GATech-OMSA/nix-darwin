@@ -23,7 +23,10 @@ error() { echo -e "${RED}✗${NC} $*" >&2; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 MACHINE_ID="${1:-}"
+
+run_banner "backup-secrets" "(none)" "$@"
 
 # Auto-detect machine ID if not provided
 if [ -z "$MACHINE_ID" ]; then

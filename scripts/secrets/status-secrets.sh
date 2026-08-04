@@ -27,6 +27,9 @@ error() { echo -e "${RED}✗${NC} $*"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "${REPO_ROOT}/scripts/lib/machine-id.sh"  # get_machine_id
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+
+run_banner "status-secrets" "(none)" "$@"
 
 echo ""
 echo "Secrets Management Status"
