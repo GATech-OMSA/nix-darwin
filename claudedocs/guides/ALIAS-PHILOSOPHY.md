@@ -16,7 +16,7 @@
 
 ## Tier 0: Umbrella dispatchers (discoverable entry points)
 
-**Status**: Incoming — implemented as zsh functions in
+**Status**: Implemented — zsh functions in
 `nix-config/home/_profiles/_template/shell/functions/dispatch.zsh`.
 
 **Pattern**: Five top-level verbs, each a bare command with an obvious default
@@ -100,9 +100,14 @@ secrets-rescan         # Discover unmanaged secrets (read-only)
 secrets-status         # Show age key, encryption, deployed files
 secrets-backup         # Backup secrets.yaml
 secrets-audit          # Scan for plaintext credential exposure
-secrets-local edit     # Edit ~/.zsh_secrets.local (gitignored testing overrides)
+secrets-local edit     # Edit ~/.zsh_secrets.local (gitignored testing overrides) (also: e)
 secrets-local add      # Set one var: secrets-local add VAR value (also: set)
 secrets-local unset    # Remove one var (also: rm-key/delete-key/remove-key)
+secrets-local show     # Print ~/.zsh_secrets.local contents (also: s/cat)
+secrets-local rm       # Delete ~/.zsh_secrets.local (also: delete/remove)
+secrets-local path     # Show file location (also: location)
+secrets-local help     # Usage + workflow (also: h, or bare secrets-local)
+sec                    # Short alias for secrets-local
 ```
 
 **Cleanup operations** (`cleanup-` + TAB):

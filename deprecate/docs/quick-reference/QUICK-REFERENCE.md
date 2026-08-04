@@ -79,7 +79,7 @@ Run this command after editing any `.nix` file:
 
 ### 2. Updating Software
 *   **System & Nix:** `just update` (Updates Nix inputs and Homebrew)
-*   **Just Nix:** `just update-nix`
+*   **Just Nix:** `just flake-update`
 
 ### 3. Testing Without Switching
 To verify your config compiles without applying it:
