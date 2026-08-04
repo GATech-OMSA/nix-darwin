@@ -52,12 +52,26 @@ __update_nix_core() {
   echo "  Updating flake inputs..."
   cd "$nix_dir" || return 1
 
-  # Stash uncommitted changes if any
+  # Stash uncommitted changes if any. The stash stack is shared across every
+  # session/worktree on this repo, so never operate on it positionally
+  # (stash@{0}) after this point — another session's push or pop can shift
+  # every index. Tag the entry with a unique message and immediately resolve
+  # its commit SHA; from here on we only ever address it by SHA (or, for the
+  # one command that requires reflog syntax, by re-resolving stash@{n} from
+  # that SHA right before use).
   local had_changes=false
+  local stash_tag stash_sha
   if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
     had_changes=true
+    stash_tag="update-nix-$(date +%Y%m%d-%H%M%S)"
     echo "  Stashing uncommitted changes..."
-    git stash push -m "update-nix auto-stash $(date +%Y%m%d-%H%M%S)" --quiet
+    git stash push -u -m "$stash_tag" --quiet
+    stash_sha=$(git stash list --format='%H %gs' | grep -F -- "$stash_tag" | head -1 | awk '{print $1}')
+    if [[ -z "$stash_sha" ]]; then
+      echo "  error: pushed a stash but couldn't resolve its SHA (tag: $stash_tag) — check 'git stash list' before continuing." >&2
+      cd - > /dev/null
+      return 1
+    fi
   fi
 
   if nix flake update; then
@@ -67,25 +81,43 @@ __update_nix_core() {
     ((errors++))
   fi
 
-  # Restore stashed changes. If `nix flake update` reproduced a diff
+  # Restore the stashed changes. If `nix flake update` reproduced a diff
   # identical to what's sitting in the stash (e.g. a prior failed run
-  # already left flake.lock in that state), `git stash pop` conflicts
+  # already left flake.lock in that state), applying it would conflict
   # because the patch is already applied — drop the now-redundant stash
-  # instead of popping it. On a genuine conflict, leave the stash intact
-  # and tell the user how to resolve it rather than aborting silently.
+  # instead. On a genuine conflict, leave the stash intact and tell the
+  # user how to resolve it rather than aborting silently.
   if [[ "$had_changes" == "true" ]]; then
     echo "  Restoring stashed changes..."
     local stash_diff current_diff
-    stash_diff=$(git stash show -p stash@{0} 2>/dev/null)
-    current_diff=$(git diff 2>/dev/null; git diff --cached 2>/dev/null)
+    stash_diff=$(git stash show -p "$stash_sha" 2>/dev/null)
+    current_diff=$(git diff HEAD 2>/dev/null)
+
+    # `stash show`/`stash apply` accept a bare commit SHA, but `stash drop`
+    # needs reflog syntax (stash@{n}) — resolve that from the SHA fresh,
+    # immediately before each drop call, since concurrent stash activity in
+    # another session/worktree can shift the entry's position at any time.
+    local stash_ref
     if [[ -n "$stash_diff" && "$stash_diff" == "$current_diff" ]]; then
       echo "  Stash matches the current working tree already — dropping it"
-      git stash drop --quiet
-    elif git stash pop --quiet; then
+      stash_ref=$(git stash list --format='%gd %H' | awk -v sha="$stash_sha" '$2 == sha {print $1}' | head -1)
+      if [[ -z "$stash_ref" ]]; then
+        echo "  error: stash entry $stash_sha is gone (another session may have popped or dropped it)." >&2
+        cd - > /dev/null
+        return 1
+      fi
+      git stash drop --quiet "$stash_ref"
+    elif git stash apply --quiet "$stash_sha"; then
       echo "  Stashed changes restored"
+      stash_ref=$(git stash list --format='%gd %H' | awk -v sha="$stash_sha" '$2 == sha {print $1}' | head -1)
+      if [[ -z "$stash_ref" ]]; then
+        echo "  warning: changes were applied but the stash entry ($stash_sha) is already gone — nothing to drop." >&2
+      else
+        git stash drop --quiet "$stash_ref"
+      fi
     else
-      echo "  error: stash pop conflicted — your changes are still safe in the stash." >&2
-      echo "  Resolve manually: git -C \"$nix_dir\" stash list; git -C \"$nix_dir\" stash show -p stash@{0}" >&2
+      echo "  error: stash apply conflicted — your changes are still safe in the stash." >&2
+      echo "  Resolve manually: git -C \"$nix_dir\" stash show -p $stash_sha   (entry SHA: $stash_sha)" >&2
       cd - > /dev/null
       return 1
     fi
