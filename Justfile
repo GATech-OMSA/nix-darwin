@@ -40,16 +40,16 @@ health:
 # UPDATES
 # ============================================================================
 
-# Update everything (Nix + Homebrew)
+# Update flake inputs + Homebrew, no rebuild/switch (for the full path — rebuild + shell restart — use the `update` shell command)
 update:
-    @echo "🔄 Updating everything..."
+    @echo "🔄 Updating flake inputs + Homebrew (no rebuild)..."
     @nix flake update
     @if command -v brew >/dev/null; then brew update && brew upgrade; fi
-    @echo "✅ Update complete. Run 'just switch' to apply Nix changes."
+    @echo "✅ Inputs updated. Run 'just switch' to rebuild, or use the 'update' shell command for the full path."
 
-# Update only Nix inputs
-update-nix:
-    @echo "❄️  Updating Nix inputs..."
+# Update only Nix flake inputs — bare `nix flake update`, no stash safety/rebuild (NOT the same as the `update nix` shell command)
+flake-update:
+    @echo "❄️  Updating Nix flake inputs..."
     nix flake update
 
 # ============================================================================
