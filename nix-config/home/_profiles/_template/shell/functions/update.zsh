@@ -266,11 +266,11 @@ __update_mas_core() {
 
 function update-nix() {
   __update_nix_core
-  local status=$?
-  if [ $status -eq 0 ]; then
+  local rc=$?
+  if [ $rc -eq 0 ]; then
     __update_restart_shell
   fi
-  return $status
+  return $rc
 }
 
 function update-brew() {
