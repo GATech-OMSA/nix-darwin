@@ -25,7 +25,7 @@ let
   # Work has no local override capability — always build from source (via the
   # corporate Go proxy when configured, else the default proxy.golang.org).
   # Personal uses the vendored, hash-pinned binary, skipping the Go build.
-  isWorkProfile = (machineConfig.profileName or "") == "work";
+  isWorkProfile = myLib.isWorkProfile (machineConfig.profileName or "");
   usePrebuiltSops = !isWorkProfile;
 in
 
