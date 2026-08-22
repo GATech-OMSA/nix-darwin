@@ -122,7 +122,7 @@ let
     kubectx      # Fast K8s context/namespace switching (includes kubens)
     k9s
     kubernetes-helm
-    opentofu     # Infrastructure as code — MPL 2.0 fork; replaces terraform (BSL since v1.6)
+    # opentofu   # Infrastructure as code — MPL 2.0 terraform fork; uncomment when IaC work resumes
 
     # Cloud
     awscli2
