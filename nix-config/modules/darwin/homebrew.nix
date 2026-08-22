@@ -63,7 +63,8 @@
       "claude-code@latest"
       "antigravity-cli"
       "ghostty"
-      "iterm2"
+      # "iterm2"                 # removed 2026-08-22 — Ghostty covers daily use; re-add if tmux -CC/Triggers needed
+      "zed"                      # Rust-native editor, built-in multi-provider AI (trial vs VS Code)
       # "dash"
       # "warp"
       "fork"
@@ -88,7 +89,7 @@
       "ollama-app"
 
       # Utilities
-      "appcleaner"
+      "pearcleaner"         # open-source uninstaller + brew-leftover cleanup (replaced appcleaner 2026-08-22)
       "keka"
       "keyclu"
       "shottr"
@@ -114,9 +115,9 @@
 
     # Mac App Store apps (requires `mas` to be installed)
     masApps = {
-      "AdBlock Pro" = 1018301773;
+      # "AdBlock Pro" removed 2026-08-22 — redundant with uBlock Origin Lite (`mas uninstall 1018301773`)
       "Capital One Shopping" = 1477110326;
-      "Consent-O-Matic" = 1606897889;
+      # "Consent-O-Matic" removed 2026-08-22 — redundant with Hush (`mas uninstall 1606897889`)
       "DarkModeSafari" = 6755151037;
       "Pages" = 409201541;
       "Rakuten Cash Back" = 1451893560;

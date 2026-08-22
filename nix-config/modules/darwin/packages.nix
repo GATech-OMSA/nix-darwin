@@ -29,6 +29,7 @@ let
     ripgrep  # Better grep (rg)
     fd  # Better find
     delta  # Better git diff (line-based)
+    difftastic  # AST-based structural diff — ignores pure reformatting (use via git difftool)
     dust  # Better du
     duf  # Better df
     btop  # Better top
@@ -95,6 +96,7 @@ let
     nvd          # Package version diff between generations
     deadnix      # Find unused code in .nix files
     statix       # Nix linter and fixer
+    nixd         # Nix LSP — option/attr completion + eval diagnostics in editors
     comma        # Run any nixpkg without installing (, cowsay hello)
 
     # Data & Log Tools
@@ -120,10 +122,11 @@ let
     kubectx      # Fast K8s context/namespace switching (includes kubens)
     k9s
     kubernetes-helm
-    # terraform    # Infrastructure as code — disabled (BSL since v1.6); use opentofu or work/packages.nix → tenv if needed
+    opentofu     # Infrastructure as code — MPL 2.0 fork; replaces terraform (BSL since v1.6)
 
     # Cloud
     awscli2
+    granted      # AWS SSO helper — encrypts SSO tokens in keychain (awscli caches them plaintext)
 
     # Interview Prep & System Design
     # mermaid-cli  # Text-to-diagram — disabled (pulls in chromium); GitHub/Obsidian/VS Code render natively
