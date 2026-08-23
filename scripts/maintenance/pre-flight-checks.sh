@@ -25,11 +25,12 @@
 #   2. Git status (warns on uncommitted changes)
 #   3. Nix daemon running
 #   4. No active rebuild processes
-#   5. Nix store integrity
-#   6. System load
-#   7. Required files exist (flake.nix, flake.lock)
-#   8. Secrets encryption (SOPS binary format)
-# (flake syntax is validated by the security-preflight build; network is not gated)
+#   5. flake.nix syntax (nix flake metadata)
+#   6. Nix store integrity
+#   7. System load
+#   8. Required files exist (flake.nix, flake.lock)
+#   9. Secrets encryption (SOPS binary format)
+# (network connectivity is not gated)
 #
 
 set -euo pipefail
@@ -186,6 +187,26 @@ check_active_rebuilds() {
   return 0
 }
 
+check_flake_syntax() {
+  print_check "Validating flake.nix syntax..."
+
+  cd "$NIX_DARWIN_DIR" || return 1
+
+  # Cheap and unconditional: security-preflight.sh also builds the candidate
+  # closure, but it's skippable (SKIP_SECURITY_PREFLIGHT=1, --skip-checks) —
+  # without this check, a skipped security-preflight leaves flake syntax
+  # errors uncaught until darwin-rebuild itself fails mid-run.
+  if nix flake metadata --no-write-lock-file &> /dev/null; then
+    print_pass "flake.nix syntax valid"
+  else
+    print_critical "flake.nix syntax error detected"
+    print_info "Run: nix flake check --show-trace"
+    return 1
+  fi
+
+  return 0
+}
+
 check_nix_store_integrity() {
   print_check "Checking Nix store integrity..."
 
@@ -324,6 +345,7 @@ main() {
   check_git_status || true
   check_nix_daemon || true
   check_active_rebuilds || true
+  check_flake_syntax || true
   check_nix_store_integrity || true
   check_system_load || true
   check_required_files || true
