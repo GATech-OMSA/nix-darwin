@@ -1,5 +1,25 @@
 { lib }:
 
+let
+  # ==================================================
+  # SHARED jq HELPERS
+  # ==================================================
+  # Role resolution used to be copy-pasted into every account-inspection
+  # command (awswhere / awsfind / awsfilter). It lives here as jq `def`s
+  # rather than zsh helper functions because most call sites sit inside a
+  # single jq program's `select()` or array comprehension — a shell function
+  # cannot be invoked mid-pipeline there.
+  #
+  # Prepend with `${awsRoleJqLib}` at the top of a jq program, then:
+  #   .value | role_list($default_role)   -> ["support", "developer"]
+  #   $role  | role_suffix($default_role) -> "-developer" ("" for the default)
+  #
+  # Note: awslist deliberately does NOT use role_list — it prints only the
+  # extra roles, without the default prepended.
+  awsRoleJqLib = ''
+    def role_list($default_role): if type == "object" and .additional_roles then [$default_role] + .additional_roles else [$default_role] end;
+    def role_suffix($default_role): if . != $default_role then "-\(.)" else "" end;'';
+in
 rec {
   # ==================================================
   # AWS SHELL FUNCTIONS
@@ -277,6 +297,7 @@ EOF
           found=1
         fi
       done < <(jq -r --arg id "$account_id" '
+        ${awsRoleJqLib}
         to_entries[] |
         .key as $project |
         (.value.alias // "") as $alias |
@@ -287,15 +308,11 @@ EOF
           ((.value | type) == "object" and .value.id == $id)
         ) |
         .key as $env |
-        (if (.value | type) == "object" and .value.additional_roles then
-          [$default_role] + .value.additional_roles
-        else
-          [$default_role]
-        end) as $roles |
+        (.value | role_list($default_role)) as $roles |
         "→ Project: \($project) (\($alias))",
         "   Environment: \($env)",
         "   Profiles:",
-        ($roles[] | "     • \($project)-\($env)" + (if . != $default_role then "-\(.)" else "" end) + " (\(.) role)")
+        ($roles[] | "     • \($project)-\($env)" + role_suffix($default_role) + " (\(.) role)")
       ' ~/.aws/accounts.json 2>/dev/null)
 
       if [[ $found -eq 0 ]]; then
@@ -393,6 +410,7 @@ EOF
           found=1
         fi
       done < <(jq -r --arg q "$q_lower" '
+        ${awsRoleJqLib}
         to_entries[] |
         .key as $project |
         (.value.alias // "") as $alias |
@@ -401,11 +419,7 @@ EOF
         .value.accounts | to_entries[] |
         .key as $env |
         (if (.value | type) == "object" then .value.id else .value end) as $account_id |
-        (if (.value | type) == "object" and .value.additional_roles then
-          [$default_role] + .value.additional_roles
-        else
-          [$default_role]
-        end) as $roles |
+        (.value | role_list($default_role)) as $roles |
         select(
           ($project | ascii_downcase | contains($q)) or
           ($alias | ascii_downcase | contains($q)) or
@@ -414,7 +428,7 @@ EOF
         ) |
         "→ \($project) (\($alias)) - \($desc)",
         "   • \($env) (Account: \($account_id))",
-        ($roles[] | "     → \($project)-\($env)" + (if . != $default_role then "-\(.)" else "" end) + " (\(.) role)"),
+        ($roles[] | "     → \($project)-\($env)" + role_suffix($default_role) + " (\(.) role)"),
         ""
       ' ~/.aws/accounts.json 2>/dev/null)
 
@@ -463,6 +477,7 @@ EOF
           found=1
         fi
       done < <(jq -r --arg val "$value" --arg type "$type" '
+        ${awsRoleJqLib}
         to_entries[] |
         . as $proj |
         (.value.default_role // "support") as $default_role |
@@ -474,13 +489,7 @@ EOF
           elif $type == "role" or $type == "r" then
             [
               .value.accounts | to_entries[] |
-              (
-                if (.value | type) == "object" and .value.additional_roles then
-                  [$default_role] + .value.additional_roles
-                else
-                  [$default_role]
-                end
-              ) | contains([$val])
+              (.value | role_list($default_role)) | contains([$val])
             ] | any
           else
             false
@@ -495,43 +504,23 @@ EOF
             select(.key == $val) |
             "   • \(.key) (Account: \(.value.id // .value | tostring))\n" +
             (
-              (
-                if (.value | type) == "object" and .value.additional_roles then
-                  [$default_role] + .value.additional_roles
-                else
-                  [$default_role]
-                end
-              )[] |
-              "     → \($proj.key)-\($val)" + (if . != $default_role then "-\(.)" else "" end) + " (\(.) role)"
+              (.value | role_list($default_role))[] |
+              "     → \($proj.key)-\($val)" + role_suffix($default_role) + " (\(.) role)"
             )
           elif $type == "role" or $type == "r" then
             [
               .value.accounts | to_entries[] |
-              select(
-                (
-                  if (.value | type) == "object" and .value.additional_roles then
-                    [$default_role] + .value.additional_roles
-                  else
-                    [$default_role]
-                  end
-                ) | contains([$val])
-              ) |
+              select((.value | role_list($default_role)) | contains([$val])) |
               "   • \(.key) (Account: \(.value.id // .value | tostring))\n" +
-              "     → \($proj.key)-\(.key)" + (if $val != $default_role then "-\($val)" else "" end) + " (\($val) role)"
+              "     → \($proj.key)-\(.key)" + ($val | role_suffix($default_role)) + " (\($val) role)"
             ] | join("\n")
           else
             [
               .value.accounts | to_entries[] |
               "   • \(.key) (Account: \(.value.id // .value | tostring))\n" +
               (
-                (
-                  if (.value | type) == "object" and .value.additional_roles then
-                    [$default_role] + .value.additional_roles
-                  else
-                    [$default_role]
-                  end
-                )[] |
-                "     → \($proj.key)-\(.key)" + (if . != $default_role then "-\(.)" else "" end) + " (\(.) role)"
+                (.value | role_list($default_role))[] |
+                "     → \($proj.key)-\(.key)" + role_suffix($default_role) + " (\(.) role)"
               )
             ] | join("\n")
           end
