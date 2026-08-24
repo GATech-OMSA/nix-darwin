@@ -19,7 +19,7 @@
 **Status**: Implemented — zsh functions in
 `nix-config/home/_profiles/_template/shell/functions/dispatch.zsh`.
 
-**Pattern**: Five top-level verbs, each a bare command with an obvious default
+**Pattern**: Four top-level verbs, each a bare command with an obvious default
 action plus subcommands for everything else. Tiers 1-5 below still exist for
 muscle memory — Tier 0 exists so a new user (or a rusty one) can type a plain
 English verb and get somewhere useful without memorizing the tier system.
@@ -28,9 +28,14 @@ English verb and get somewhere useful without memorizing the tier system.
 |------|---------------|--------------|
 | `update` | `update-all` | `nix`, `brew`, `vscode`, `mas`, `dev`, `system` |
 | `clean` | `cleanup-standard` | `quick`, `safe`, `dev`, `aggressive`, `nix`, `docker`, `python`, `deep` |
-| `secrets` | status | `edit`, `view`, `deploy`, `rescan`, `audit`, `backup` |
-| `status` | health check | `secrets`, `git` |
+| `syscheck` | health check | `secrets`, `git` |
 | `fix` | menu | `rollback`, `rebuild`, `rebuild-force` |
+
+There used to be a `secrets` umbrella dispatcher and a `status` verb; `secrets`
+was dropped (the `secrets-*` Tier-3 aliases already cover the same ground) and
+`status` was renamed `syscheck` — not `sysinfo`, since core.zsh already has a
+`sysinfo` function (system information printout) — to leave `status`
+unambiguous for `git status`.
 
 Frame it as: Tier 0 is what you type when you don't remember the tier-3/4
 name; the longer forms remain available (and faster once memorized).
@@ -112,8 +117,7 @@ sec                    # Short alias for secrets-local
 
 **Cleanup operations** (`cleanup-` + TAB):
 ```
-cleanup                # Standard cleanup (alias for cleanup-standard)
-clean                  # Quick cleanup (alias for cleanup-quick)
+clean                  # Umbrella dispatcher (Tier 0) — bare = cleanup-standard
 cleanup-safe           # Logs/temp only
 cleanup-quick          # Safe + brew cleanup
 cleanup-standard       # Quick + Docker prune + Nix GC
@@ -122,8 +126,10 @@ cleanup-aggressive     # Deep clean (requires confirmation)
 cleanup-nix            # Nix generations only
 cleanup-docker         # Docker cleanup only
 cleanup-python         # Python cache cleanup only
-system-cleanup         # Interactive guided cleanup script
 ```
+`clean deep` runs the old `system-cleanup` interactive script; the standalone
+`cleanup` function and `system-cleanup` alias were both removed as redundant
+with `clean` / `clean deep`.
 
 **Update operations** (`update-` + TAB):
 ```

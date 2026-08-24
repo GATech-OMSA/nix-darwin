@@ -38,10 +38,10 @@ closure. Two commands close that gap:
 - **`secnext`** — scans what *would* be installed before you switch: builds the candidate
   closure (no activation), diffs it against the running system, and prompts on findings.
 
-`secnext` runs automatically before `nix-rebuild`, `update-nix`, and the other `update-*`
-commands. A failed/offline scan never blocks a rebuild (it warns and proceeds). Bypass with
+`secnext` runs automatically before `nix-rebuild`, `update nix`, and the other `update`
+subcommands. A failed/offline scan never blocks a rebuild (it warns and proceeds). Bypass with
 `SKIP_SECURITY_PREFLIGHT=1` or `nix-rebuild-skip-checks`. Remediation in a Nix system, in order:
-update (`update-nix`), remove unused owners (`secnow --explain`), whitelist triaged
+update (`update nix`), remove unused owners (`secnow --explain`), whitelist triaged
 false-matches (`scripts/validation/vulnix-whitelist.toml`), or overlay-patch (rare).
 
 ### Walkthrough

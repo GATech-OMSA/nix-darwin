@@ -1,5 +1,5 @@
 # dispatch.zsh
-# Umbrella dispatcher functions (update/clean/secrets/status/fix) that route
+# Umbrella dispatcher functions (update/clean/syscheck/fix) that route
 # to existing functions and scripts — a thin command-UX layer, no new logic.
 # Extracted from zsh.nix for maintainability
 
@@ -22,6 +22,9 @@ __dispatch_run_script() {
 # UPDATE
 # ============================================
 function update() {
+  # Marks calls into update-* as dispatcher-routed so those functions skip
+  # their direct-invocation deprecation notice.
+  local __UPDATE_DISPATCHED=1
   case "${1:-}" in
     "")
       update-all
@@ -90,65 +93,29 @@ EOF
   esac
 }
 
-# Back-compat: `cleanup` used to be the default-tier alias — now routes
-# through the `clean` dispatcher instead of shadowing it.
-function cleanup() { clean "$@" }
-
 # ============================================
-# SECRETS
+# SYSCHECK
 # ============================================
-function secrets() {
-  case "${1:-}" in
-    "")
-      __dispatch_run_script secrets/status-secrets.sh
-      ;;
-    help|--help|-h)
-      cat <<'EOF'
-Usage: secrets [subcommand]
-  (no args)   Show secrets status
-  edit        Edit encrypted secrets.yaml
-  view        View decrypted secrets
-  deploy      Decrypt + deploy secrets
-  rescan      Discover unmanaged secrets (read-only)
-  audit       Audit secret permissions/coverage
-  backup      Backup secrets
-EOF
-      ;;
-    edit) shift; __dispatch_run_script secrets/edit-secrets.sh "$@" ;;
-    view) shift; __dispatch_run_script secrets/view-secrets.sh "$@" ;;
-    deploy) shift; __dispatch_run_script secrets/deploy-secrets.sh "$@" ;;
-    rescan) shift; __dispatch_run_script secrets/rescan-secrets.sh "$@" ;;
-    audit) shift; __dispatch_run_script secrets/audit-secrets.sh "$@" ;;
-    backup) shift; __dispatch_run_script secrets/backup-secrets.sh "$@" ;;
-    *)
-      echo "Unknown secrets subcommand: $1" >&2
-      secrets help
-      return 1
-      ;;
-  esac
-}
-
-# ============================================
-# STATUS
-# ============================================
-function status() {
+# Named syscheck, not sysinfo — core.zsh already defines a `sysinfo` function
+# (system information printout) with its own lazy-load stub.
+function syscheck() {
   case "${1:-}" in
     "")
       __dispatch_run_script maintenance/health-check.sh
       ;;
     help|--help|-h)
       cat <<'EOF'
-Usage: status [subcommand]
+Usage: syscheck [subcommand]
   (no args)   Run system health check
   secrets     Show secrets status
   git         Show nix-darwin repo git status
 EOF
       ;;
-    secrets) shift; secrets "$@" ;;
+    secrets) shift; __dispatch_run_script secrets/status-secrets.sh "$@" ;;
     git) shift; git -C "$HOME/nix-darwin" status --short --branch "$@" ;;
     *)
-      echo "Unknown status subcommand: $1" >&2
-      status help
+      echo "Unknown syscheck subcommand: $1" >&2
+      syscheck help
       return 1
       ;;
   esac

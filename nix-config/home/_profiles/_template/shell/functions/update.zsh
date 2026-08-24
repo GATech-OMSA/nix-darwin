@@ -275,7 +275,19 @@ __update_mas_core() {
 # UPDATE FUNCTIONS (public — compose cores, restart shell once)
 # ============================================
 
+# Print a one-line deprecation notice when a update-* function is invoked
+# directly by bare name rather than through the `update` dispatcher, which
+# sets __UPDATE_DISPATCHED before calling in. $2 is the replacement command,
+# e.g. "nix" -> "update nix"; pass the full replacement (e.g. "update") when
+# there's no subcommand form.
+__update_deprecation_notice() {
+  if [[ -z ${__UPDATE_DISPATCHED:-} ]]; then
+    echo "▸ Note: '$1' is deprecated — use '$2'"
+  fi
+}
+
 function update-nix() {
+  __update_deprecation_notice update-nix 'update nix'
   __update_nix_core
   local rc=$?
   if [ $rc -eq 0 ]; then
@@ -285,18 +297,22 @@ function update-nix() {
 }
 
 function update-brew() {
+  __update_deprecation_notice update-brew 'update brew'
   __update_brew_core
 }
 
 function update-vscode() {
+  __update_deprecation_notice update-vscode 'update vscode'
   __update_vscode_core
 }
 
 function update-mas() {
+  __update_deprecation_notice update-mas 'update mas'
   __update_mas_core
 }
 
 function update-dev() {
+  __update_deprecation_notice update-dev 'update dev'
   echo "→ Quick development update..."
   local start_time=$(date +%s)
   local errors=0
@@ -321,6 +337,7 @@ function update-dev() {
 }
 
 function update-system() {
+  __update_deprecation_notice update-system 'update system'
   echo "→ System update..."
   local start_time=$(date +%s)
   local errors=0
@@ -345,6 +362,7 @@ function update-system() {
 }
 
 function update-all() {
+  __update_deprecation_notice update-all update
   echo "✓ Complete system update..."
   echo "================================================"
 

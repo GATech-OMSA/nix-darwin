@@ -594,7 +594,7 @@ check_system_resources() {
     if (( wal_mb < 2 )); then
       check_pass "Atuin WAL healthy" "${wal_mb}MB"
     else
-      check_warn "Atuin WAL bloated" "${wal_mb}MB — run 'system-cleanup' to checkpoint"
+      check_warn "Atuin WAL bloated" "${wal_mb}MB — run 'clean deep' to checkpoint"
     fi
   fi
 }

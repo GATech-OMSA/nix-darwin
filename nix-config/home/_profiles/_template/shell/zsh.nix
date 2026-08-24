@@ -446,18 +446,17 @@ in
       # ============================================
       # CLEANUP & MAINTENANCE
       # ============================================
-      # `clean`/`cleanup` are umbrella dispatcher functions (dispatch.zsh),
-      # not aliases — an alias here would shadow the function of the same
-      # name. See dispatch.zsh for subcommands (quick/safe/dev/aggressive/...).
+      # `clean` is the umbrella dispatcher function (dispatch.zsh), not an
+      # alias — an alias here would shadow the function of the same name.
+      # See dispatch.zsh for subcommands (quick/safe/dev/aggressive/deep/...).
+      # `clean deep` runs the same system-cleanup.sh script that used to have
+      # its own `system-cleanup` alias — that alias was removed as redundant.
       #
       # Specific cleanup tasks (Zsh functions)
       # cleanup-safe       : Logs/temp files only
       # cleanup-quick      : Safe + brew cleanup
       # cleanup-standard   : Quick + Docker prune + Nix GC
       # cleanup-aggressive : Deep clean (requires confirmation)
-
-      # Script-based maintenance
-      system-cleanup = "${nixDarwinDir}/scripts/maintenance/system-cleanup.sh";
     };
 
 
@@ -926,8 +925,6 @@ in
       function cleanup-safe() { __lazy_load_cleanup; cleanup-safe "$@"; }
       function cleanup-quick() { __lazy_load_cleanup; cleanup-quick "$@"; }
       function cleanup-standard() { __lazy_load_cleanup; cleanup-standard "$@"; }
-      # cleanup() stub lives in the dispatch lazy-load block below, not here —
-      # it now routes through the `clean` umbrella dispatcher.
       function cleanup-dev() { __lazy_load_cleanup; cleanup-dev "$@"; }
       function cleanup-aggressive() { __lazy_load_cleanup; cleanup-aggressive "$@"; }
       function cleanup-all() { __lazy_load_cleanup; cleanup-all "$@"; }
@@ -949,19 +946,18 @@ in
       function update-system() { __lazy_load_update; update-system "$@"; }
       function update-all() { __lazy_load_update; update-all "$@"; }
 
-      # Lazy-load: umbrella dispatchers (update/clean/secrets/status/fix +
-      # back-compat cleanup). Routing layer only — the bodies call the
-      # already-lazy functions/scripts above, so this defers just the
-      # dispatch.zsh parse cost, not the work it routes to.
+      # Lazy-load: umbrella dispatchers (update/clean/syscheck/fix). Routing
+      # layer only — the bodies call the already-lazy functions/scripts
+      # above, so this defers just the dispatch.zsh parse cost, not the
+      # work it routes to. Named syscheck, not sysinfo — core.zsh already
+      # owns `sysinfo` (see its own lazy stub above).
       __lazy_load_dispatch() {
-        unfunction update clean cleanup secrets status fix __lazy_load_dispatch 2>/dev/null
+        unfunction update clean syscheck fix __lazy_load_dispatch 2>/dev/null
         source ${lazyDispatch}
       }
       function update() { __lazy_load_dispatch; update "$@"; }
       function clean() { __lazy_load_dispatch; clean "$@"; }
-      function cleanup() { __lazy_load_dispatch; cleanup "$@"; }
-      function secrets() { __lazy_load_dispatch; secrets "$@"; }
-      function status() { __lazy_load_dispatch; status "$@"; }
+      function syscheck() { __lazy_load_dispatch; syscheck "$@"; }
       function fix() { __lazy_load_dispatch; fix "$@"; }
 
       # Lazy-load: workspace backup/restore — the only functions this module defines.
