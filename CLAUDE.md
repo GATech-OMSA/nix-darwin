@@ -245,7 +245,7 @@ deprecate/docs/                 # Archived guides (git history)
 | Build (no switch) | `just build` | Test if config compiles |
 | Restart shell | `exec zsh` | After rebuild |
 | Rollback | `just rollback` (or `nix-rollback`) | If build breaks |
-| System Cleanup | `system-cleanup` | Interactive cache/log/docker cleaning |
+| System Cleanup | `clean deep` | Interactive cache/log/docker cleaning |
 | Brew Audit | `nix-brew-audit` | Check Brew apps for Nix migration |
 | Health check | `just health` (or `nix-health`) | Troubleshooting |
 | Update (weekly, full) | `update` (bare = `update-all`; subcommands `nix\|brew\|vscode\|mas\|dev\|system`) | Canonical weekly update: nix, brew, vscode, mas + macOS check — see `shell/functions/dispatch.zsh` |
