@@ -63,6 +63,7 @@ let
     gnused
     gawk
     pandoc  # Document converter
+    tectonic  # Self-contained LaTeX engine — downloads packages on demand, no TeX Live install
 
     # Performance & Benchmarking
     hyperfine    # Command-line benchmarking tool
