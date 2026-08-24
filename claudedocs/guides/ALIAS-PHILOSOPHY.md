@@ -28,12 +28,14 @@ English verb and get somewhere useful without memorizing the tier system.
 |------|---------------|--------------|
 | `update` | `update-all` | `nix`, `brew`, `vscode`, `mas`, `dev`, `system` |
 | `clean` | `cleanup-standard` | `quick`, `safe`, `dev`, `aggressive`, `nix`, `docker`, `python`, `deep` |
-| `sysinfo` | health check | `secrets`, `git` |
+| `syscheck` | health check | `secrets`, `git` |
 | `fix` | menu | `rollback`, `rebuild`, `rebuild-force` |
 
 There used to be a `secrets` umbrella dispatcher and a `status` verb; `secrets`
 was dropped (the `secrets-*` Tier-3 aliases already cover the same ground) and
-`status` was renamed `sysinfo` to leave `status` unambiguous for `git status`.
+`status` was renamed `syscheck` — not `sysinfo`, since core.zsh already has a
+`sysinfo` function (system information printout) — to leave `status`
+unambiguous for `git status`.
 
 Frame it as: Tier 0 is what you type when you don't remember the tier-3/4
 name; the longer forms remain available (and faster once memorized).

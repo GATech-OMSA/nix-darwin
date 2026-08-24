@@ -946,17 +946,18 @@ in
       function update-system() { __lazy_load_update; update-system "$@"; }
       function update-all() { __lazy_load_update; update-all "$@"; }
 
-      # Lazy-load: umbrella dispatchers (update/clean/sysinfo/fix). Routing
+      # Lazy-load: umbrella dispatchers (update/clean/syscheck/fix). Routing
       # layer only — the bodies call the already-lazy functions/scripts
       # above, so this defers just the dispatch.zsh parse cost, not the
-      # work it routes to.
+      # work it routes to. Named syscheck, not sysinfo — core.zsh already
+      # owns `sysinfo` (see its own lazy stub above).
       __lazy_load_dispatch() {
-        unfunction update clean sysinfo fix __lazy_load_dispatch 2>/dev/null
+        unfunction update clean syscheck fix __lazy_load_dispatch 2>/dev/null
         source ${lazyDispatch}
       }
       function update() { __lazy_load_dispatch; update "$@"; }
       function clean() { __lazy_load_dispatch; clean "$@"; }
-      function sysinfo() { __lazy_load_dispatch; sysinfo "$@"; }
+      function syscheck() { __lazy_load_dispatch; syscheck "$@"; }
       function fix() { __lazy_load_dispatch; fix "$@"; }
 
       # Lazy-load: workspace backup/restore — the only functions this module defines.

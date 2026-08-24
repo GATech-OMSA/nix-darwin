@@ -1,5 +1,5 @@
 # dispatch.zsh
-# Umbrella dispatcher functions (update/clean/sysinfo/fix) that route
+# Umbrella dispatcher functions (update/clean/syscheck/fix) that route
 # to existing functions and scripts — a thin command-UX layer, no new logic.
 # Extracted from zsh.nix for maintainability
 
@@ -94,16 +94,18 @@ EOF
 }
 
 # ============================================
-# SYSINFO
+# SYSCHECK
 # ============================================
-function sysinfo() {
+# Named syscheck, not sysinfo — core.zsh already defines a `sysinfo` function
+# (system information printout) with its own lazy-load stub.
+function syscheck() {
   case "${1:-}" in
     "")
       __dispatch_run_script maintenance/health-check.sh
       ;;
     help|--help|-h)
       cat <<'EOF'
-Usage: sysinfo [subcommand]
+Usage: syscheck [subcommand]
   (no args)   Run system health check
   secrets     Show secrets status
   git         Show nix-darwin repo git status
@@ -112,8 +114,8 @@ EOF
     secrets) shift; __dispatch_run_script secrets/status-secrets.sh "$@" ;;
     git) shift; git -C "$HOME/nix-darwin" status --short --branch "$@" ;;
     *)
-      echo "Unknown sysinfo subcommand: $1" >&2
-      sysinfo help
+      echo "Unknown syscheck subcommand: $1" >&2
+      syscheck help
       return 1
       ;;
   esac
