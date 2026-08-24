@@ -246,10 +246,14 @@ $SCRIPT_DIR/build/test-darwin-build.sh"
 
   tests_security="$SCRIPT_DIR/security/test-sops-encryption.sh
 $SCRIPT_DIR/security/test-permissions.sh
-$SCRIPT_DIR/security/test-git-hooks.sh"
+$SCRIPT_DIR/security/test-git-hooks.sh
+$SCRIPT_DIR/security/test-preflight-cache.sh"
 
   tests_lib="$SCRIPT_DIR/lib/test-machine-detection.sh
-$SCRIPT_DIR/lib/test-helpers.sh"
+$SCRIPT_DIR/lib/test-helpers.sh
+$SCRIPT_DIR/lib/test-run-banner.sh
+$SCRIPT_DIR/lib/test-machine-id.sh
+$SCRIPT_DIR/lib/test-audit-framework.sh"
 
   tests_integration="$SCRIPT_DIR/integration/test-multi-machine.sh
 $SCRIPT_DIR/integration/test-rebuild.sh

@@ -5,6 +5,7 @@
 #
 
 source "$(dirname "$0")/../test-framework.sh"
+source "$(dirname "$0")/../../scripts/lib/machine-id.sh"  # get_machine_id
 
 test_begin "Machine Detection"
 
@@ -64,7 +65,7 @@ fi
 test_section "Nix Evaluation"
 
 # Flake outputs are keyed on machineId (from config/machine-config.nix), not hostname
-machine_id=$(nix eval --raw --file "$REPO_ROOT/config/machine-config.nix" machineId 2>/dev/null || echo "")
+machine_id="$(get_machine_id)"
 
 if [[ -n "$machine_id" ]]; then
   assert_command_succeeds \

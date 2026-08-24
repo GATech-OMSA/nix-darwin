@@ -6,7 +6,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner, get_machine_id
 CONFIG_FILE="$REPO_ROOT/config/machine-config.nix"
 PROFILE="${1:-}"
 VALID_PROFILES=("personal" "work" "minimal")
@@ -53,7 +53,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Read machineId before making changes
-MACHINE_ID=$(nix eval --raw --file "$CONFIG_FILE" machineId 2>/dev/null)
+MACHINE_ID="$(get_machine_id)"
 if [ -z "$MACHINE_ID" ]; then
   echo "error: failed to read machineId from $CONFIG_FILE"
   exit 1

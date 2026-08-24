@@ -23,8 +23,12 @@ set -euo pipefail
 # ============================================
 NIX_DARWIN_DIR="${HOME}/nix-darwin"
 REPO_ROOT="$NIX_DARWIN_DIR"
-source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
-MACHINE_ID=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/machine-config.nix" machineId)
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner, get_machine_id
+MACHINE_ID="$(get_machine_id)"
+if [[ -z "$MACHINE_ID" ]]; then
+  echo "error: failed to read machineId from ${NIX_DARWIN_DIR}/config/machine-config.nix" >&2
+  exit 1
+fi
 USERNAME=$(nix eval --raw --file "${NIX_DARWIN_DIR}/config/user-config.nix" username 2>/dev/null || echo "$USER")
 
 WITH_SYSTEM=false

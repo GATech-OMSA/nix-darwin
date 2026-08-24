@@ -35,12 +35,57 @@ set -euo pipefail
 
 NIX_DIR="${FLAKE_ROOT:-$HOME/nix-darwin}"
 REPO_ROOT="$NIX_DIR"
-source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
+source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner, get_machine_id
+CACHE_DIR="${HOME}/.cache/nix-darwin/sec-preflight"
+CACHE_TTL_DAYS="${SEC_PREFLIGHT_CACHE_TTL_DAYS:-7}"
+
+# ── Verdict-cache helpers (pure functions — no globals, no exit) ───────────
+# Split out so tests can source this file (guarded below) and exercise the
+# cache-key logic directly without running vulnix or building a closure.
+
+# compute_whitelist_sig <nix_dir>: concatenated mtimes of the whitelist
+# file(s) that affect the verdict (VULNIX_WHITELIST override + repo default).
+compute_whitelist_sig() {
+  local nix_dir="$1"
+  local sig="" w
+  for w in "${VULNIX_WHITELIST:-}" "$nix_dir/scripts/validation/vulnix-whitelist.toml"; do
+    [[ -n "$w" && -f "$w" ]] && sig="${sig}$(stat -f '%m' "$w" 2>/dev/null || echo 0)"
+  done
+  printf '%s' "$sig"
+}
+
+# compute_cache_key <target> <whitelist_sig>: stable key for a candidate
+# closure + whitelist state. Same inputs → same key; a changed whitelist
+# mtime → a different key (invalidates the cache).
+compute_cache_key() {
+  local target="$1" whitelist_sig="$2"
+  printf '%s|%s' "$target" "$whitelist_sig" | /usr/bin/shasum -a 256 | awk '{print $1}'
+}
+
+# cache_verdict_age_days <cache_file> <now_ts>: age in days of the verdict
+# recorded in <cache_file> (line 1 = unix ts). A corrupt/non-numeric ts is
+# treated as expired (999 days) rather than tripping set -e in arithmetic.
+cache_verdict_age_days() {
+  local cache_file="$1" now="$2"
+  local cached_ts
+  cached_ts="$(head -1 "$cache_file" 2>/dev/null || echo 0)"
+  if [[ "$cached_ts" =~ ^[0-9]+$ ]]; then
+    echo $(( (now - cached_ts) / 86400 ))
+  else
+    echo 999
+  fi
+}
+
+# cache_verdict_value <cache_file>: the recorded verdict (line 2: clean|findings).
+cache_verdict_value() {
+  local cache_file="$1"
+  sed -n '2p' "$cache_file" 2>/dev/null || echo ""
+}
+
+main() {
 FAST=false
 PROMPT=true
 USE_CACHE=true
-CACHE_DIR="${HOME}/.cache/nix-darwin/sec-preflight"
-CACHE_TTL_DAYS="${SEC_PREFLIGHT_CACHE_TTL_DAYS:-7}"
 
 all_args=("$@")
 while [[ $# -gt 0 ]]; do
@@ -71,8 +116,8 @@ fi
 
 # ── Resolve machineId (flake config name != hostname) ──────────────────────
 # Prefer a MACHINE_ID passed by the caller (rebuild.sh already eval'd it) to
-# avoid a second `nix eval` fork per rebuild; fall back to evaluating it here.
-machine_id="${MACHINE_ID:-$(nix eval --raw --file "$NIX_DIR/config/machine-config.nix" machineId 2>/dev/null || true)}"
+# avoid a second `nix eval` fork per rebuild; fall back to the shared resolver.
+machine_id="${MACHINE_ID:-$(get_machine_id)}"
 if [[ -z "$machine_id" ]]; then
   warning "Could not read machineId — skipping security pre-flight (proceeding)."
   exit 0
@@ -118,23 +163,13 @@ fi
 # same packages); --no-cache forces a fresh scan + re-prompt.
 # Cache file: "<unix-ts>\n<verdict: clean|findings>".
 if [[ "$USE_CACHE" == true ]]; then
-  whitelist_sig=""
-  for _w in "${VULNIX_WHITELIST:-}" "$NIX_DIR/scripts/validation/vulnix-whitelist.toml"; do
-    [[ -n "$_w" && -f "$_w" ]] && whitelist_sig="${whitelist_sig}$(stat -f '%m' "$_w" 2>/dev/null || echo 0)"
-  done
-  cache_key="$(printf '%s|%s' "$target" "$whitelist_sig" | /usr/bin/shasum -a 256 | awk '{print $1}')" || cache_key=""
+  whitelist_sig="$(compute_whitelist_sig "$NIX_DIR")"
+  cache_key="$(compute_cache_key "$target" "$whitelist_sig")" || cache_key=""
   cache_file="$CACHE_DIR/${cache_key}"
   if [[ -n "$cache_key" && -f "$cache_file" ]]; then
-    cached_ts="$(head -1 "$cache_file" 2>/dev/null || echo 0)"
-    cached_verdict="$(sed -n '2p' "$cache_file" 2>/dev/null || echo "")"
+    cached_verdict="$(cache_verdict_value "$cache_file")"
     now="$(date +%s)"
-    # Guard against a corrupt/non-numeric ts: treat as expired so we re-scan
-    # rather than trip set -e in the arithmetic below.
-    if [[ "$cached_ts" =~ ^[0-9]+$ ]]; then
-      age_days=$(( (now - cached_ts) / 86400 ))
-    else
-      age_days=999
-    fi
+    age_days="$(cache_verdict_age_days "$cache_file" "$now")"
     if [[ "$age_days" -lt "$CACHE_TTL_DAYS" ]]; then
       if [[ "$cached_verdict" == "clean" ]]; then
         echo -e "${GREEN}✓ (cached) Candidate closure unchanged — no known non-whitelisted CVEs (last scanned ${age_days} day(s) ago; --no-cache re-scans).${NC}"
@@ -212,3 +247,11 @@ case "$reply" in
   [yY]|[yY][eE][sS]) write_cache "findings"; exit 0 ;;
   *) warning "Aborted by user. Nothing was switched."; exit 1 ;;
 esac
+}
+
+# Guarded so tests can `source` this file to exercise the pure cache-key
+# helpers above without running main (which builds a closure and shells
+# out to vulnix). Executed normally, main runs exactly as before.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
