@@ -14,7 +14,8 @@ source "${REPO_ROOT}/scripts/lib/audit-framework.sh"
 source "${REPO_ROOT}/scripts/lib/run-banner.sh"  # run_banner
 # sumval <summary-line> <key> → the integer for key=<number> on a SUMMARY: line.
 # Used to parse the sub-scripts' machine-readable summary instead of scraping ANSI.
-sumval() { echo "$1" | grep -oE "$2=[0-9]+" | head -1 | cut -d= -f2; }
+# Field-matched (not grep -oE) so key="secure" doesn't also match "insecure=".
+sumval() { echo "$1" | awk -v k="$2" '{for(i=1;i<=NF;i++) if($i~"^"k"="){split($i,a,"="); print a[2]; exit}}'; }
 VERBOSE=0
 TOTAL_CHECKS=0
 PASSED_CHECKS=0

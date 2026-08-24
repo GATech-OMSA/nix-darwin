@@ -67,7 +67,7 @@ Secrets are encrypted with `sops`. **Never edit `secrets.yaml` manually without 
 ### 4. Updates
 
 - `just update`: Update Flake inputs (nixpkgs) and Homebrew.
-- `just update-nix`: Update only Nix inputs.
+- `just flake-update`: Update only Nix inputs.
 - `update-dev`: Quick update for development environment.
 
 ### 5. Shell & Aliases

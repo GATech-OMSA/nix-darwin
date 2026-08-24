@@ -43,7 +43,7 @@ nix-darwin/
 │   ├── lib/                  # 30+ helper functions
 │   └── overlays/             # Package customizations
 ├── scripts/                  # Utility scripts
-│   ├── setup/                # preflight.sh, bootstrap.sh, configure.sh, activate.sh
+│   ├── setup/                # inspect.sh, bootstrap.sh, configure.sh, activate.sh
 │   ├── secrets/              # deploy, edit, view, backup, rescan, status, audit
 │   └── maintenance/          # System maintenance
 ├── cache/                    # Pre-built binaries (sops-install-secrets)

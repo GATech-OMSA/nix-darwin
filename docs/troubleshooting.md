@@ -14,12 +14,12 @@
 | Build fails | `nix-rollback` | [Build Errors](#build-errors) |
 | Wrong profile active | Edit machine-config.nix | [Profile Issues](#profile-issues) |
 | Config files missing | Run `./scripts/configure.sh` | [Profile Issues](#missing-configuration-files) |
-| Pure-eval error | Remove the impure builtin (no --impure needed) | [Flake evaluation](#flake-evaluation-pure--no---impure--flake_root-needed) |
+| Pure-eval error at build | Remove the impure builtin (no --impure needed) | [Flake evaluation](#flake-evaluation-pure--no---impure--flake_root-needed) |
 | Placeholders in secrets | Edit secret templates, run activate.sh | [Secrets Issues](#placeholder-detection) |
 | Changes don't apply | `exec zsh` | [Silent Failures](#silent-failures) |
 | Git commit blocked | Check secret encryption | [Git Problems](#commit-blocked-by-hooks) |
 | Age key mismatch | Check ~/.config/sops/age/ | [Secrets Issues](#age-key-problems) |
-| Pure-eval error | An impure builtin was reintroduced — remove it (no --impure needed) | [Flake evaluation](#flake-evaluation-pure--no---impure--flake_root-needed) |
+| Impure builtin reintroduced | An impure builtin was reintroduced — remove it (no --impure needed) | [Flake evaluation](#flake-evaluation-pure--no---impure--flake_root-needed) |
 
 ---
 

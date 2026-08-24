@@ -97,8 +97,19 @@ __update_nix_core() {
     # needs reflog syntax (stash@{n}) — resolve that from the SHA fresh,
     # immediately before each drop call, since concurrent stash activity in
     # another session/worktree can shift the entry's position at any time.
+    #
+    # `stash show -p` only prints the tracked-file diff, so a stash pushed
+    # with `-u` that ALSO holds untracked files can still look identical to
+    # `git diff HEAD` here — fast-dropping in that case would permanently
+    # delete those untracked files, since `stash drop` (unlike `stash apply`)
+    # never writes them back to disk. A `-u` stash ALWAYS records a third
+    # parent commit (stash@{n}^3) even when there are zero untracked files —
+    # its tree is simply empty in that case — so checking mere presence of
+    # ^3 would make the fast-drop path permanently unreachable. Require the
+    # ^3 tree to be non-empty before treating the stash as untracked-bearing.
     local stash_ref
-    if [[ -n "$stash_diff" && "$stash_diff" == "$current_diff" ]]; then
+    if [[ -n "$stash_diff" && "$stash_diff" == "$current_diff" ]] && \
+       ! { git rev-parse -q --verify "${stash_sha}^3" >/dev/null 2>&1 && [[ -n "$(git ls-tree -r --name-only "${stash_sha}^3")" ]]; }; then
       echo "  Stash matches the current working tree already — dropping it"
       stash_ref=$(git stash list --format='%gd %H' | awk -v sha="$stash_sha" '$2 == sha {print $1}' | head -1)
       if [[ -z "$stash_ref" ]]; then
