@@ -180,7 +180,7 @@ _This section is generated from `nix-config/modules/darwin/homebrew.nix` by_
 _`scripts/docs/sync-app-recommendations.sh`. Do not edit by hand —_
 _re-run via `just docs-apps` after editing `homebrew.nix`._
 
-### Casks (28)
+### Casks (27)
 
 | Cask | Note |
 | --- | --- |
@@ -211,7 +211,6 @@ _re-run via `just docs-apps` after editing `homebrew.nix`._
 | `raycast` |  |
 | `shottr` |  |
 | `visual-studio-code` |  |
-| `zed` | Rust-native editor, built-in multi-provider AI (trial vs VS Code) |
 
 ### Mac App Store (6)
 
