@@ -61,7 +61,6 @@
       # "antigravity"
       "visual-studio-code"
       "claude-code@latest"
-      "antigravity-cli"
       "ghostty"
       # "iterm2"                 # removed 2026-08-22 — Ghostty covers daily use; re-add if tmux -CC/Triggers needed
       "zed"                      # Rust-native editor, built-in multi-provider AI (trial vs VS Code)
@@ -86,7 +85,7 @@
       "codex"
       "codex-app"       # OpenAI Codex GUI (separate from codex CLI)
       # "jan"             # Local LLM runner
-      "ollama-app"
+      # "ollama-app"      # removed 2026-09-29 — not in active use
 
       # Utilities
       "pearcleaner"         # open-source uninstaller + brew-leftover cleanup (replaced appcleaner 2026-08-22)
