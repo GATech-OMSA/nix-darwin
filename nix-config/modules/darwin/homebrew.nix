@@ -83,7 +83,7 @@
       "chatgpt"
       "claude"
       "codex"
-      "codex-app"       # OpenAI Codex GUI (separate from codex CLI)
+      # "codex-app"     # removed 2026-09-29 — discontinued upstream; replaced by "chatgpt"
       # "jan"             # Local LLM runner
       # "ollama-app"      # removed 2026-09-29 — not in active use
 
