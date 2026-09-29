@@ -63,7 +63,7 @@
       "claude-code@latest"
       "ghostty"
       # "iterm2"                 # removed 2026-08-22 — Ghostty covers daily use; re-add if tmux -CC/Triggers needed
-      "zed"                      # Rust-native editor, built-in multi-provider AI (trial vs VS Code)
+      # "zed"                    # removed 2026-09-29 — trial ended; VS Code/Cursor cover editing
       # "dash"
       # "warp"
       "fork"
