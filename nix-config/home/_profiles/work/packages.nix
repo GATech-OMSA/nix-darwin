@@ -45,8 +45,8 @@
     # aws-vault          # Secure AWS credential storage
     # aws-iam-authenticator  # EKS authentication
     # eksctl             # EKS cluster management
-    granted              # Fast AWS role switching with SSO
-    awslogs              # AWS CloudWatch logs for humans (tail/grep from terminal)
+    # granted            # declared once, in modules/darwin/packages.nix (all machines)
+    # awslogs removed 2026-10-12 — `aws logs tail` in AWS CLI v2 does the same
     # infracost          # Cloud cost estimates for Terraform
     # steampipe          # Cloud infrastructure queries
 
@@ -113,7 +113,7 @@
     # ============================================
     # GIT TOOLING
     # ============================================
-    lazygit              # TUI git client — pairs perfectly with terminal-heavy workflow
+    # lazygit            # declared once, in modules/darwin/packages.nix (all machines)
     # delta              # Syntax-highlighted diff viewer (set as git pager)
     # git-absorb         # Auto-fixup commits into history (--autosquash on rails)
 

@@ -13,12 +13,12 @@ let
   # Essential packages for ALL machines
   essentialPackages = with pkgs; [
     # Version Control
-    git
-    git-lfs
+    git  # Also from programs.git (HM); kept here so root's `sudo darwin-rebuild` has git on PATH
+    # git-lfs — installed by programs.git.lfs (HM), not declared twice
     gh  # GitHub CLI
 
     # Editors
-    vim
+    # vim removed — macOS ships /usr/bin/vim; neovim covers the rest (and vim carried 17 whitelisted CVEs)
     neovim
 
     # Shell
@@ -28,14 +28,14 @@ let
     # Note: bat, eza, fzf, zoxide, direnv, atuin — installed via programs.* in _template/programs/
     ripgrep  # Better grep (rg)
     fd  # Better find
-    delta  # Better git diff (line-based)
+    # delta — installed by programs.delta (HM), not declared twice
     difftastic  # AST-based structural diff — ignores pure reformatting (use via git difftool)
     dust  # Better du
     duf  # Better df
     btop  # Better top
     procs  # Better ps
     sd  # Better sed
-    gum  # Interactive CLI components
+    # gum removed 2026-10-12 — nothing in the repo calls it
     nix-direnv  # Fast direnv for Nix
 
     # JSON/YAML/TOML Tools
@@ -56,7 +56,7 @@ let
     # File Utilities
     rsync
     unzip
-    p7zip
+    # p7zip removed 2026-10-12 — stale fork; Keka handles .7z (extract() no longer has a 7z branch)
     duti  # Default application handler
 
     # Text Processing
@@ -88,7 +88,7 @@ let
     security-scan  # Custom (nix-config/pkgs): CVE scan of system closure + brew cask drift; bundles vulnix
 
     # macOS Specific
-    mkalias
+    # mkalias removed 2026-10-12 — nix-darwin now rsyncs real app bundles into /Applications/Nix Apps
     tmux  # Terminal multiplexer
 
     # Nix Tooling

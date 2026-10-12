@@ -105,25 +105,13 @@ in
     done
   '';
 
-  # Create macOS aliases in /Applications for Nix-installed GUI apps
-  # Without this, Nix apps only appear in /Applications/Nix Apps/ and
-  # Spotlight/Dock can't find them at /Applications/AppName.app
-  system.activationScripts.postActivation.text = ''
-    nixAppsDir="/Applications/Nix Apps"
-    if [ -d "$nixAppsDir" ]; then
-      echo "Creating macOS aliases for Nix apps in /Applications..."
-      for app in "$nixAppsDir"/*.app; do
-        [ -e "$app" ] || continue
-        appName=$(basename "$app")
-        target="/Applications/$appName"
-        # Remove stale alias if it exists
-        if [ -e "$target" ] || [ -L "$target" ]; then
-          /bin/rm -rf "$target"
-        fi
-        ${pkgs.mkalias}/bin/mkalias "$app" "$target"
-      done
-    fi
-  '';
+  # Nix GUI apps: nix-darwin's own `applications` activation script rsyncs real
+  # app bundles (not symlinks) into /Applications/Nix Apps, which Spotlight
+  # indexes. The old mkalias loop that also dropped aliases into /Applications
+  # was removed 2026-10-12 (it could rm -rf a same-named cask app). Anything
+  # that needs a fixed path must use "/Applications/Nix Apps/<App>.app".
+  # Stale aliases from the old loop (e.g. /Applications/Ghostty.app on work)
+  # are not cleaned up automatically — delete them by hand if they linger.
 
   # Zsh configuration (base setup, extended in Home Manager)
   programs.zsh = {

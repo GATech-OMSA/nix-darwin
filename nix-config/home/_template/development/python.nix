@@ -4,8 +4,8 @@
   # Python development configuration
 
   home.packages = with pkgs; [
-    python313
-    uv    # Fast Python package manager
+    # python313 removed 2026-10-12 — UV_PYTHON_PREFERENCE=only-managed means uv never uses it
+    uv    # Fast Python package manager (installs/manages its own Pythons)
     ruff  # Fast linter/formatter
     # micromamba  # Build broken - install via Homebrew: brew install micromamba
   ];

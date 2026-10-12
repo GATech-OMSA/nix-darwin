@@ -11,6 +11,6 @@
   #   - corepack: not enabled globally — project-level packageManager field handles it
 
   home.packages = with pkgs; [
-    nodejs_22  # Includes npm by default
+    nodejs_24  # Includes npm by default (22 reaches EOL 2027-04-30; mac-14 is already on 24)
   ];
 }

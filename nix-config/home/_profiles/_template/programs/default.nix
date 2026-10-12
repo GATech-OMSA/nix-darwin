@@ -17,7 +17,6 @@ in
     ./eza.nix
     ./fzf.nix
     ./git.nix
-    ./karabiner.nix
     ./nix-index.nix
     ./node.nix
     ./ssh.nix

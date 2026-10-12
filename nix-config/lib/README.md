@@ -94,7 +94,8 @@ cost).
 Consistent status-echo snippets for Nix-generated shell code (`error` writes
 to stderr). Four variants only — decorative ones were removed as dead code.
 
-**Real usage:** `_template/programs/karabiner.nix` activation script.
+**Real usage:** none currently (its only caller, `karabiner.nix`, was removed
+2026-10-12); kept for future activation scripts.
 
 ### Sub-libraries
 
