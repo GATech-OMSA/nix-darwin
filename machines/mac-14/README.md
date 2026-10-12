@@ -10,7 +10,7 @@ Homebrew plus a few dotfiles, all in this directory. Nothing outside
 - **Prompt and shell:** starship, atuin (ctrl-r history search), zoxide (`z`, `zi`),
   fzf (ctrl-t, alt-c), direnv, zsh-autosuggestions, fast-syntax-highlighting
 - **Faster search / modern CLI:** ripgrep, fd, bat, eza, delta, sd, dust, duf, btop, jq, yq
-- git, git-lfs, gh, node@22
+- git, git-lfs, gh, node@24
 - npm 14-day release quarantine (`min-release-age=14`), no Homebrew auto-update
 
 ## Setup on the new machine
@@ -39,6 +39,10 @@ exec zsh
 2. Symlinks `starship.toml`, `atuin/config.toml`, and `zshrc` into `~/.config/`;
    creates `~/.npmrc` only if absent (an existing one is never replaced)
 3. Adds a managed `# >>> mac-14 >>>` block to `~/.zshrc` (nothing else in it is touched)
+   and one to `~/.zshenv`. The `~/.zshenv` block sets `NO_GLOBAL_RCS`, because stock macOS
+   `/etc/zshrc` (`$(locale LC_CTYPE)`) and `/etc/zprofile` (`path_helper` in backticks)
+   fork at startup. It rebuilds PATH from `/etc/paths` and `/etc/paths.d` without forking.
+   Do not add `eval "$(brew shellenv)"` to `~/.zprofile`; PATH is already set.
 4. Includes `config/gitconfig` from your global git config; sets identity only if
    none exists
 5. Generates `~/.cache/mac-14/init/*.zsh` (starship, zoxide, atuin, direnv, fzf and the
@@ -85,6 +89,6 @@ CVE scanning. Rollback is `brew` only (no generations).
 
 ## Undo
 
-Delete the `# >>> mac-14 >>>` block from `~/.zshrc`, remove `~/.config/mac-14`,
+Delete the `# >>> mac-14 >>>` blocks from `~/.zshrc` and `~/.zshenv`, remove `~/.config/mac-14`,
 `~/.cache/mac-14`, and the `include.path` line from `~/.gitconfig`. Backups of any
 file bootstrap replaced are next to it as `*.pre-mac-14`.

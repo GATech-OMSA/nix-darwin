@@ -1,20 +1,18 @@
 # machines/mac-14/config/atuin/config.toml
 #
-# Same settings as nix-config/home/_profiles/_template/programs/atuin.nix.
-# Local-only history: no sync (work machine).
+# Identical to the live ~/.config/atuin/config.toml on the personal Nix machine
+# (generated there from nix-config/.../programs/atuin.nix). Local-only history:
+# auto_sync = false.
 
-search_mode = "fuzzy"
-filter_mode = "global"
-style = "compact"
-show_preview = true
-max_preview_height = 4
-inline_height = 0
-history_filter = [
-  "^\\s+",   # Ignore commands starting with space
-  "^exit$",
-  "^clear$",
-]
 auto_sync = false
 enter_accept = true
-secrets_filter = true   # Auto-filter AWS keys, tokens, passwords from history
+filter_mode = "global"
+history_filter = ['^\s+', "^exit$", "^clear$"]
+inline_height = 0
+max_preview_height = 4
+search_mode = "fuzzy"
+secrets_filter = true
+show_preview = true
 store_failed = true
+style = "compact"
+sync_frequency = "1h"

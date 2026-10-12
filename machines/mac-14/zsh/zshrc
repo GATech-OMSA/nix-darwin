@@ -17,6 +17,10 @@ if [[ ! -r "$MAC14_INIT/bins.zsh" ]]; then
 fi
 source "$MAC14_INIT/bins.zsh"   # HOMEBREW_PREFIX, PATH, __*_BIN absolute paths
 
+# ==== What the skipped /etc/zshrc would have set (see ~/.zshenv mac-14 block) ====
+setopt COMBINING_CHARS
+disable log 2>/dev/null
+
 # ==== Environment ====
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
