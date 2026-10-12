@@ -773,7 +773,7 @@ in
               *.tgz)       tar xzf $1     ;;
               *.zip)       unzip $1       ;;
               *.Z)         uncompress $1  ;;
-              *.7z)        7z x $1        ;;
+              *.7z)        echo "'$1': open .7z with Keka (p7zip was removed)" ;;
               *)           echo "'$1' cannot be extracted via extract()" ;;
             esac
           else

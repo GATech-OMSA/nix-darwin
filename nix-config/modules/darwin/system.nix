@@ -16,7 +16,7 @@ let
     "/Applications/Microsoft Outlook.app"
     "/Applications/Microsoft Teams.app"
     "/System/Applications/Notes.app"
-    "/Applications/Ghostty.app"
+    "/Applications/Nix Apps/Ghostty.app"  # Nix ghostty-bin (work has no Homebrew cask)
     # "/System/Applications/System Settings.app"
   ];
 

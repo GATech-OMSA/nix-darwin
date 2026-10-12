@@ -13,8 +13,7 @@
     nerd-fonts.fira-code
     nerd-fonts.jetbrains-mono
 
-    # Regular fonts
-    source-code-pro
+    # source-code-pro removed 2026-10-12 — duplicate of the Nerd Fonts above, unreferenced
 
     # Optional: More fonts if needed
     # ibm-plex

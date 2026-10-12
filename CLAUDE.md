@@ -343,8 +343,8 @@ Applies to both personal and work profiles. Disabled by default. Edit URLs to ma
 - Credential protection
 
 **Supply chain protections (see `docs/supply-chain-security.md`):**
-- npm: 7-day quarantine (`min-release-age=7`)
-- uv/Python: 7-day quarantine (`exclude-newer = "7 days"`)
+- npm: 14-day quarantine (`min-release-age=14`)
+- uv/Python: 14-day quarantine (`exclude-newer = "14 days"`)
 - Homebrew: manual updates only (no auto-upgrade on rebuild)
 - GitHub Actions: pinned to commit SHAs, not mutable tags
 - direnv: explicit `direnv allow` per-project, no blanket whitelist

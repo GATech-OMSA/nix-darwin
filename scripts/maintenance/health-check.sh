@@ -416,7 +416,7 @@ check_packages() {
     "git:Git version control"
     "curl:HTTP client"
     "jq:JSON processor"
-    "vim:Text editor"
+    "nvim:Text editor"
     "zsh:Z shell"
   )
 

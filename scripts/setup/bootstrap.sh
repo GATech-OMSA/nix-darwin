@@ -391,38 +391,6 @@ setup_age_key() {
 }
 
 # ============================================================================
-# GUM INSTALLATION (for future UI enhancements)
-# ============================================================================
-
-install_gum() {
-  print_step "◆ Installing Gum (UI Tool)"
-
-  if command -v gum &>/dev/null; then
-    success "gum already installed: $(gum --version)"
-    echo ""
-    return
-  fi
-
-  if [ "$DRY_RUN" = true ]; then
-    info "[DRY RUN] Would install gum via Nix"
-    echo ""
-    return
-  fi
-
-  info "Installing gum for enhanced terminal UI..."
-  echo ""
-
-  if nix-env -iA nixpkgs.gum; then
-    success "gum installed successfully"
-  else
-    warning "gum installation failed - continuing without it"
-    info "Scripts will work without gum, just with simpler UI"
-  fi
-
-  echo ""
-}
-
-# ============================================================================
 # MAIN SCRIPT
 # ============================================================================
 
@@ -500,7 +468,6 @@ install_sops
 install_age
 verify_installation
 setup_age_key
-install_gum
 
 print_header "✓ Bootstrap Complete"
 
