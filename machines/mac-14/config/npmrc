@@ -1,0 +1,7 @@
+# machines/mac-14/config/npmrc
+#
+# Supply chain protection: reject packages published less than 14 days ago.
+# Same policy as nix-config/home/_profiles/_template/programs/node.nix.
+# Corporate registry / CA settings are machine-specific: add them to ~/.npmrc by hand.
+save-exact=true
+min-release-age=14

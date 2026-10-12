@@ -1,0 +1,206 @@
+# machines/mac-14/zsh/zshrc
+#
+# Interactive shell config for the Homebrew-only work machine. Sourced from
+# ~/.zshrc (bootstrap.sh adds the managed block). Port of the relevant parts of
+# nix-config/home/_profiles/_template/shell/zsh.nix, minus anything Nix-specific.
+#
+# SIGCHLD RULES (macOS 15+): nothing here may run `$(cmd)` or `cmd > file` at the
+# top level. Tool init scripts (starship/atuin/zoxide/direnv/fzf) are generated and
+# patched ONCE by bootstrap.sh into ~/.cache/mac-14/init/ and only sourced here.
+# See docs/macos-zsh-sigchld.md before changing anything in this file.
+
+# ==== Generated init (paths, patched tool init, plugins) ====
+typeset -g MAC14_INIT="${MAC14_INIT:-$HOME/.cache/mac-14/init}"
+if [[ ! -r "$MAC14_INIT/bins.zsh" ]]; then
+  print -u2 "mac-14: init files missing — run machines/mac-14/bootstrap.sh"
+  return 0
+fi
+source "$MAC14_INIT/bins.zsh"   # HOMEBREW_PREFIX, PATH, __*_BIN absolute paths
+
+# ==== Environment ====
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export EDITOR="vim"
+export PAGER="less"
+export BAT_THEME="TwoDark"
+export BAT_PAGER="less -FR"
+export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+export FZF_CTRL_T_COMMAND="fd --type f --hidden --follow --exclude .git"
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
+
+# Supply chain: Homebrew never updates implicitly. Use `mac14-update`.
+export HOMEBREW_NO_AUTO_UPDATE=1
+export HOMEBREW_NO_ANALYTICS=1
+export HOMEBREW_NO_INSECURE_REDIRECT=1
+
+# ==== History ====
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=100000
+SAVEHIST=100000
+setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
+setopt SHARE_HISTORY EXTENDED_HISTORY INTERACTIVE_COMMENTS
+
+# ==== Completion ====
+typeset -U path fpath
+fpath+=("$HOMEBREW_PREFIX/share/zsh/site-functions")
+autoload -Uz compinit
+typeset -g ZCOMPDUMP="$HOME/.cache/zsh/zcompdump-$ZSH_VERSION"
+# Gate mkdir so it only forks the first time (SIGCHLD rule).
+[[ -d "${ZCOMPDUMP:h}" ]] || /bin/mkdir -p "${ZCOMPDUMP:h}"
+if [[ -s "$ZCOMPDUMP" ]]; then
+  compinit -u -C -d "$ZCOMPDUMP"
+else
+  compinit -u -d "$ZCOMPDUMP"
+fi
+
+# ==== Fuzzy finder (ctrl-t files, alt-c dirs) — before atuin so atuin owns ctrl-r ====
+if [[ $options[zle] = on && -r "$MAC14_INIT/fzf.zsh" ]]; then
+  source "$MAC14_INIT/fzf.zsh" 2>/dev/null
+fi
+
+# ==== Atuin pre-population (skip atuin.zsh's `$(atuin uuid)` fork) ====
+# ATUIN_SESSION + ATUIN_SHLVL set here make atuin.zsh's guard a no-op.
+zmodload zsh/datetime 2>/dev/null
+if [[ -z "${ATUIN_SESSION:-}" ]]; then
+  export ATUIN_SESSION="${EPOCHREALTIME//.}-$$"
+fi
+export ATUIN_SHLVL=$SHLVL
+# bootstrap.sh patches atuin.zsh's per-command `id=$(atuin history start …)` to
+# capture through this per-pid file (waitjobs path) instead of `$()`.
+typeset -g __ATUIN_HISTORY_START_FILE="${TMPDIR:-/tmp}/.atuin-history-start.$$"
+_atuin_cleanup_history_start() {
+  [[ -f "$__ATUIN_HISTORY_START_FILE" ]] && /bin/rm -f "$__ATUIN_HISTORY_START_FILE"
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook zshexit _atuin_cleanup_history_start
+
+# ==== Tool integrations (pre-generated, patched, SIGCHLD-safe) ====
+source "$MAC14_INIT/starship.zsh"
+source "$MAC14_INIT/zoxide.zsh"
+source "$MAC14_INIT/atuin.zsh"
+source "$MAC14_INIT/direnv.zsh"
+
+# ==== SIGCHLD-safe starship prompt ====
+# Stock init sets PROMPT='$(starship prompt …)', which forks on EVERY redraw and can
+# lose SIGCHLD on macOS 15+. Render in precmd via foreground redirect, stash in
+# parameters, and reference those: `$(<file)` reads without forking.
+typeset -g __STARSHIP_LEFT_FILE="$HOME/.cache/starship/.left.$$"
+typeset -g __STARSHIP_RIGHT_FILE="$HOME/.cache/starship/.right.$$"
+typeset -g STARSHIP_LEFT="" STARSHIP_RIGHT=""
+# Set after the first precmd render; gates the chpwd hook so a `cd` during shell
+# init can't fork starship inside the SIGCHLD window before the first prompt.
+typeset -g __STARSHIP_READY=
+[[ -d "$HOME/.cache/starship" ]] || /bin/mkdir -p "$HOME/.cache/starship"
+
+__starship_render() {
+  "$__STARSHIP_BIN" prompt \
+    --terminal-width="$COLUMNS" \
+    --keymap="${KEYMAP:-}" \
+    --status="${STARSHIP_CMD_STATUS:-}" \
+    --pipestatus="${STARSHIP_PIPE_STATUS[*]:-}" \
+    --cmd-duration="${STARSHIP_DURATION:-}" \
+    --jobs="${STARSHIP_JOBS_COUNT:-0}" \
+    > "$__STARSHIP_LEFT_FILE" 2>/dev/null
+  STARSHIP_LEFT="$(<$__STARSHIP_LEFT_FILE)"
+  "$__STARSHIP_BIN" prompt --right \
+    --terminal-width="$COLUMNS" \
+    --keymap="${KEYMAP:-}" \
+    --status="${STARSHIP_CMD_STATUS:-}" \
+    --pipestatus="${STARSHIP_PIPE_STATUS[*]:-}" \
+    --cmd-duration="${STARSHIP_DURATION:-}" \
+    --jobs="${STARSHIP_JOBS_COUNT:-0}" \
+    > "$__STARSHIP_RIGHT_FILE" 2>/dev/null
+  STARSHIP_RIGHT="$(<$__STARSHIP_RIGHT_FILE)"
+  __STARSHIP_READY=1
+}
+
+# Do NOT render at init time: the foreground starship runs would hit the same race.
+# The precmd hook fires before the first prompt, which is early enough.
+add-zsh-hook precmd __starship_render
+
+# Pure parameter expansion on redraw — no fork.
+PROMPT='$STARSHIP_LEFT'
+RPROMPT='$STARSHIP_RIGHT'
+
+# Re-render when the vi keymap changes.
+__starship_keymap_select() {
+  __starship_render
+  zle reset-prompt
+}
+zle -N zle-keymap-select __starship_keymap_select
+
+# Widgets that cd then redraw (fzf alt-c, zoxide `zi`) never fire precmd, so refresh
+# the frozen prompt here. Only acts inside a widget ($WIDGET set).
+__starship_chpwd() {
+  [[ -n "$__STARSHIP_READY" && -n "${WIDGET:-}" ]] || return
+  __starship_render
+  zle reset-prompt 2>/dev/null
+}
+add-zsh-hook chpwd __starship_chpwd
+
+__starship_cleanup() {
+  /bin/rm -f "$__STARSHIP_LEFT_FILE" "$__STARSHIP_RIGHT_FILE" 2>/dev/null
+}
+add-zsh-hook zshexit __starship_cleanup
+
+# ==== SIGCHLD-safe direnv hook ====
+# Stock hook is `eval "$(direnv export zsh)"` — a `$()` on every prompt/cd. Redirect
+# to a per-pid file and source it instead.
+typeset -g __DIRENV_EXPORT_FILE="$HOME/.cache/direnv/.export.$$.zsh"
+[[ -d "$HOME/.cache/direnv" ]] || /bin/mkdir -p "$HOME/.cache/direnv"
+
+# Skip the first call: at shell start the parent's direnv state is already inherited,
+# and forking direnv just to confirm that races SIGCHLD before the first prompt.
+typeset -g __DIRENV_HOOK_PRIMED=
+_direnv_hook() {
+  if [[ -z "$__DIRENV_HOOK_PRIMED" ]]; then
+    __DIRENV_HOOK_PRIMED=1
+    return 0
+  fi
+  trap -- "" SIGINT
+  if "$__DIRENV_BIN" export zsh > "$__DIRENV_EXPORT_FILE" 2>/dev/null; then
+    [[ -s "$__DIRENV_EXPORT_FILE" ]] && source "$__DIRENV_EXPORT_FILE"
+  fi
+  trap - SIGINT
+}
+_direnv_cleanup_export() {
+  [[ -f "$__DIRENV_EXPORT_FILE" ]] && /bin/rm -f "$__DIRENV_EXPORT_FILE"
+}
+add-zsh-hook zshexit _direnv_cleanup_export
+
+# ==== Aliases ====
+alias ..='cd ..'
+alias ...='cd ../..'
+alias c='clear'
+alias g='git'
+alias ls='eza --icons=auto --git'
+alias ll='eza -l --icons=auto --git'
+alias la='eza -la --icons=auto --git'
+alias lt='eza --tree --level=2 --icons=auto'
+alias cat='bat --paging=never'
+alias reload='exec zsh'
+
+# Weekly update: explicit, never automatic (supply chain).
+mac14-update() {
+  brew update && brew upgrade && brew upgrade --cask --greedy
+}
+
+# ==== Word movement (Option+Left/Right) ====
+bindkey "^[b" backward-word
+bindkey "^[f" forward-word
+bindkey "^[[1;3C" forward-word
+bindkey "^[[1;3D" backward-word
+
+# ==== Local overrides (corporate proxy / CA bundle / secrets — NOT in git) ====
+[[ -r "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# ==== Autosuggestions (patched copy, see bootstrap.sh) ====
+# MANUAL_REBIND: bind widgets once at first precmd instead of every prompt.
+export ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+ZSH_AUTOSUGGEST_STRATEGY=(history)
+[[ -r "$MAC14_INIT/plugins/zsh-autosuggestions.zsh" ]] &&
+  source "$MAC14_INIT/plugins/zsh-autosuggestions.zsh"
+
+# ==== Fast syntax highlighting (patched copy) — must be sourced last ====
+[[ -r "$MAC14_INIT/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]] &&
+  source "$MAC14_INIT/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"

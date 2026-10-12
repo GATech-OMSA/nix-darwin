@@ -1,0 +1,41 @@
+# machines/mac-14/Brewfile
+#
+# Everything this machine installs via Homebrew. Deliberately small.
+# Apply with: machines/mac-14/bootstrap.sh   (or: brew bundle --file=machines/mac-14/Brewfile)
+#
+# Supply chain: Homebrew never auto-updates here (HOMEBREW_NO_AUTO_UPDATE is set in
+# zsh/zshrc). Update on purpose with `brew update && brew upgrade`.
+
+# ==== Apps (casks) ====
+cask "claude-code@latest"   # Claude Code CLI
+cask "ghostty"              # Terminal
+# cask "visual-studio-code" # Uncomment if wanted
+# cask "orbstack"           # Uncomment if containers are needed
+
+# ==== Shell experience ====
+brew "starship"     # Prompt
+brew "atuin"        # Searchable shell history (ctrl-r)
+brew "zoxide"       # Smarter cd (z, zi)
+brew "fzf"          # Fuzzy finder (ctrl-t, alt-c)
+brew "direnv"       # Per-directory env
+brew "zsh-autosuggestions"             # Fish-style suggestions from history
+brew "zsh-fast-syntax-highlighting"    # Fast command highlighting
+
+# ==== Faster search / modern CLI ====
+brew "ripgrep"      # rg: fast grep
+brew "fd"           # Fast find
+brew "bat"          # cat with syntax highlighting
+brew "eza"          # ls with git + icons
+brew "git-delta"    # Readable git diffs
+brew "sd"           # Simple sed
+brew "dust"         # du
+brew "duf"          # df
+brew "btop"         # top
+brew "jq"           # JSON
+brew "yq"           # YAML
+
+# ==== Core tooling ====
+brew "git"
+brew "git-lfs"
+brew "gh"           # GitHub CLI
+brew "node@22"      # keg-only; zsh/zshrc adds it to PATH

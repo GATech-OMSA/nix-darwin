@@ -1,0 +1,47 @@
+# machines/mac-14/config/gitconfig
+#
+# Shared git settings, pulled in via `git config --global include.path` by
+# bootstrap.sh. Identity (user.name / user.email) is NOT set here.
+
+[init]
+	defaultBranch = main
+
+[core]
+	pager = delta
+	autocrlf = input
+	# Keep the index hot so `git status` and the prompt's git module stay fast.
+	fsmonitor = true
+	untrackedCache = true
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	line-numbers = true
+
+[merge]
+	conflictstyle = zdiff3
+
+[diff]
+	colorMoved = default
+
+[fetch]
+	prune = true
+
+[push]
+	autoSetupRemote = true
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[alias]
+	s = status -sb
+	aa = add --all
+	cm = commit -m
+	ps = push
+	pl = pull
+	l = log --oneline --graph --decorate -20
